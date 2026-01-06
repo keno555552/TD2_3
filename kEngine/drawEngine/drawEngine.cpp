@@ -940,7 +940,7 @@ void DrawEngine::Draw2D() {
 
 			// Set Texture
 			int textureHandle;
-			textureHandle = resourceManager_->ReadCommenTextureHandle(material->textureHandle);
+			textureHandle = material->textureHandle;
 			textureSrvHandleGPU_ = resourceManager_->GetTextureGPUDescriptorHandle(textureHandle);
 			commandList_->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU_);
 
