@@ -5,8 +5,8 @@ SceneManager::SceneManager(kEngine* system) {
 	//sceneUsingHandle_ = SceneNum::S_STAGE_01;
 	//sceneUsingHandle_ = SceneNum::S_BOSSTEST;
 	//sceneUsingHandle_ = SceneNum::S_TESTER;
-	sceneUsingHandle_ = SceneNum::S_TITLE;
-	//sceneUsingHandle_ = SceneNum::S_STAGE_01;
+	//sceneUsingHandle_ = SceneNum::S_TITLE;
+	sceneUsingHandle_ = SceneNum::S_STAGE_01;
 	
 	
 
@@ -110,6 +110,7 @@ void SceneManager::SceneChanger() {
 		case SceneNum::S_STAGE_01:
 			//sceneUsing_ = new SceneTest(system_);
 			//sceneUsing_ = new Scene1(system_);
+            sceneUsing_ = new SceneStage01(system_);
 			break;
 		case SceneNum::S_STAGE_02:
 			break;

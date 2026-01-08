@@ -50,101 +50,62 @@ Vector3 Player::CornerPosition(const Vector3& center, Corner4 corner) {
 }
 
 void Player::Move() {
-	bool landing = false;
-	/// 移動
-	// 左右移動捜索
-	if (system_->GetIsPush(DIK_D) || system_->GetIsPush(DIK_A)) {
-		Vector3 acceleration = {};
-		if (system_->GetIsPush(DIK_D)) {
-			if (velocity_.x < 0.0f) {
-				// 速度と逆方向に入力中に急ブレーキ
-				velocity_.x *= (1.0f - kAttenuation);
-			}
-			acceleration.x += kAcceleration;
+	// 入力状態の取得
+	bool pushA = system_->GetIsPush(DIK_A);
+	bool pushD = system_->GetIsPush(DIK_D);
 
-			if (lrDirection_ != LRDirection::kRight) {
-				lrDirection_ = LRDirection::kRight;
-				turnFirstRotationY_ = mainPosition.transform.rotate.y;
-				turnTimer_ = kTimeTurn;
-			}
+	// 腕の膨張・収縮処理
+	// Aキーで左腕、Dキーで右腕を膨らませる
+	UpdateArmScale(armScaleL_, pushA);
+	UpdateArmScale(armScaleR_, pushD);
+
+	// 旋回と速度の計算
+	if (pushA && pushD) {
+		// 【停止】両方膨らませると急ブレーキ
+		currentSpeed_ *= 0.8f;
+	} else if (!pushA && !pushD) {
+		// 【加速】ボタンを離した際、腕が縮みながら加速（元に戻るまでブースト）
+		if (armScaleL_ > 1.01f || armScaleR_ > 1.01f) {
+			currentSpeed_ = kBaseSpeed + kBoostPower;
+		} else {
+			currentSpeed_ = kBaseSpeed;
 		}
-		if (system_->GetIsPush(DIK_A)) {
-			if (velocity_.x > 0.0f) {
-				// 速度と逆方向に入力中に急ブレーキ
-				velocity_.x *= (1.0f - kAttenuation);
-			}
-			acceleration.x -= kAcceleration;
-			if (lrDirection_ != LRDirection::kLeft) {
-				lrDirection_ = LRDirection::kLeft;
-				turnFirstRotationY_ = mainPosition.transform.rotate.y;
-				turnTimer_ = kTimeTurn;
-			}
-		}
-
-		if (system_->GetIsPush(DIK_A) && system_->GetIsPush(DIK_D)) {
-			if (lrDirection_ != LRDirection::None) {
-				lrDirection_ = LRDirection::None;
-				turnFirstRotationY_ = mainPosition.transform.rotate.y;
-				turnTimer_ = kTimeTurn;
-			}
-		}
-
-		// 加速/減速
-		velocity_.x += acceleration.x * deltaTime_;
-
-		velocity_.x = std::clamp(velocity_.x, -kLimitRunSpeed, kLimitRunSpeed);
 	} else {
-		// 非入力時は移動減衰をかける
-		velocity_.x *= std::exp(-kAttenuation * deltaTime_);
-		if (velocity_.x < 0.01f && velocity_.x > -0.01f) { 
-			velocity_.x = 0.0f;
-		}
-		//if (behavior_ != Behavior::kAttack) {
-		if (lrDirection_ != LRDirection::None) { 
-			lrDirection_ = LRDirection::None;
-			turnFirstRotationY_ = mainPosition.transform.rotate.y;
-			turnTimer_ = kTimeTurn;
-		}
-		//}
+		// 【旋回】膨らんでいる方に旋回
+		// 原点が付け根にあれば、スケールを変えるだけで外側に伸びる
+		objectParts_[1].transform.scale.x = armScaleR_;
+		objectParts_[1].transform.scale.y = armScaleR_;
+		objectParts_[1].transform.scale.z = armScaleR_;
+		objectParts_[2].transform.scale.x = armScaleL_;
+		objectParts_[2].transform.scale.y = armScaleL_;
+		objectParts_[2].transform.scale.z = armScaleL_;
+		float turnAmount = (armScaleR_ - armScaleL_) * kTurnSpeed;
+		mainPosition.transform.rotate.y += turnAmount;
+		currentSpeed_ = kBaseSpeed;
 	}
 
-	// 回転制御
-	if (turnTimer_ >= 0.0f) {
-		turnTimer_ -= deltaTime_;
-		turnTimer_ = std::min(turnTimer_, 0.0f);
+	// 4. 進行方向への移動計算
+	// Y軸回転から進行方向ベクトルを計算 (3Dの場合)
+	Vector3 forward = {
+		std::sin(mainPosition.transform.rotate.y),
+		0.0f,
+		std::cos(mainPosition.transform.rotate.y)
+	};
 
-		float destinationRotationYTable[] = {
-			-std::numbers::pi_v<float> / 2.0f,                            // 右
-			std::numbers::pi_v<float> /2.0f,       // 左
-			0.0f // なし
-		};
-		// 状態に応じた角度を取得する
-		float destinationRotationY = destinationRotationYTable[static_cast<uint32_t>(lrDirection_)];
-		// 自キャラの角度を設定する
-		mainPosition.transform.rotate.y = turnFirstRotationY_ * (turnTimer_ / kTimeTurn) + destinationRotationY * (1 - turnTimer_ / kTimeTurn);
-	}
+	/*velocity_.x = forward.x * currentSpeed_;
+	velocity_.z = forward.z * currentSpeed_;*/
+	velocity_.x = 0.0f;
+	velocity_.z = 0.0f;
 
-
-	if (onGround_) {
-
-		// ジャンプ
-		if (system_->GetIsPush(DIK_W)) {
-			// ジャンプ初速を加える
-			velocity_.y += kJumpAcceleration;
-		}
-
-	} else {
-		// 落下速度
-		velocity_.y -= kGravityAcceleration * deltaTime_;
-		// 落下速度制限
-		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
-		// 空中
-		if (velocity_.y < 0) {
-			if ((mainPosition.transform.translate.y + velocity_.y) <= 2.0f) {
-				landing = true;
-			}
-		}
-	}
+	// 5. 腕の座標調整（重ならないようにずらす
+	// 左腕
+	objectParts_[1].transform.translate =
+		objectParts_[0].transform.translate +
+		Vector3{ -(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
+	// 右腕
+	objectParts_[2].transform.translate =
+		objectParts_[0].transform.translate +
+		Vector3{ +(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
 }
 
 void Player::OnGroundChanger(const CollisionMapInfo& info) {
@@ -258,4 +219,14 @@ void Player::MovePlayerByResult(const CollisionMapInfo& info) {
 	mainPosition.transform.translate.x += info.moveVector.x * deltaTime_;
 	mainPosition.transform.translate.y += info.moveVector.y * deltaTime_;
 	mainPosition.transform.translate.z += info.moveVector.z * deltaTime_;
+}
+
+// 腕のスケールを更新する補助関数
+void Player::UpdateArmScale(float &scale, bool isPush) {
+	if (isPush) {
+		scale += kExpandSpeed * deltaTime_;
+	} else {
+		scale -= kShrinkSpeed * deltaTime_;
+	}
+	scale = std::clamp(scale, 1.0f, kMaxArmScale);
 }

@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "SceneTitle.h"
 #include "Scene1.h"
+#include "SceneStage01.h"
 #include "SceneResult.h"
 #include "SceneTestForGE.h"
 #include "SceneTester.h"

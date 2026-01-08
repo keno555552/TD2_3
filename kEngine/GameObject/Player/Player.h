@@ -7,6 +7,18 @@
 #include "Scene.h"
 #include "GameObject/Object/Corner.h"
 
+// 最大膨張率
+static inline const float kMaxArmScale = 2.5f;
+// 腕が縮む速さ
+static inline const float kShrinkSpeed = 5.0f;
+// 腕が膨らむ速さ
+static inline const float kExpandSpeed = 4.0f;
+// 旋回性能
+static inline const float kTurnSpeed = 0.05f;
+// 自動直進の基本速度
+static inline const float kBaseSpeed = 0.02f;
+// 離した時の加速力
+static inline const float kBoostPower = 0.04f;
 
 /// 移動速度
 static inline const float kAcceleration = 3.0f;
@@ -64,7 +76,8 @@ private:
 	void OnGroundChanger(const CollisionMapInfo& info);
 	void MapCollisionDecideDown(CollisionMapInfo& info);
 	void MovePlayerByResult(const CollisionMapInfo& info);
-
+	// 腕のスケールを更新する補助関数
+	void UpdateArmScale(float &scale, bool isPush);
 
 private:
 	/////// State
@@ -89,6 +102,13 @@ private:
 	/// 経過時間
 
 	//////// プレイヤーデータ
+	// 左腕のスケール（1.0が通常）
+	float armScaleL_ = 1.0f;
+	// 右腕のスケール
+	float armScaleR_ = 1.0f;
+	// 現在の移動速度
+	float currentSpeed_ = 0.0f;
+
 	/// 移動速度
 	Vector3 velocity_ = {};
 	/// 方向/開始時の方向

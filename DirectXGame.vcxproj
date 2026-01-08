@@ -350,6 +350,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="scenes\CG4_HK_1\Effect2.cpp" />
     <ClCompile Include="scenes\Scene1.cpp" />
     <ClCompile Include="scenes\SceneResult.cpp" />
+    <ClCompile Include="scenes\SceneStage01.cpp" />
     <ClCompile Include="scenes\SceneTest.cpp" />
     <ClCompile Include="kEngine\GameObject\Object\Sprite.cpp" />
     <ClCompile Include="kEngine\drawEngine\DrawData\SpriteData.cpp" />
@@ -445,6 +446,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="scenes\CG4_HK_1\Effect2.h" />
     <ClInclude Include="scenes\Scene1.h" />
     <ClInclude Include="scenes\SceneResult.h" />
+    <ClInclude Include="scenes\SceneStage01.h" />
     <ClInclude Include="scenes\SceneTest.h" />
     <ClInclude Include="kEngine\GameObject\Object\Sprite.h" />
     <ClInclude Include="kEngine\drawEngine\DrawData\SpriteData.h" />
