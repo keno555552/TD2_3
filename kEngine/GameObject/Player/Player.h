@@ -16,9 +16,9 @@ static inline const float kExpandSpeed = 4.0f;
 // 旋回性能
 static inline const float kTurnSpeed = 0.05f;
 // 自動直進の基本速度
-static inline const float kBaseSpeed = 0.02f;
+static inline const float kBaseSpeed = 20.0f;
 // 離した時の加速力
-static inline const float kBoostPower = 0.04f;
+static inline const float kBoostPower = 40.0f;
 
 /// 移動速度
 static inline const float kAcceleration = 3.0f;

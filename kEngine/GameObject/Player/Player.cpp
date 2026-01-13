@@ -14,7 +14,12 @@ Player::Player(kEngine* system, const Vector3& position) {
 }
 
 void Player::Update(Camera* camera) {
-	deltaTime_ = system_->GetDeltaTime();
+	// 1. エンジンから値を取得
+	float rawDeltaTime = system_->GetDeltaTime();
+
+	// 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
+	// これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます
+	deltaTime_ = std::min(rawDeltaTime, 0.1f);
 	BehaviorRootUpdate();
 
 	Object::Update(camera);
@@ -64,9 +69,15 @@ void Player::Move() {
 		// 【停止】両方膨らませると急ブレーキ
 		currentSpeed_ *= 0.8f;
 	} else if (!pushA && !pushD) {
-		// 【加速】ボタンを離した際、腕が縮みながら加速（元に戻るまでブースト）
-		if (armScaleL_ > 1.01f || armScaleR_ > 1.01f) {
-			currentSpeed_ = kBaseSpeed + kBoostPower;
+		// 【加速】ボタンを離した際、腕が縮みながら加速
+		// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
+		float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
+
+		if (maxExtraScale > 0.0f) {
+			// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
+			// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
+			float boostRatio = maxExtraScale / (kMaxArmScale - 1.0f);
+			currentSpeed_ = kBaseSpeed + (kBoostPower * boostRatio);
 		} else {
 			currentSpeed_ = kBaseSpeed;
 		}
@@ -84,28 +95,27 @@ void Player::Move() {
 		currentSpeed_ = kBaseSpeed;
 	}
 
-	// 4. 進行方向への移動計算
+	// 進行方向への移動計算
 	// Y軸回転から進行方向ベクトルを計算 (3Dの場合)
 	Vector3 forward = {
-		std::sin(mainPosition.transform.rotate.y),
+		-std::sin(mainPosition.transform.rotate.y),
 		0.0f,
-		std::cos(mainPosition.transform.rotate.y)
+		-std::cos(mainPosition.transform.rotate.y)
 	};
 
-	/*velocity_.x = forward.x * currentSpeed_;
-	velocity_.z = forward.z * currentSpeed_;*/
-	velocity_.x = 0.0f;
-	velocity_.z = 0.0f;
+	velocity_.x = forward.x * currentSpeed_;
+	velocity_.z = forward.z * currentSpeed_;
 
-	// 5. 腕の座標調整（重ならないようにずらす
-	// 左腕
+	// 見た目の更新（どの状態でも毎フレーム実行する）
+	// 左腕 (Index 1)
+	objectParts_[1].transform.scale = { armScaleR_, armScaleR_, armScaleR_ };
 	objectParts_[1].transform.translate =
-		objectParts_[0].transform.translate +
-		Vector3{ -(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
-	// 右腕
+		objectParts_[0].transform.translate + Vector3{ -(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
+
+	// 右腕 (Index 2)
+	objectParts_[2].transform.scale = { armScaleL_, armScaleL_, armScaleL_ };
 	objectParts_[2].transform.translate =
-		objectParts_[0].transform.translate +
-		Vector3{ +(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
+		objectParts_[0].transform.translate + Vector3{ +(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
 }
 
 void Player::OnGroundChanger(const CollisionMapInfo& info) {
