@@ -242,14 +242,14 @@ bool crashDecision(const Sphere& s1, const Sphere& s2) {
 //	return false;
 //}
 //
-//bool crashDecision(const AABB& a, const AABB& b) {
-//	if ((a.min.x <= b.max.x && a.max.x >= b.min.x) &&
-//		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
-//		(a.min.z <= b.max.z && a.max.z >= b.min.z)) {
-//		return true;
-//	}
-//	return false;
-//}
+bool crashDecision(const AABB& a, const AABB& b) {
+	if ((a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+		(a.min.z <= b.max.z && a.max.z >= b.min.z)) {
+		return true;
+	}
+	return false;
+}
 //
 //bool crashDecision(const AABB& a, const Sphere& sphere) {
 //	Vector3 closestPoint{ std::clamp(sphere.center.x, a.min.x,a.max.x),
