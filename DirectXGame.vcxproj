@@ -293,6 +293,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\core\Input\inputManager.cpp" />
     <ClCompile Include="kEngine\core\driver\config.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\BasicResource.cpp" />
+    <ClCompile Include="kEngine\tool\CollisionManager\CollisionManager.cpp" />
     <ClCompile Include="kEngine\tool\crashDecision\crashData.cpp" />
     <ClCompile Include="kEngine\tool\crashDecision\crashDecision.cpp" />
     <ClCompile Include="kEngine\tool\DefaultMenu\DefaultMenu.cpp" />
@@ -384,6 +385,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\core\Input\inputManager.h" />
     <ClInclude Include="kEngine\core\driver\config.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\BasicResource.h" />
+    <ClInclude Include="kEngine\tool\CollisionManager\CollisionManager.h" />
     <ClInclude Include="kEngine\tool\crashDecision\crashData.h" />
     <ClInclude Include="kEngine\tool\crashDecision\crashDecision.h" />
     <ClInclude Include="kEngine\tool\DefaultMenu\DefaultMenu.h" />
