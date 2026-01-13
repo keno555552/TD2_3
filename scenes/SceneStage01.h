@@ -29,6 +29,7 @@ private:
 	/// モデルハンドル
 	int skydomeModelHandle_ = 0;
 	int playerModelHandle_ = 0;
+	int wallModelHandle_ = 0;
 
 	/// テキスチャーハンドル
 	int boxTextureHandle_ = 0;
@@ -43,9 +44,8 @@ private:
     Object *playerLArm_ = nullptr;*/
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
-	MapChipField *mapChipField_ = nullptr;
-	std::vector<std::vector<Object *>> blockObjectList_;
 
+	Object* wall_[4] = { nullptr };
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
@@ -55,6 +55,5 @@ private:
 	void CameraPart();
 	void ImguiPart();
 
-	void GenerateBlocks();
 };
 

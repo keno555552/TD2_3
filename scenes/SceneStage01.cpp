@@ -1,4 +1,5 @@
 #include "SceneStage01.h"
+#include "crashDecision/crashDecision.h"
 
 SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== システム初期化 ============///
@@ -10,6 +11,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
 	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
 	boxTextureHandle_ = system_->LoadTextrue("resources/texture/testBox.png");
 	tryTextureHandle_ = system_->LoadTextrue("resources/texture/Tryer.png");
@@ -24,6 +26,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	player_ = new Player(system, Vector3(2.0f, 0.5f, 0));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = Vector3(0.5f, 0.5f, 0.5f);
+	//player_->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
 	//player_->CreateDefaultData();
 	//player_->modelHandle_ = playerModelHandle_;
 
@@ -37,15 +40,15 @@ SceneStage01::SceneStage01(kEngine *system) {
 	sprite2_->CreateDefaultData();
 	sprite2_->objectParts_[0].materialConfig->textureHandle = uvTextureHandle_;
 
-
-	/// マップチップの生成
-	mapChipField_ = new MapChipField();
-	mapChipField_->LoadMapChipCsv("resources/stage/blocks1.csv");
-	mapChipField_->SetBlockWidth(1.0f);
-	mapChipField_->SetBlockHeight(1.0f);
-
-	/// マップチップの初期化
-	GenerateBlocks();
+	for (int i = 0; i < 4; i++) {
+		wall_[i] = new Object;
+		wall_[i]->IntObject(system_);
+		wall_[i]->CreateModelData(wallModelHandle_);
+		wall_[i]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 10.0f);
+		//wall_[i]->mainPosition.transform.scale = Vector3(0.05f, 0.05f, 0.05f);
+		wall_[i]->mainPosition.transform.translate = Vector3(-1.0f, 0.0f, 5.0f);
+	}
+	
 }
 
 SceneStage01::~SceneStage01() {
@@ -56,7 +59,6 @@ SceneStage01::~SceneStage01() {
 	delete skydome_;
 	delete sprite_;
 	delete sprite2_;
-	delete mapChipField_;
 }
 
 void SceneStage01::Update() {
@@ -72,12 +74,10 @@ void SceneStage01::Update() {
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
-	/// ブロック更新
-	for (auto &row : blockObjectList_) {
-		for (auto &block : row) {
-			if (block) {
-				block->Update(usingCamera_);
-			}
+	for (int i = 0; i < 4; i++) {
+		wall_[i]->Update(usingCamera_);
+		if (crashDecision(wall_[i]->GetAABB(wall_[i]), player_->GetAABB(player_))) {
+			// 衝突処理
 		}
 	}
 
@@ -104,13 +104,8 @@ void SceneStage01::Draw() {
 	//system_->Draw3D(player_);
 	//system_->Draw3D(model_);
 
-	/// ブロック描画
-	for (auto &row : blockObjectList_) {
-		for (auto &block : row) {
-			if (block) {
-				block->Draw();
-			}
-		}
+	for (int i = 0; i < 4; i++) {
+		wall_[i]->Draw();
 	}
 
 #ifdef USE_IMGUI
@@ -166,33 +161,3 @@ void SceneStage01::ImguiPart() {
 	}
 }
 #endif
-
-
-void SceneStage01::GenerateBlocks() {
-	/// ボックス生成
-	// 要素数
-	uint32_t kNumBlockVertical = mapChipField_->GetNumBlockVirtical();
-	uint32_t kNumBlockHorizontal = mapChipField_->GetNumBlockHorizontal();
-
-	// 要素数を変更する
-	// 列数を設定(縦方向のブロック数)
-	blockObjectList_.resize(kNumBlockVertical);
-	for (uint32_t i = 0; i < kNumBlockVertical; i++) {
-		// 列数を設定(横方向のブロック数)
-		blockObjectList_[i].resize(kNumBlockHorizontal);
-	}
-	// いざボックス生成
-	for (uint32_t i = 0; i < kNumBlockVertical; i++) {
-		for (uint32_t j = 0; j < kNumBlockHorizontal; j++) {
-			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlock) {
-				blockObjectList_[i][j] = new Object();
-				blockObjectList_[i][j]->IntObject(system_);
-				blockObjectList_[i][j]->CreateDefaultData();
-				blockObjectList_[i][j]->modelHandle_ = config::default_Cube_MeshBufferHandle_;
-				blockObjectList_[i][j]->objectParts_[0].materialConfig->useModelTexture = false;
-				blockObjectList_[i][j]->objectParts_[0].materialConfig->textureHandle = boxTextureHandle_;
-				blockObjectList_[i][j]->mainPosition.transform.translate = mapChipField_->GetMapChipPositionByIndex(j, i);
-			}
-		}
-	}
-}
