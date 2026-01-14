@@ -23,7 +23,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	skydome_->CreateModelData(skydomeModelHandle_);
 	skydome_->objectParts_[0].materialConfig->enableLighting = false;
 
-	player_ = new Player(system, Vector3(2.0f, 0.5f, 0));
+	player_ = new Player(system, Vector3(5.0f, 0.0f, 5.0f));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = Vector3(0.5f, 0.5f, 0.5f);
 	//player_->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
@@ -44,11 +44,18 @@ SceneStage01::SceneStage01(kEngine *system) {
 		wall_[i] = new Object;
 		wall_[i]->IntObject(system_);
 		wall_[i]->CreateModelData(wallModelHandle_);
-		wall_[i]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 10.0f);
+		wall_[i]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 1.0f);
 		//wall_[i]->mainPosition.transform.scale = Vector3(0.05f, 0.05f, 0.05f);
-		wall_[i]->mainPosition.transform.translate = Vector3(-1.0f, 0.0f, 5.0f);
+		wall_[i]->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
 	}
-	
+	wall_[0]->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 50.0f);
+	wall_[0]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 100.0f);
+	wall_[1]->mainPosition.transform.translate = Vector3(50.0f, 0.0f, 100.0f);
+	wall_[1]->mainPosition.transform.scale = Vector3(100.0f, 1.0f, 1.0f);
+	wall_[2]->mainPosition.transform.translate = Vector3(100.0f, 0.0f, 50.0f);
+	wall_[2]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 100.0f);
+	wall_[3]->mainPosition.transform.translate = Vector3(50.0f, 0.0f, 0.0f);
+	wall_[3]->mainPosition.transform.scale = Vector3(100.0f, 1.0f, 1.0f);
 }
 
 SceneStage01::~SceneStage01() {
@@ -78,8 +85,23 @@ void SceneStage01::Update() {
 		wall_[i]->Update(usingCamera_);
 		if (crashDecision(wall_[i]->GetAABB(wall_[i]), player_->GetAABB(player_))) {
 			// 衝突処理
+			if (i == 0) {
+				player_->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x + wall_[i]->mainPosition.transform.scale.x / 2.0f + player_->mainPosition.transform.scale.x / 2.0f;
+			}
+			if (i == 1) {
+				player_->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z - wall_[i]->mainPosition.transform.scale.z / 2.0f - player_->mainPosition.transform.scale.z / 2.0f;
+			}
+			if (i == 2) {
+				player_->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x - wall_[i]->mainPosition.transform.scale.x / 2.0f - player_->mainPosition.transform.scale.x / 2.0f;
+			}
+			if(i == 3) {
+				player_->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z + wall_[i]->mainPosition.transform.scale.z / 2.0f + player_->mainPosition.transform.scale.z / 2.0f;
+			}
+
 		}
 	}
+
+	
 
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
