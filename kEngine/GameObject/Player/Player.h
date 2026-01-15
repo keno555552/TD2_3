@@ -8,17 +8,17 @@
 #include "GameObject/Object/Corner.h"
 
 // 最大膨張率
-static inline const float kMaxArmScale = 2.5f;
+static inline const float kMaxArmScale = 5.0f;
 // 腕が縮む速さ
-static inline const float kShrinkSpeed = 5.0f;
+static inline const float kShrinkSpeed = 1.5f;
 // 腕が膨らむ速さ
-static inline const float kExpandSpeed = 4.0f;
+static inline const float kExpandSpeed = 1.2f;
 // 旋回性能
-static inline const float kTurnSpeed = 0.05f;
+static inline const float kTurnSpeed = 0.04f;
 // 自動直進の基本速度
-static inline const float kBaseSpeed = 20.0f;
+static inline const float kBaseSpeed = 6.0f;
 // 離した時の加速力
-static inline const float kBoostPower = 40.0f;
+static inline const float kBoostPower = 12.0f;
 
 /// 移動速度
 static inline const float kAcceleration = 3.0f;
