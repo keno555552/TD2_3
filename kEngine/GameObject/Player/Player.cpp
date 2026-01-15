@@ -97,14 +97,14 @@ void Player::Move() {
 
 	// 進行方向への移動計算
 	// Y軸回転から進行方向ベクトルを計算 (3Dの場合)
-	Vector3 forward = {
+	forward_ = {
 		-std::sin(mainPosition.transform.rotate.y),
 		0.0f,
 		-std::cos(mainPosition.transform.rotate.y)
 	};
 
-	velocity_.x = forward.x * currentSpeed_;
-	velocity_.z = forward.z * currentSpeed_;
+	velocity_.x = forward_.x * currentSpeed_;
+	velocity_.z = forward_.z * currentSpeed_;
 
 	// 見た目の更新（どの状態でも毎フレーム実行する）
 	// 左腕 (Index 1)

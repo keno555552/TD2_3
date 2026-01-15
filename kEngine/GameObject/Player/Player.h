@@ -48,6 +48,8 @@ public:
 
 	void Update(Camera* camera) override;
 
+	Vector3 GetForward() const { return forward_; }
+
 private:
 
 	enum class LRDirection { kRight, kLeft, None };
@@ -96,6 +98,8 @@ private:
 	/// DamageCD
 	float kDamageCD_ = 1.0f; ///(秒)
 	float kDamageParameter_ = kDamageCD_ * 60.0f;
+
+	Vector3 forward_;
 
 private:
 

@@ -504,7 +504,7 @@ Matrix4x4 MakeTranslateMatrix(const Vector3 translate) {
 
 
 Vector3 ExtractScale(const Matrix4x4 matrix4x4) {
-	return Vector3 { matrix4x4.m[0][0], matrix4x4.m[1][1], matrix4x4.m[2][2] };
+	return Vector3{ matrix4x4.m[0][0], matrix4x4.m[1][1], matrix4x4.m[2][2] };
 }
 
 Vector3 ExtractRotate(const Matrix4x4 matrix4x4) {
@@ -517,7 +517,7 @@ Vector3 ExtractRotate(const Matrix4x4 matrix4x4) {
 }
 
 Vector3 ExtractTranslate(const Matrix4x4 matrix4x4) {
-	return Vector3 { matrix4x4.m[3][0], matrix4x4.m[3][1], matrix4x4.m[3][2] };
+	return Vector3{ matrix4x4.m[3][0], matrix4x4.m[3][1], matrix4x4.m[3][2] };
 }
 
 
@@ -531,7 +531,7 @@ Matrix4x4 MakeAffineMatrix(Vector3 scole, Vector3 rotate, Vector3 translate) {
 
 	Matrix4x4 t = MakeTranslateMatrix(translate);
 
-	return Matrix4x4{ r * s * t };
+	return Matrix4x4{ s * r * t };
 }
 
 Matrix4x4 MatrixMix(Matrix4x4* matrix1, Matrix4x4* matrix2, Matrix4x4* matrix3, Matrix4x4* matrix4) {
