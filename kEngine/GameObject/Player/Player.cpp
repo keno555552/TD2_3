@@ -10,7 +10,8 @@ Player::Player(kEngine* system, const Vector3& position) {
 	mainPosition.transform.translate = position;
 	objectParts_[0].materialConfig->lightModelType = LightModelType::HalfLambert;
 
-	mainPosition.transform.rotate.y = 0.0f;
+	mainPosition.transform.rotate.y =
+            std::numbers::pi_v<float>; // 初期向きをZマイナス方向に
 }
 
 void Player::Update(Camera* camera) {
@@ -72,7 +73,6 @@ void Player::Move() {
 		// 【加速】ボタンを離した際、腕が縮みながら加速
 		// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
 		float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
-
 		if (maxExtraScale > 0.0f) {
 			// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
 			// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
@@ -82,16 +82,32 @@ void Player::Move() {
 			currentSpeed_ = kBaseSpeed;
 		}
 	} else {
-		// 【旋回】膨らんでいる方に旋回
-		// 原点が付け根にあれば、スケールを変えるだけで外側に伸びる
-		objectParts_[1].transform.scale.x = armScaleR_;
-		objectParts_[1].transform.scale.y = armScaleR_;
-		objectParts_[1].transform.scale.z = armScaleR_;
-		objectParts_[2].transform.scale.x = armScaleL_;
-		objectParts_[2].transform.scale.y = armScaleL_;
-		objectParts_[2].transform.scale.z = armScaleL_;
-		float turnAmount = (armScaleR_ - armScaleL_) * kTurnSpeed;
-		mainPosition.transform.rotate.y += turnAmount;
+		// 【旋回】片方のボタンだけ押されている状態
+
+		// 旋回力を固定値、または腕のサイズを加味して計算
+		// (scaleを足すことで、腕が大きいほど急旋回できるようになります)
+		float currentTurnSpeed = kTurnSpeed;
+
+		if (pushA) {
+			// Aボタン（左腕膨張 = 左の推進力UP）
+			// 左が前に出るので、機体は「右」に回る (Y回転プラス)
+
+			// 旋回速度の計算：基本速度 + (膨張分 * 係数)
+			// 腕が大きくなるほど、より鋭く旋回します
+			// 係数(0.05fなど)は調整してください
+			float turnSpeed = kTurnSpeed + (armScaleL_ - 1.0f) * 0.02f;
+
+			mainPosition.transform.rotate.y += turnSpeed;
+		} else if (pushD) {
+			// Dボタン（右腕膨張 = 右の推進力UP）
+			// 右が前に出るので、機体は「左」に回る (Y回転マイナス)
+
+			float turnSpeed = kTurnSpeed + (armScaleR_ - 1.0f) * 0.02f;
+
+			mainPosition.transform.rotate.y -= turnSpeed;
+		}
+
+		// 速度は基本速度
 		currentSpeed_ = kBaseSpeed;
 	}
 
@@ -107,15 +123,15 @@ void Player::Move() {
 	velocity_.z = forward_.z * currentSpeed_;
 
 	// 見た目の更新（どの状態でも毎フレーム実行する）
-	// 左腕 (Index 1)
+	// 右腕 (Index 1)
 	objectParts_[1].transform.scale = { armScaleR_, armScaleR_, armScaleR_ };
 	objectParts_[1].transform.translate =
-		objectParts_[0].transform.translate + Vector3{ -(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
+	objectParts_[0].transform.translate + Vector3{ -(kPlayerWidth / 2.0f + (armScaleR_ * 0.5f)), 0.0f, 0.0f };
 
-	// 右腕 (Index 2)
+	// 左腕 (Index 2)
 	objectParts_[2].transform.scale = { armScaleL_, armScaleL_, armScaleL_ };
 	objectParts_[2].transform.translate =
-		objectParts_[0].transform.translate + Vector3{ +(kPlayerWidth / 2.0f + 0.25f), 0.0f, 0.0f };
+	objectParts_[0].transform.translate + Vector3{ +(kPlayerWidth / 2.0f + (armScaleL_ * 0.5f)), 0.0f, 0.0f };
 }
 
 void Player::OnGroundChanger(const CollisionMapInfo& info) {

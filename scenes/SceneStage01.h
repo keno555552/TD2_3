@@ -26,6 +26,13 @@ private:
 	/// 今使っているカメラ
 	Camera *usingCamera_ = nullptr;			// 借り用
 
+	/// カメラ距離
+	float cameraDistance_ = 15.0f; // 実数値
+	float cameraDistanceMultiply_ = 15.0f; // 倍率値
+	/// カメラ高さ(実数値)
+	float cameraHeight_ = 9.0f; // 実数値
+	float cameraHeightMultiply_ = 8.0f; // 倍率値
+
 	/// =========== リソースハンドル ============///
 	/// モデルハンドル
 	int skydomeModelHandle_ = 0;
@@ -40,9 +47,6 @@ private:
 	/// =========== ゲームオブジェクト ==========///
 	Object *skydome_ = nullptr;
 	Player *player_ = nullptr;
-   /* Player *playerBody_ = nullptr;
-    Object *playerRArm_ = nullptr;
-    Object *playerLArm_ = nullptr;*/
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
 
