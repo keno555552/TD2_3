@@ -48,6 +48,11 @@ public:
 
 	void Update(Camera* camera) override;
 
+	// 左腕のスケールを取得
+	float GetArmScaleL() const { return armScaleL_; }
+    // 右腕のスケールを取得
+    float GetArmScaleR() const { return armScaleR_; }
+
 private:
 
 	enum class LRDirection { kRight, kLeft, None };

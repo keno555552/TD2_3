@@ -10,7 +10,8 @@ Player::Player(kEngine* system, const Vector3& position) {
 	mainPosition.transform.translate = position;
 	objectParts_[0].materialConfig->lightModelType = LightModelType::HalfLambert;
 
-	mainPosition.transform.rotate.y = 0.0f;
+	mainPosition.transform.rotate.y =
+            std::numbers::pi_v<float>; // 初期向きをZマイナス方向に
 }
 
 void Player::Update(Camera* camera) {
