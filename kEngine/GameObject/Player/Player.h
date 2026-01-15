@@ -48,10 +48,13 @@ public:
 
 	void Update(Camera* camera) override;
 
+	
 	// 左腕のスケールを取得
 	float GetArmScaleL() const { return armScaleL_; }
-    // 右腕のスケールを取得
-    float GetArmScaleR() const { return armScaleR_; }
+  // 右腕のスケールを取得
+  float GetArmScaleR() const { return armScaleR_; }
+    
+  Vector3 GetForward() const { return forward_; }
 
 private:
 
@@ -101,6 +104,8 @@ private:
 	/// DamageCD
 	float kDamageCD_ = 1.0f; ///(秒)
 	float kDamageParameter_ = kDamageCD_ * 60.0f;
+
+	Vector3 forward_;
 
 private:
 

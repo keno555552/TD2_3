@@ -5,6 +5,7 @@
 #include "DebugCamera.h"
 #include "Player\Player.h"
 #include "tool\MapChip\MapChipField.h"
+#include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 
 class SceneStage01 :public Scene {
 public:
@@ -50,6 +51,8 @@ private:
 	SimpleSprite *sprite2_ = nullptr;
 
 	Object* wall_[4] = { nullptr };
+
+	P_DashWind* dashWindEffect_ = nullptr;
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;

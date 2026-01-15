@@ -59,6 +59,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 	wall_[2]->mainPosition.transform.scale = Vector3(1.0f, 1.0f, 100.0f);
 	wall_[3]->mainPosition.transform.translate = Vector3(50.0f, 0.0f, 0.0f);
 	wall_[3]->mainPosition.transform.scale = Vector3(100.0f, 1.0f, 1.0f);
+
+	dashWindEffect_ = new P_DashWind(system_);
 }
 
 SceneStage01::~SceneStage01() {
@@ -107,7 +109,14 @@ void SceneStage01::Update() {
 		}
 	}
 
-	
+	Vector3 playerPos = player_->mainPosition.transform.translate;
+	Vector3 forward = player_->GetForward();
+
+	dashWindEffect_->SetGenerationPos(playerPos);
+	dashWindEffect_->SetGenerationPos(playerPos + forward * 1.0f + Vector3(0.0f, 0.5f, 0.0f));
+	dashWindEffect_->SetTargetForward(forward);
+
+	dashWindEffect_->Update(usingCamera_);
 
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
@@ -135,6 +144,8 @@ void SceneStage01::Draw() {
 	for (int i = 0; i < 4; i++) {
 		wall_[i]->Draw();
 	}
+
+	dashWindEffect_->Draw();
 
 #ifdef USE_IMGUI
 	/// imgui処理
