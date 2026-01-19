@@ -257,6 +257,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\SphereMesh.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\Sprite2DMesh.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\TriangleMesh.cpp" />
+    <ClCompile Include="kEngine\GameObject\Enemy\Enemy.cpp" />
     <ClCompile Include="kEngine\GameObject\Object\Corner.cpp" />
     <ClCompile Include="kEngine\drawEngine\DrawData\CornerData.cpp" />
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -371,6 +372,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\SphereMesh.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\Sprite2DMesh.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\TriangleMesh.h" />
+    <ClInclude Include="kEngine\GameObject\Enemy\Enemy.h" />
     <ClInclude Include="kEngine\GameObject\Object\Corner.h" />
     <ClInclude Include="kEngine\drawEngine\DrawData\CornerData.h" />
     <ClInclude Include="kEngine\core\driver\FrameRateLimiter.h" />
