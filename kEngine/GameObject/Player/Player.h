@@ -48,10 +48,20 @@ public:
 
 	void Update(Camera* camera) override;
 
+	// 外部から強制的に速度を与える（ノックバック用）
+	void AddKnockback(const Vector3 &force);
+
+	// 衝突判定のために腕の情報を公開
+	Vector3 GetArmPositionL() const;
+	Vector3 GetArmPositionR() const;
 	// 左腕のスケールを取得
 	float GetArmScaleL() const { return armScaleL_; }
     // 右腕のスケールを取得
     float GetArmScaleR() const { return armScaleR_; }
+
+	// シーン側から「今攻撃中？」と聞くための関数(片方で両方連動するかどうか確認する)
+	bool IsAttackingR() const { return isAttackingR_; }
+	bool IsAttackingL() const { return isAttackingL_; }
 
 private:
 
@@ -102,6 +112,9 @@ private:
 	float kDamageCD_ = 1.0f; ///(秒)
 	float kDamageParameter_ = kDamageCD_ * 60.0f;
 
+	// ノックバック中の操作不能時間（秒）
+	float knockbackTimer_ = 0.0f;
+
 private:
 
 	/// 経過時間
@@ -136,5 +149,8 @@ private:
 	// デスフラグ
 	bool isDead_ = false;
 
+	// 攻撃中フラグ
+	bool isAttackingR_ = false;
+	bool isAttackingL_ = false;
 };
 

@@ -4,6 +4,7 @@
 #include "Object\Sprite.h"
 #include "DebugCamera.h"
 #include "Player\Player.h"
+#include "Enemy\Enemy.h"
 #include "tool\MapChip\MapChipField.h"
 
 class SceneStage01 :public Scene {
@@ -48,6 +49,8 @@ private:
 	Player *player_ = nullptr;
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
+
+	Enemy *enemy_ = nullptr;
 
 	Object* wall_[4] = { nullptr };
 
