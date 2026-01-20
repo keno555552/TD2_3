@@ -65,6 +65,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 	wall_[3]->mainPosition.transform.scale = Vector3(100.0f, 1.0f, 1.0f);
 
 	dashWindEffect_ = new P_DashWind(system_);
+
+	suctionEffect_ = new P_Suction(system_);
 }
 
 SceneStage01::~SceneStage01() {
@@ -240,6 +242,18 @@ void SceneStage01::Update() {
 
 	dashWindEffect_->Update(usingCamera_);
 
+	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetLeftEmitting(false);
+	suctionEffect_->SetRightEmitting(false);
+	if (system_->GetIsPush(DIK_A)) {
+		suctionEffect_->SetLeftEmitting(true);
+	}
+	if (system_->GetIsPush(DIK_D)) {
+		suctionEffect_->SetRightEmitting(true);
+	}
+
+	suctionEffect_->Update(usingCamera_);
+
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
@@ -269,7 +283,9 @@ void SceneStage01::Draw() {
 		wall_[i]->Draw();
 	}
 
-	dashWindEffect_->Draw();
+	//dashWindEffect_->Draw();
+
+	suctionEffect_->Draw();
 
 #ifdef USE_IMGUI
 	/// imgui処理

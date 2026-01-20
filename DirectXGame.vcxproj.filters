@@ -414,6 +414,7 @@
     <ClCompile Include="kEngine\GameObject\Particle\DashWind\P_DashWind.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp">
     <ClCompile Include="kEngine\GameObject\Enemy\Enemy.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -707,6 +708,7 @@
     <ClInclude Include="kEngine\GameObject\Particle\DashWind\P_DashWind.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h">
     <ClInclude Include="kEngine\GameObject\Enemy\Enemy.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>

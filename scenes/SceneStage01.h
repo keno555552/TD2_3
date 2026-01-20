@@ -7,6 +7,7 @@
 #include "Enemy\Enemy.h"
 #include "tool\MapChip\MapChipField.h"
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
+#include "kEngine/GameObject/Particle/Suction/P_Suction.h"
 
 class SceneStage01 :public Scene {
 public:
@@ -56,6 +57,8 @@ private:
 	Object* wall_[4] = { nullptr };
 
 	P_DashWind* dashWindEffect_ = nullptr;
+
+	P_Suction* suctionEffect_ = nullptr;
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
