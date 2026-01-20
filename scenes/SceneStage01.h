@@ -4,6 +4,7 @@
 #include "Object\Sprite.h"
 #include "DebugCamera.h"
 #include "Player\Player.h"
+#include "Enemy\Enemy.h"
 #include "tool\MapChip\MapChipField.h"
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
@@ -50,6 +51,8 @@ private:
 	Player *player_ = nullptr;
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
+
+	Enemy *enemy_ = nullptr;
 
 	Object* wall_[4] = { nullptr };
 
