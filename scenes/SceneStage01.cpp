@@ -67,6 +67,11 @@ SceneStage01::SceneStage01(kEngine *system) {
 	dashWindEffect_ = new P_DashWind(system_);
 
 	suctionEffect_ = new P_Suction(system_);
+
+	planeReductionEffectL_ = new P_PlaneReduction(system_);
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectR_ = new P_PlaneReduction(system_);
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 }
 
 SceneStage01::~SceneStage01() {
@@ -133,6 +138,8 @@ void SceneStage01::Update() {
 	dashWindEffect_->Update(usingCamera_);
 
 	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
+	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
 	suctionEffect_->SetLeftEmitting(false);
 	suctionEffect_->SetRightEmitting(false);
 	if (system_->GetIsPush(DIK_A)) {
@@ -143,6 +150,17 @@ void SceneStage01::Update() {
 	}
 
 	suctionEffect_->Update(usingCamera_);
+
+
+	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A));
+	planeReductionEffectL_->SetTargetPos(player_->GetArmPositionL());
+	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
+	planeReductionEffectL_->Update(camera_);
+
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D));
+	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
+	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
+	planeReductionEffectR_->Update(camera_);
 
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
@@ -176,6 +194,9 @@ void SceneStage01::Draw() {
 	//dashWindEffect_->Draw();
 
 	suctionEffect_->Draw();
+
+	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 #ifdef USE_IMGUI
 	/// imgui処理

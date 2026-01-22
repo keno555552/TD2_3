@@ -8,6 +8,8 @@
 #include "tool\MapChip\MapChipField.h"
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
+#include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
+
 
 class SceneStage01 :public Scene {
 public:
@@ -59,6 +61,9 @@ private:
 	P_DashWind* dashWindEffect_ = nullptr;
 
 	P_Suction* suctionEffect_ = nullptr;
+
+	P_PlaneReduction* planeReductionEffectL_ = nullptr;
+	P_PlaneReduction* planeReductionEffectR_ = nullptr;
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;

@@ -44,21 +44,25 @@ void P_Suction::CreateSuction() {
 			p->lifeTimeTimer.Init0(lifeTime_, system_->GetTimeManager());
 			*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 			p->part->mainPosition.transform = CreateDefaultTransform();
-			p->part->objectParts_[0].transform.scale = Vector3(0.1f, 0.1f, 0.1f);
 			p->part->objectParts_[0].transform.scale = Vector3(0.05f, 0.05f, 0.05f);
+			p->part->objectParts_[0].transform.scale = Vector3(0.1f, 0.1f, 0.1f);
 			p->part->isBillboard_ = true;
 
-			Vector3& tp = *e.targetPos;
+			p->target = *e.targetPos;
 			const float s = *e.armScale;
 
-			p->part->mainPosition.transform.translate.x = tp.x + randomMaker_->randomFloat(-s, s);
-			p->part->mainPosition.transform.translate.y = tp.y + randomMaker_->randomFloat(0.0f, s);
-			p->part->mainPosition.transform.translate.z = tp.z + randomMaker_->randomFloat(-s, s);
+			p->localOffset.x = randomMaker_->randomFloat(-s, s);
+			p->localOffset.y = randomMaker_->randomFloat(1.0f, s);
+			p->localOffset.z = randomMaker_->randomFloat(-s, s);
 
-			Vector3 direction = tp - p->part->mainPosition.transform.translate;
+			//p->part->mainPosition.transform.translate.x = p->target.x + randomMaker_->randomFloat(-s, s);
+			//p->part->mainPosition.transform.translate.y = p->target.y + randomMaker_->randomFloat(0.0f, s);
+			//p->part->mainPosition.transform.translate.z = p->target.z + randomMaker_->randomFloat(-s, s);
+
+			/*Vector3 direction = p->target - p->part->mainPosition.transform.translate;
 			direction = Normalize(direction);
 
-			p->velocity = direction * speed_;
+			p->velocity = direction * speed_;*/
 		}
 	}
 }
@@ -69,7 +73,15 @@ void P_Suction::UpdateSuction() {
 		// ついでに縮めたいなら
 		float s = 1.0f - t;
 		//p->part->mainPosition.transform.scale = Vector3(s, s, s);
-		p->part->mainPosition.transform.translate += p->velocity;
+
+		Vector3 direction = -1.0f * p->localOffset;
+		direction = Normalize(direction);
+
+		p->velocity = direction * speed_;
+
+		p->localOffset += p->velocity;
+
+		p->part->mainPosition.transform.translate = p->localOffset + p->target;
 	}
 }
 

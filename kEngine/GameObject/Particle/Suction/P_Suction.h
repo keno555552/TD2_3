@@ -26,7 +26,7 @@ private:
 
 private:
 	struct EmitterDesc {
-		bool* isEmitting; // 左右のON/OFF
+		bool* isEmitting; // 左右それぞれのON/OFF
 		Vector3* targetPos;
 		float* armScale;
 	};
