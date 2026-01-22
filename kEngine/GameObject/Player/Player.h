@@ -8,13 +8,13 @@
 #include "GameObject/Object/Corner.h"
 
 // 最大膨張率
-static inline const float kMaxArmScale = 5.0f;
+static inline const float kMaxArmScale = 30.0f;
 // 腕が縮む速さ
 static inline const float kShrinkSpeed = 0.4f;
 // 腕が膨らむ速さ
 static inline const float kExpandSpeed = 0.3f;
 // 旋回性能
-static inline const float kTurnSpeed = 0.02f;
+static inline const float kTurnSpeed = 0.01f;
 // 自動直進の基本速度
 static inline const float kBaseSpeed = 3.0f;
 // 離した時の加速力
@@ -69,9 +69,9 @@ public:
     float &GetRefDamageTimer() { return kDamageParameter_; }
     float &GetRefKnockbackCD() { return knockbackCD_; }
     float &GetRefKnockbackTimer() { return knockbackTimer_; }
-    bool &GetRefIsDamage() { return isDamage_; }
 #endif
 
+    bool IsDamage() { return isDamage_; }
 	// シーン側から「今攻撃中？」と聞くための関数(片方で両方連動するかどうか確認する)
 	bool IsAttackingR() const { return isAttackingR_; }
 	bool IsAttackingL() const { return isAttackingL_; }

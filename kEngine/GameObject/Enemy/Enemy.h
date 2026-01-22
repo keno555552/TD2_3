@@ -31,9 +31,9 @@ public:
     float &GetRefDamageTimer() { return kDamageParameter_; }
     float &GetRefKnockbackCD() { return knockbackCD_; }
     float &GetRefKnockbackTimer() { return knockbackTimer_; }
-    bool &GetRefIsDamage() { return isDamage_; }
 #endif
 
+    bool IsDamage() { return isDamage_; }
     // シーン側から「今攻撃中？」と聞くための関数
     bool IsAttackingR() const { return isAttackingR_; }
     bool IsAttackingL() const { return isAttackingL_; }

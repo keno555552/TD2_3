@@ -58,13 +58,15 @@ void Enemy::Move() {
     }
   }
 
-  isAttackingR_ = false;
-  isAttackingL_ = false;
   if (armScaleR_ > 1.0f) {
     isAttackingR_ = true;
+  } else {
+      isAttackingR_ = false;
   }
   if (armScaleL_ > 1.0f) {
     isAttackingL_ = true;
+  } else {
+      isAttackingL_ = false;
   }
 
   float currentTurnSpeed = 0.04f;

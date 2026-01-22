@@ -110,11 +110,8 @@ void Player::Move() {
     velocity_.x *= 0.95f;
     velocity_.z *= 0.95f;
   } else {
-    // --- 通常移動処理 ---
 
-    // 攻撃判定リセット
-    isAttackingR_ = false;
-    isAttackingL_ = false;
+    // --- 通常移動処理 ---
 
     // 旋回と速度の計算
     if (pushA && pushD) {
@@ -135,9 +132,13 @@ void Player::Move() {
 
       if (armScaleL_ > 1.0f) {
           isAttackingL_ = true;
+      } else {
+          isAttackingL_ = false;
       }
       if (armScaleR_ > 1.0f) {
           isAttackingR_ = true;
+      } else {
+          isAttackingR_ = false;
       }
     } else {
       // 【旋回】片方のボタンだけ押されている状態
@@ -152,15 +153,21 @@ void Player::Move() {
 
         // 旋回速度の計算：基本速度 + (膨張分 * 係数)
         // 腕が大きくなるほど、より鋭く旋回します
-        // 係数(0.05fなど)は調整してください
+        // 係数は調整してください
         float turnSpeed = kTurnSpeed + (armScaleL_ - 1.0f) * 0.02f;
         mainPosition.transform.rotate.y += turnSpeed;
+
+        // 攻撃判定解除
+        isAttackingL_ = false;
       } else if (pushD) {
         // Dボタン（右腕膨張 = 右の推進力UP）
         // 右が前に出るので、機体は「左」に回る (Y回転マイナス)
 
         float turnSpeed = kTurnSpeed + (armScaleR_ - 1.0f) * 0.02f;
         mainPosition.transform.rotate.y -= turnSpeed;
+
+        // 攻撃判定解除
+        isAttackingR_ = false;
       }
       currentSpeed_ = kBaseSpeed;
     }
@@ -176,9 +183,9 @@ void Player::Move() {
     mainPosition.transform.scale.y = mainPosition.transform.scale.x;
     mainPosition.transform.scale.z = mainPosition.transform.scale.x;
    
-    // プレイヤーの見た目を更新
-    UpdateAppearance();
   }
+  // プレイヤーの見た目を更新
+  UpdateAppearance();
 }
 
 void Player::OnGroundChanger(const CollisionMapInfo &info) {
