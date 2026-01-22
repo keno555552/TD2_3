@@ -96,62 +96,26 @@ void SceneStage01::Update() {
 
 	enemy_->Update(usingCamera_);
 
-	//// ▼▼▼▼▼▼▼▼▼ 敵の腕との衝突判定を追加 ▼▼▼▼▼▼▼▼▼
-	//
-	//// 1. 座標情報の取得
-	//Vector3 playerPos = player_->mainPosition.transform.translate;
-	//Vector3 enemyArmPos = enemy_->GetArmPositionR();
-	//float enemyArmScale = enemy_->GetArmScaleR();
-	//
-	//// 2. 判定半径の計算 (簡易的な球体判定)
-	//// プレイヤー半径(0.5) + 腕の半径(スケール * 0.5)
-	//float collisionRadius = 0.25f + (enemyArmScale * 0.25f);
+	// ▼▼▼▼▼▼▼▼▼ AABB版：腕の衝突判定（スケール対応版） ▼▼▼▼▼▼▼▼▼
 
-	//// 3. 距離の計算
-	//Vector3 diff = {
-	//	playerPos.x - enemyArmPos.x,
-	//	playerPos.y - enemyArmPos.y,
-	//	playerPos.z - enemyArmPos.z
-	//};
-	//// 距離の二乗（処理負荷軽減のため、ルート計算は衝突確定後に行う）
-	//float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+    // 引数に「attackerScale（攻撃主のスケール）」を追加しました
+	auto CheckArmCollision = [&](Object* targetObj, const AABB& targetAABB, Vector3 armPos, float armScale, float attackerScale) {
 
-	//// 4. ヒット時の処理
-	//if (distSq < collisionRadius * collisionRadius) {
-	//	float len = std::sqrt(distSq);
-	//	if (len > 0.0f) {
-	//		// プレイヤーを弾き飛ばす方向（腕の中心 -> プレイヤー）
-	//		Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
+		// 1. 腕のAABBを作成
+		// 解説: 
+		// - 0.5f : モデル自体の半径（1mの立方体の半分）
+		// - armScale : 腕自体の膨張率（1.0 ~ 5.0）
+		// - attackerScale : プレイヤーや敵の全体スケール（0.5 や 1.0 など）
+		float armRealRadius = 0.5f * armScale * attackerScale;
 
-	//		// ノックバックの威力（腕が大きいほど強く飛ばす）
-	//		float power = 15.0f * (enemyArmScale * 0.5f);
-
-	//		// 力を加える（Y軸に数値を足して、少し上に跳ねさせる）
-	//		Vector3 knockbackForce = {
-	//			pushDir.x * power,
-	//			0.0f,
-	//			pushDir.z * power
-	//		};
-	//		player_->AddKnockback(knockbackForce);
-	//	}
-	//}
-
-	// ▼▼▼▼▼▼▼▼▼ AABB版：腕の衝突判定（共通処理） ▼▼▼▼▼▼▼▼▼
-
-	// 判定処理をラムダ式として定義
-	// targetObj: 攻撃を受ける人, targetAABB: 受ける人の体, armPos/Scale: 殴る腕の情報
-	auto CheckArmCollision = [&](Object *targetObj, const AABB &targetAABB, Vector3 armPos, float armScale) {
-
-		// 1. 腕のAABBを作成（指定されたサイズ感で）
-		float armHalfSize = armScale * 0.25f;
 		AABB armAABB;
-		armAABB.min = { armPos.x - armHalfSize, armPos.y - armHalfSize, armPos.z - armHalfSize };
-		armAABB.max = { armPos.x + armHalfSize, armPos.y + armHalfSize, armPos.z + armHalfSize };
+		armAABB.min = { armPos.x - armRealRadius, armPos.y - armRealRadius, armPos.z - armRealRadius };
+		armAABB.max = { armPos.x + armRealRadius, armPos.y + armRealRadius, armPos.z + armRealRadius };
 
 		// 2. 衝突判定 (AABB vs AABB)
 		if (crashDecision(armAABB, targetAABB)) {
 
-			// 3. 衝突ベクトル計算（中心座標同士の距離）
+			// 3. 衝突ベクトル計算
 			Vector3 targetPos = targetObj->mainPosition.transform.translate;
 			Vector3 diff = {
 				targetPos.x - armPos.x,
@@ -167,17 +131,20 @@ void SceneStage01::Update() {
 				Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
 
 				// 威力計算
-				float power = 15.0f * (armScale * 0.5f);
+				// 威力もスケールに合わせて調整したい場合は、ここにも attackerScale を掛けると良いです
+				// （小さいキャラの攻撃は弱く、大きいキャラは強くなる）
+				float basePower = 8.0f;
+
+				// 例: 体のサイズも威力に反映させるなら
+				// float power = basePower * (armScale * armScale) * (attackerScale / 0.5f); 
+				// ※とりあえず今は元のままにしておきます
+				float power = basePower * (armScale * armScale);
+
 				Vector3 knockbackForce = {
 					pushDir.x * power,
-					5.0f, // 少し浮かせる
+					0.0f,
 					pushDir.z * power
 				};
-
-				// ターゲット固有のノックバック関数を呼び出す
-				// ※PlayerとEnemyでクラスが違うので、共通の親クラス(Object)にAddKnockbackがない場合は
-				//   ここでキャストするか、個別に呼ぶ必要があります。
-				//   ここでは簡略化のため、それぞれのポインタが特定のクラスであることを前提にします。
 
 				if (targetObj == player_) {
 					player_->AddKnockback(knockbackForce);
@@ -190,23 +157,28 @@ void SceneStage01::Update() {
 
 	// --- 実際の判定実行 ---
 
-	// 準備：それぞれの体のAABBを取得
+	// 準備
 	AABB playerBodyAABB = player_->GetAABB(player_);
 	AABB enemyBodyAABB = enemy_->GetAABB(enemy_);
 
-	// 1. 敵からの攻撃 (AI未実装ならfalseになるので安全)
+	// 現在のスケールを取得 (XYZ均等と仮定してXを使う)
+	float pScale = player_->mainPosition.transform.scale.x;
+	float eScale = enemy_->mainPosition.transform.scale.x;
+
+	// 1. 敵からの攻撃 (引数の最後に eScale を追加)
 	if (enemy_->IsAttackingR()) {
-		CheckArmCollision(player_, playerBodyAABB, enemy_->GetArmPositionR(), enemy_->GetArmScaleR());
+		CheckArmCollision(player_, playerBodyAABB, enemy_->GetArmPositionR(), enemy_->GetArmScaleR(), eScale);
 	}
 	if (enemy_->IsAttackingL()) {
-		CheckArmCollision(player_, playerBodyAABB, enemy_->GetArmPositionL(), enemy_->GetArmScaleL());
+		CheckArmCollision(player_, playerBodyAABB, enemy_->GetArmPositionL(), enemy_->GetArmScaleL(), eScale);
 	}
-	// 2. プレイヤーからの攻撃
+
+	// 2. プレイヤーからの攻撃 (引数の最後に pScale を追加)
 	if (player_->IsAttackingR()) {
-		CheckArmCollision(enemy_, enemyBodyAABB, player_->GetArmPositionR(), player_->GetArmScaleR());
+		CheckArmCollision(enemy_, enemyBodyAABB, player_->GetArmPositionR(), player_->GetArmScaleR(), pScale);
 	}
 	if (player_->IsAttackingL()) {
-		CheckArmCollision(enemy_, enemyBodyAABB, player_->GetArmPositionL(), player_->GetArmScaleL());
+		CheckArmCollision(enemy_, enemyBodyAABB, player_->GetArmPositionL(), player_->GetArmScaleL(), pScale);
 	}
 
 	// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -325,8 +297,8 @@ void SceneStage01::ImguiPart() {
 
 	{
         Transform camTransform = usingCamera_->GetTransform();
-		// ウィンドウの初期位置を右上に設定
-        ImGui::SetNextWindowPos(ImVec2(1000, 0), ImGuiCond_Once);
+		// ウィンドウの初期位置を左上に設定
+        ImGui::SetNextWindowPos(ImVec2(10, 0), ImGuiCond_Once);
 		ImGui::Begin("GameCamera");
         ImGui::Text("Transform");
 		ImGui::SliderFloat3("Pos", &camTransform.translate.x, -1.0f, 1.0f);
@@ -342,18 +314,70 @@ void SceneStage01::ImguiPart() {
 	}
 
 	{
+		// ウィンドウの初期位置を右上に設定
+		ImGui::SetNextWindowPos(ImVec2(950, 0), ImGuiCond_Once);
 		ImGui::Begin("PlayerPos");
-		ImGui::SliderFloat3("Pos", &player_->mainPosition.transform.translate.x, -1.0f, 1.0f);
-		ImGui::SliderFloat3("Rotate", &player_->mainPosition.transform.rotate.x, -1.0f, 1.0f);
+		if (ImGui::Button("ResetPos")) {
+			player_->mainPosition.transform.translate = Vector3(2.0f, 0.0f, 2.0f);
+		}
+		if (ImGui::TreeNode("Transform")) {
+			ImGui::SliderFloat3("Pos", &player_->mainPosition.transform.translate.x, -50.0f, 50.0f);
+			ImGui::SliderFloat3("Rotate", &player_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
+			ImGui::SliderFloat3("Scale", &player_->mainPosition.transform.scale.x, 0.0f, 5.0f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("ArmScale")) {
+			ImGui::SliderFloat("ArmScaleL", &player_->GetRefArmScaleL(), 0.0f, 5.0f);
+			ImGui::SliderFloat("ArmScaleR", &player_->GetRefArmScaleR(), 0.0f, 5.0f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Params")) {
+			ImGui::SliderFloat("DamageCD", &player_->GetRefDamageCD(), 0.0f, 5.0f);
+			ImGui::SliderFloat("DamageTimer", &player_->GetRefDamageTimer(), 0.0f, 5.0f);
+			ImGui::SliderFloat("KnockbackCD", &player_->GetRefKnockbackCD(), 0.0f, 5.0f);
+			ImGui::SliderFloat("KnockbackTimer", &player_->GetRefKnockbackTimer(), 0.0f, 5.0f);
+			ImGui::Checkbox("isDamage", &player_->GetRefIsDamage());
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("State")) {
+			ImGui::Text("isAttackR: %d", player_->IsAttackingR());
+			ImGui::Text("isAttackL: %d", player_->IsAttackingL());
+			ImGui::TreePop();
+		}
 		ImGui::End();
 	}
 
 	{
 		// ウィンドウの初期位置を右に設定
-		ImGui::SetNextWindowPos(ImVec2(1000, 300), ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2(950, 300), ImGuiCond_Once);
 		ImGui::Begin("Enemy");
-		ImGui::SliderFloat3("Pos", &enemy_->mainPosition.transform.translate.x, 1.0f, 100.0f);
-		ImGui::SliderFloat3("Rotate", &enemy_->mainPosition.transform.rotate.x, -1.0f, 1.0f);
+		if (ImGui::Button("ResetPos")) {
+			enemy_->mainPosition.transform.translate = Vector3(10.0f, 0.0f, 10.0f);
+		}
+		if (ImGui::TreeNode("Transform")) {
+			ImGui::SliderFloat3("Pos", &enemy_->mainPosition.transform.translate.x, -50.0f, 50.0f);
+			ImGui::SliderFloat3("Rotate", &enemy_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
+			ImGui::SliderFloat3("Scale", &enemy_->mainPosition.transform.scale.x, 0.0f, 5.0f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("ArmScale")) {
+			ImGui::SliderFloat("ArmScaleL", &enemy_->GetRefArmScaleL(), 0.0f, 5.0f);
+			ImGui::SliderFloat("ArmScaleR", &enemy_->GetRefArmScaleR(), 0.0f, 5.0f);
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("Params")) {
+			ImGui::SliderFloat("DamageCD", &enemy_->GetRefDamageCD(), 0.0f, 5.0f);
+			ImGui::SliderFloat("DamageTimer", &enemy_->GetRefDamageTimer(), 0.0f, 5.0f);
+			ImGui::SliderFloat("KnockbackCD", &enemy_->GetRefKnockbackCD(), 0.0f, 5.0f);
+			ImGui::SliderFloat("KnockbackTimer", &enemy_->GetRefKnockbackTimer(), 0.0f, 5.0f);
+			ImGui::Checkbox("isDamage", &enemy_->GetRefIsDamage());
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("State")) {
+			ImGui::Text("isAttackR: %d", enemy_->IsAttackingR());
+			ImGui::Text("isAttackL: %d", enemy_->IsAttackingL());
+			ImGui::TreePop();
+		}
 		ImGui::End();
 	}
 
