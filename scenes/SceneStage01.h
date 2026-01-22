@@ -68,5 +68,8 @@ private:
 	void CameraPart();
 	void ImguiPart();
 
+	/// ============= 衝突判定関数 ============/// 
+	// 攻撃による当たり判定
+	void CheckAttackCollision();
 };
 
