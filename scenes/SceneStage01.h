@@ -32,15 +32,16 @@ private:
 
 	/// カメラ距離
 	float cameraDistance_ = 15.0f; // 実数値
-	float cameraDistanceMultiply_ = 15.0f; // 倍率値
+	float cameraDistanceMultiply_ = 7.0f; // 倍率値
 	/// カメラ高さ(実数値)
 	float cameraHeight_ = 9.0f; // 実数値
-	float cameraHeightMultiply_ = 8.0f; // 倍率値
+	float cameraHeightMultiply_ = 4.0f; // 倍率値
 
 	/// =========== リソースハンドル ============///
 	/// モデルハンドル
 	int skydomeModelHandle_ = 0;
 	int playerModelHandle_ = 0;
+	int guideArrowModelHandle_ = 0;
 	int wallModelHandle_ = 0;
 
 	/// テキスチャーハンドル
@@ -54,7 +55,9 @@ private:
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
 
-	Enemy *enemy_ = nullptr;
+	std::vector<Enemy*> enemies_{}; // enemyのリスト
+
+	Object* guideArrow_ = nullptr; // ガイド矢印
 
 	Object* wall_[4] = { nullptr };
 
@@ -64,6 +67,8 @@ private:
 
 	P_PlaneReduction* planeReductionEffectL_ = nullptr;
 	P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
@@ -76,5 +81,9 @@ private:
 	/// ============= 衝突判定関数 ============/// 
 	// 攻撃による当たり判定
 	void CheckAttackCollision();
+
+	/// ============ ガイド矢印関連 ============///
+	// ガイド矢印の更新
+	void UpdateGuideArrow();
 };
 
