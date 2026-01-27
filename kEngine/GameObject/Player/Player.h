@@ -93,7 +93,7 @@ private:
 		bool wallHit = false;    // 壁に当の当たり判定
 		Vector3 moveVector = {}; // 移動量
 	};
-
+	
 	
 
 private:

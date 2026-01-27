@@ -97,6 +97,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+
 }
 
 SceneStage01::~SceneStage01() {
@@ -141,6 +142,7 @@ void SceneStage01::Update() {
 		enemy->Update(usingCamera_);
 	}
 
+
 	/// 衝突判定処理
 
 	// 攻撃当たり判定処理
@@ -169,11 +171,15 @@ void SceneStage01::Update() {
 	Vector3 playerPos = player_->mainPosition.transform.translate;
 	Vector3 forward = player_->GetForward();
 
-	dashWindEffect_->SetGenerationPos(playerPos);
-	dashWindEffect_->SetGenerationPos(playerPos + forward * 1.0f + Vector3(0.0f, 0.5f, 0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL()-0.5f,0.0f));
 	dashWindEffect_->SetTargetForward(forward);
-
+	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
+	dashWindEffect_->SetEmitting(false);
+	
+	if (player_->IsAttackingL()) {
+		dashWindEffect_->SetEmitting(true);
+	}
 
 	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
 	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
@@ -242,8 +248,9 @@ void SceneStage01::Draw() {
 		wall_[i]->Draw();
 	}
 
-	//dashWindEffect_->Draw();
-
+	// 自機が進む際のダッシュエフェクト
+	dashWindEffect_->Draw();
+	// 自機の腕がでかくなる際の吸い込みエフェクト
 	suctionEffect_->Draw();
 
 	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();

@@ -2,23 +2,28 @@
 #include "Object/Object.h"
 #include "Vector3.h"
 #include "kEngine.h"
+#include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
+#include "kEngine/GameObject/Particle/Suction/P_Suction.h"
+#include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
 
 static inline const float kEnemyWidth = 1.0f;
 
 class Enemy : public Object {
 public:
-    Enemy(kEngine *system, const Vector3 &position);
-    void Update(Camera *camera) override;
+    Enemy(kEngine* system, const Vector3& position);
+    void Update(Camera* camera) override;
+    void Draw() override;
 
     void MoveEnemyByResult();
 
     // 外部から強制的に速度を与える（ノックバック用）
-    void AddKnockback(const Vector3 &force);
+    void AddKnockback(const Vector3& force);
     // 衝突判定のために腕の情報を公開
     Vector3 GetArmPositionL() const;
     Vector3 GetArmPositionR() const;
     float GetArmScaleL() const { return armScaleL_; }
     float GetArmScaleR() const { return armScaleR_; }
+    Vector3 GetForward() const { return forward_; }
 
     // 見た目を更新する
     void UpdateAppearance();
@@ -57,6 +62,8 @@ private:
     /// 移動速度
     Vector3 velocity_ = {};
 
+    Vector3 forward_;
+
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;
@@ -76,4 +83,12 @@ private:
     // 攻撃中フラグ
     bool isAttackingR_ = false;
     bool isAttackingL_ = false;
+
+private:
+
+    P_DashWind* dashWindEffectL_ = nullptr;
+    P_DashWind* dashWindEffectR_ = nullptr;
+    P_Suction* suctionEffect_ = nullptr;
+    P_PlaneReduction* planeReductionEffectL_ = nullptr;
+    P_PlaneReduction* planeReductionEffectR_ = nullptr;
 };
