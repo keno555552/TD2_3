@@ -5,6 +5,7 @@
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
+#include "Arm/Arm.h"
 
 static inline const float kEnemyWidth = 1.0f;
 
@@ -64,6 +65,9 @@ private:
 
     Vector3 forward_;
 
+    // これまでのパーツ管理ではなく、Armクラスを持つ
+    Arm* armL_ = nullptr;
+    Arm* armR_ = nullptr;
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;

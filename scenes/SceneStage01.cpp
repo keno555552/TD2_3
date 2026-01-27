@@ -565,13 +565,13 @@ void SceneStage01::CheckAttackCollision() {
 		Object* objA, Vector3 posA, float armScaleA, float bodyScaleA, bool isAtkA,
 		Object* objB, Vector3 posB, float armScaleB, float bodyScaleB, bool isAtkB) {
 			// 1. Aの腕のAABB作成（体スケールも考慮）
-			float radiusA = 0.5f * armScaleA * bodyScaleA;
+			float radiusA = kBaseActorScale_.x * armScaleA * bodyScaleA;
 			AABB boxA;
 			boxA.min = { posA.x - radiusA, posA.y - radiusA, posA.z - radiusA };
 			boxA.max = { posA.x + radiusA, posA.y + radiusA, posA.z + radiusA };
 
 			// 2. Bの腕のAABB作成
-			float radiusB = 0.5f * armScaleB * bodyScaleB;
+			float radiusB = kBaseActorScale_.x * armScaleB * bodyScaleB;
 			AABB boxB;
 			boxB.min = { posB.x - radiusB, posB.y - radiusB, posB.z - radiusB };
 			boxB.max = { posB.x + radiusB, posB.y + radiusB, posB.z + radiusB };
