@@ -8,6 +8,16 @@ Enemy::Enemy(kEngine *system, const Vector3 &position) {
   mainPosition.transform = CreateDefaultTransform();
   mainPosition.transform.translate = position;
   objectParts_[0].materialConfig->lightModelType = LightModelType::HalfLambert;
+
+  dashWindEffectL_ = new P_DashWind(system_);
+  dashWindEffectR_ = new P_DashWind(system_);
+
+  suctionEffect_ = new P_Suction(system_);
+
+  planeReductionEffectL_ = new P_PlaneReduction(system_);
+  planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+  planeReductionEffectR_ = new P_PlaneReduction(system_);
+  planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 }
 
 void Enemy::Update(Camera *camera) {
@@ -33,10 +43,75 @@ void Enemy::Update(Camera *camera) {
     Move();
   }
 
+  forward_ = { -std::sin(mainPosition.transform.rotate.y), 0.0f,
+                -std::cos(mainPosition.transform.rotate.y) };
+
   MoveEnemyByResult();
+
+  // パーティクル
+  dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_/2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
+  dashWindEffectL_->SetTargetForward(forward_);
+  dashWindEffectL_->SetArmScale(GetArmScaleL());
+  dashWindEffectL_->Update(camera);
+  dashWindEffectL_->SetEmitting(false);
+  dashWindEffectL_->SetEmitting(true);
+
+  if (IsAttackingL()) {
+      dashWindEffectL_->SetEmitting(true);
+  }
+
+  dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_/2.0f + Vector3(0.0f, GetArmScaleR() - 0.5f, 0.0f));
+  dashWindEffectR_->SetTargetForward(forward_);
+  dashWindEffectR_->SetArmScale(GetArmScaleR());
+  dashWindEffectR_->Update(camera);
+  dashWindEffectR_->SetEmitting(false);
+  dashWindEffectR_->SetEmitting(true);
+
+  if (IsAttackingR()) {
+      dashWindEffectR_->SetEmitting(true);
+  }
+
+  suctionEffect_->SetArmScaleL(GetArmScaleL());
+  suctionEffect_->SetTargetPosLeft(GetArmPositionL());
+  suctionEffect_->SetTargetPosRight(GetArmPositionR());
+  suctionEffect_->SetLeftEmitting(false);
+  suctionEffect_->SetRightEmitting(false);
+
+  suctionEffect_->SetLeftEmitting(true);
+  suctionEffect_->SetRightEmitting(true);
+  if (system_->GetIsPush(DIK_A)) {
+      //suctionEffect_->SetLeftEmitting(true);
+  }
+  if (system_->GetIsPush(DIK_D)) {
+      //suctionEffect_->SetRightEmitting(true);
+  }
+
+  suctionEffect_->Update(camera);
+
+
+  planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A));
+  planeReductionEffectL_->SetTargetPos(GetArmPositionL());
+  planeReductionEffectL_->SetTargetScale(GetArmScaleL());
+  planeReductionEffectL_->Update(camera);
+
+  planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D));
+  planeReductionEffectR_->SetTargetPos(GetArmPositionR());
+  planeReductionEffectR_->SetTargetScale(GetArmScaleR());
+  planeReductionEffectR_->Update(camera);
 
   // 親クラスの更新（描画など）
   Object::Update(camera);
+}
+
+void Enemy::Draw() {
+    dashWindEffectL_->Draw();
+    dashWindEffectR_->Draw();
+    suctionEffect_->Draw();
+
+    if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+    if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+
+    Object::Draw();
 }
 
 void Enemy::MoveEnemyByResult() {

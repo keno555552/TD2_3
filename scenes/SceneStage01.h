@@ -65,6 +65,7 @@ private:
 	P_PlaneReduction* planeReductionEffectL_ = nullptr;
 	P_PlaneReduction* planeReductionEffectR_ = nullptr;
 
+	
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
 

@@ -44,9 +44,11 @@ void P_Suction::CreateSuction() {
 			p->lifeTimeTimer.Init0(lifeTime_, system_->GetTimeManager());
 			*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 			p->part->mainPosition.transform = CreateDefaultTransform();
+
+
 			p->part->objectParts_[0].transform.scale = Vector3(0.05f, 0.05f, 0.05f);
 			p->part->objectParts_[0].transform.scale = Vector3(0.1f, 0.1f, 0.1f);
-			p->part->isBillboard_ = true;
+			p->part->isBillboard_ = false;
 
 			p->target = *e.targetPos;
 			const float s = *e.armScale;
@@ -72,7 +74,7 @@ void P_Suction::UpdateSuction() {
 		float t = p->lifeTimeTimer.parameter_ / p->lifeTimeTimer.maxTime_;
 		// ついでに縮めたいなら
 		float s = 1.0f - t;
-		//p->part->mainPosition.transform.scale = Vector3(s, s, s);
+		p->part->mainPosition.transform.scale = Vector3(s, s, s);
 
 		Vector3 direction = -1.0f * p->localOffset;
 		direction = Normalize(direction);
