@@ -30,16 +30,23 @@ SrvManager::~SrvManager() {
 
 uint32_t SrvManager::Allocate() {
 
-	assert(useIndex < kMaxSRVCount);
-	// 上限に達していないかチェックしてassert
+	assert(nextNewIndex < kMaxSRVCount);
+	/// 上限に達していないかチェックしてassert
 
-	// return する番号を一旦記録しておく
-	int index = useIndex;
+	/// freeIndicesに廃棄された番号があればそれを返す
+	if (!freeIndices.empty()) {
+		uint32_t index = freeIndices.back();
+		freeIndices.pop_back();
+		return index;
+	}
 
-	// 次回のために番号を1進める
-	useIndex++;
+	/// return する番号を一旦記録しておく
+	int index = nextNewIndex;
 
-	// 上で記録した番号をreturn
+	/// 次回のために番号を1進める
+	nextNewIndex++;
+
+	/// 上で記録した番号をreturn
 	return index;
 }
 
@@ -55,11 +62,11 @@ D3D12_GPU_DESCRIPTOR_HANDLE SrvManager::GetGPUDescriptorHandle(uint32_t index) {
 	return handleGPU;
 }
 
-uint32_t SrvManager::GetDesriptorSizeSRV() {
+uint32_t SrvManager::GetDescriptorSizeSRV() {
 	return descriptorSize;
 }
 
-void SrvManager::CreateSRVforTexture2D(uint32_t srvIndex, ID3D12Resource* pResource, DXGI_FORMAT Format, UINT MipLevels) {
+void SrvManager::CreateSRVForTexture2D(uint32_t srvIndex, ID3D12Resource* pResource, DXGI_FORMAT Format, UINT MipLevels) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = Format;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING; // シェーダーでのコンポーネントマッピング
@@ -73,7 +80,7 @@ void SrvManager::CreateSRVforTexture2D(uint32_t srvIndex, ID3D12Resource* pResou
 	);
 }
 
-void SrvManager::CreateSRVforStructuredBuffer(uint32_t srvIndex, ID3D12Resource* pResource, UINT numElements, UINT structureByteStride) {
+void SrvManager::CreateSRVForStructuredBuffer(uint32_t srvIndex, ID3D12Resource* pResource, UINT numElements, UINT structureByteStride) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -90,8 +97,13 @@ void SrvManager::CreateSRVforStructuredBuffer(uint32_t srvIndex, ID3D12Resource*
 	);
 }
 
+void SrvManager::Free(uint32_t srvIndex) {
+	// 廃棄されたSRVインデックスをfreeIndicesに追加
+	freeIndices.push_back(srvIndex);
+}
+
 bool SrvManager::CheckSRVHeapFull() {
-	if (useIndex >= kMaxSRVCount) return true;
+	if (nextNewIndex >= kMaxSRVCount) return true;
 	return false;
 }
 

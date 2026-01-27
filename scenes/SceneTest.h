@@ -1,12 +1,12 @@
 #pragma once
-#include "Scene.h"
+#include "BaseScene.h"
 #include "Object\Object.h"
 #include "Object\Sprite.h"
 #include "DebugCamera.h"
 #include "Player\Player.h"
 #include "tool\MapChip\MapChipField.h"
 
-class SceneTest :public Scene
+class SceneTest :public BaseScene
 {
 public:
 	SceneTest(kEngine* system);
@@ -51,7 +51,7 @@ private:
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();
-	void ImguiPart();
+	void ImGuiPart();
 
 	void GenerateBlocks();
 };
