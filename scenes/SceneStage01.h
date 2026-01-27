@@ -5,6 +5,7 @@
 #include "DebugCamera.h"
 #include "Player\Player.h"
 #include "Enemy\Enemy.h"
+#include "Crown\Crown.h"
 #include "tool\MapChip\MapChipField.h"
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
@@ -58,6 +59,7 @@ private:
 	std::vector<Enemy*> enemies_{}; // enemyのリスト
 
 	Object* guideArrow_ = nullptr; // ガイド矢印
+	Crown* crown_ = nullptr; // 1位用王冠
 
 	Object* wall_[4] = { nullptr };
 
@@ -85,5 +87,9 @@ private:
 	/// ============ ガイド矢印関連 ============///
 	// ガイド矢印の更新
 	void UpdateGuideArrow();
+
+	/// ============ 王冠関連 ============///
+	// 王冠の更新
+	void UpdateCrown();
 };
 

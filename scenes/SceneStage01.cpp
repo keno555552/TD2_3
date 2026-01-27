@@ -69,6 +69,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 	guideArrow_->CreateModelData(guideArrowModelHandle_);
 	guideArrow_->mainPosition.transform.scale = Vector3(0.0f, 0.0f, 0.0f); // 最初は非表示
 
+	// 王冠生成(初期化時はターゲットなし)
+	crown_ = new Crown(system_);
+
 	for (int i = 0; i < 4; i++) {
 		wall_[i] = new Object;
 		wall_[i]->IntObject(system_);
@@ -109,6 +112,12 @@ SceneStage01::~SceneStage01() {
 		delete enemy;
 	}
 	enemies_.clear();
+	if (guideArrow_) {
+		delete guideArrow_;
+	}
+	if (crown_) {
+		delete crown_;
+	}
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
         }
@@ -193,6 +202,8 @@ void SceneStage01::Update() {
 
 	/// ガイド矢印更新
 	UpdateGuideArrow();
+	/// 王冠の更新
+	UpdateCrown();
 
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
@@ -222,6 +233,10 @@ void SceneStage01::Draw() {
 	}
 
 	guideArrow_->Draw();
+
+	if (crown_) {
+		crown_->Draw();
+	}
 
 	for (int i = 0; i < 4; i++) {
 		wall_[i]->Draw();
@@ -762,4 +777,31 @@ void SceneStage01::UpdateGuideArrow() {
 
 	// 4. 矢印の更新（行列計算など）
 	guideArrow_->Update(camera_); // ←忘れずに呼ぶ
+}
+
+void SceneStage01::UpdateCrown() {
+	// 1. 全員の中で「最大の腕サイズ」を持つキャラを探す
+
+	// まずプレイヤーを暫定1位にする
+	Object* topChar = player_;
+	float topArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+
+	// 敵リストを回して比較
+	for (auto* enemy : enemies_) {
+		float eMax = std::max(enemy->GetArmScaleL(), enemy->GetArmScaleR());
+
+		// 現王者より大きければ更新
+		if (eMax > topArmScale) {
+			topArmScale = eMax;
+			topChar = enemy;
+		}
+	}
+
+	// 2. 王冠に情報を渡す
+	// SetTarget内で「前回と違うキャラならアニメーション開始」を判定しているので
+	// 毎フレーム渡してOK
+	if (crown_) {
+		crown_->SetTarget(topChar, topArmScale);
+		crown_->Update(camera_);
+	}
 }
