@@ -5,6 +5,7 @@
 #include "DebugCamera.h"
 #include "Player\Player.h"
 #include "Enemy\Enemy.h"
+#include "Crown\Crown.h"
 #include "tool\MapChip\MapChipField.h"
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
@@ -32,15 +33,24 @@ private:
 
 	/// カメラ距離
 	float cameraDistance_ = 15.0f; // 実数値
-	float cameraDistanceMultiply_ = 15.0f; // 倍率値
+	float cameraDistanceMultiply_ = 7.0f; // 倍率値
 	/// カメラ高さ(実数値)
 	float cameraHeight_ = 9.0f; // 実数値
-	float cameraHeightMultiply_ = 8.0f; // 倍率値
+	float cameraHeightMultiply_ = 4.0f; // 倍率値
+	// ▼▼▼ 手動ズーム制御用 ▼▼▼
+	float manualZoomOffset_ = 0.0f;        // 現在の手動ズーム量（0が基準）
+	const float kManualZoomSpeed_ = 10.0f; // ズームの変化速度
+	const float kMinManualZoom_ = -5.0f;   // 最大ズームイン（近づける限界）
+	const float kMaxManualZoom_ = 15.0f;   // 最大ズームアウト（離れる限界）
+	// ズームアウトした時に、少し視点も高くするかどうかの係数
+	// (1.0なら距離と同じだけ高さも増える。0.0なら高さは変わらない)
+	const float kManualZoomHeightRatio_ = 0.5f;
 
 	/// =========== リソースハンドル ============///
 	/// モデルハンドル
 	int skydomeModelHandle_ = 0;
 	int playerModelHandle_ = 0;
+	int guideArrowModelHandle_ = 0;
 	int wallModelHandle_ = 0;
 
 	/// テキスチャーハンドル
@@ -54,7 +64,10 @@ private:
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
 
-	Enemy *enemy_ = nullptr;
+	std::vector<Enemy*> enemies_{}; // enemyのリスト
+
+	Object* guideArrow_ = nullptr; // ガイド矢印
+	Crown* crown_ = nullptr; // 1位用王冠
 
 	Object* wall_[4] = { nullptr };
 
@@ -65,7 +78,8 @@ private:
 	P_PlaneReduction* planeReductionEffectL_ = nullptr;
 	P_PlaneReduction* planeReductionEffectR_ = nullptr;
 
-	
+	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
+
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
 
@@ -77,5 +91,13 @@ private:
 	/// ============= 衝突判定関数 ============/// 
 	// 攻撃による当たり判定
 	void CheckAttackCollision();
+
+	/// ============ ガイド矢印関連 ============///
+	// ガイド矢印の更新
+	void UpdateGuideArrow();
+
+	/// ============ 王冠関連 ============///
+	// 王冠の更新
+	void UpdateCrown();
 };
 

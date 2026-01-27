@@ -3,6 +3,7 @@
 #include "crashDecision/crashDecision.h"
 
 #include <algorithm>
+#include <numbers>
 
 SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== システム初期化 ============///
@@ -14,6 +15,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
 	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	guideArrowModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arrow/arrow.obj");
 	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
 	boxTextureHandle_ = system_->LoadTextrue("resources/texture/testBox.png");
@@ -28,7 +30,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 
 	player_ = new Player(system, Vector3(5.0f, 0.0f, 5.0f));
 	player_->CreateModelData(playerModelHandle_);
-	player_->mainPosition.transform.scale = Vector3(0.5f, 0.5f, 0.5f);
+	player_->mainPosition.transform.scale = kBaseActorScale_;
 	//player_->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
 	//player_->CreateDefaultData();
 	//player_->modelHandle_ = playerModelHandle_;
@@ -43,9 +45,32 @@ SceneStage01::SceneStage01(kEngine *system) {
 	sprite2_->CreateDefaultData();
 	sprite2_->objectParts_[0].materialConfig->textureHandle = uvTextureHandle_;
 
-	enemy_ = new Enemy(system, Vector3(10.0f, 0.0f, 10.0f));
-	enemy_->CreateModelData(playerModelHandle_);
-	enemy_->mainPosition.transform.scale = Vector3(0.5f, 0.5f, 0.5f);
+	// --- エネミーの複数生成 ---
+	// テスト用に3体ほど配置
+	std::vector<Vector3> spawnPositions = {
+		{ 20.0f, 0.0f,  20.0f}, // 右奥
+		{ 20.0f, 0.0f,  10.0f}, // 右手前
+		{  5.0f, 0.0f, 20.0f}   // 前
+	};
+
+	for (const auto& pos : spawnPositions) {
+		Enemy* newEnemy = new Enemy(system_, pos);
+		// モデルデータ共有（読み込み回数を減らすためハンドルを使い回す）
+		newEnemy->CreateModelData(playerModelHandle_);
+		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
+
+		// リストに追加
+		enemies_.push_back(newEnemy);
+	}
+
+	// ガイド矢印
+	guideArrow_ = new Object;
+	guideArrow_->IntObject(system_);
+	guideArrow_->CreateModelData(guideArrowModelHandle_);
+	guideArrow_->mainPosition.transform.scale = Vector3(0.0f, 0.0f, 0.0f); // 最初は非表示
+
+	// 王冠生成(初期化時はターゲットなし)
+	crown_ = new Crown(system_);
 
 	for (int i = 0; i < 4; i++) {
 		wall_[i] = new Object;
@@ -83,7 +108,17 @@ SceneStage01::~SceneStage01() {
 	delete skydome_;
 	delete sprite_;
 	delete sprite2_;
-	delete enemy_;
+	// リスト内のエネミーを全て解放
+	for (auto* enemy : enemies_) {
+		delete enemy;
+	}
+	enemies_.clear();
+	if (guideArrow_) {
+		delete guideArrow_;
+	}
+	if (crown_) {
+		delete crown_;
+	}
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
         }
@@ -102,7 +137,10 @@ void SceneStage01::Update() {
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
-	enemy_->Update(usingCamera_);
+	// リスト内のエネミーを全て更新
+	for (auto* enemy : enemies_) {
+		enemy->Update(usingCamera_);
+	}
 
 
 	/// 衝突判定処理
@@ -168,6 +206,11 @@ void SceneStage01::Update() {
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
 
+	/// ガイド矢印更新
+	UpdateGuideArrow();
+	/// 王冠の更新
+	UpdateCrown();
+
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
@@ -191,7 +234,15 @@ void SceneStage01::Draw() {
 	//system_->Draw3D(player_);
 	//system_->Draw3D(model_);
 
-	enemy_->Draw();
+	for (auto* enemy : enemies_) {
+		enemy->Draw();
+	}
+
+	guideArrow_->Draw();
+
+	if (crown_) {
+		crown_->Draw();
+	}
 
 	for (int i = 0; i < 4; i++) {
 		wall_[i]->Draw();
@@ -215,6 +266,28 @@ void SceneStage01::CameraPart() {
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
 	} else {
+		// ---------------------------------------------------------
+		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
+		// ---------------------------------------------------------
+		float dt = system_->GetDeltaTime();
+
+		// Sキー: ズームアウト（距離を足す）
+		if (system_->GetIsPush(DIK_S)) {
+			manualZoomOffset_ += kManualZoomSpeed_ * dt;
+		}
+		// Wキー: ズームイン（距離を引く）
+		else if (system_->GetIsPush(DIK_W)) {
+			manualZoomOffset_ -= kManualZoomSpeed_ * dt;
+		}
+
+		// 行き過ぎないように制限 (Clamp)
+		manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
+
+
+		// ---------------------------------------------------------
+		// 2. カメラ座標の計算
+		// ---------------------------------------------------------
+
 		// プレイヤーの情報を取得
 		Vector3 playerPos = player_->mainPosition.transform.translate;
 		float playerRotY = player_->mainPosition.transform.rotate.y;
@@ -224,14 +297,24 @@ void SceneStage01::CameraPart() {
 		// 腕が大きくなるほど距離(baseDistance)を増やす
 		// 例：基本 + 腕の余剰分 * 倍率
 		// ここの数値をいじると「引き」の強さが変わる
-		float baseDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
-		float baseHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+		float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
+		float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+
+		// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
+
+		// 距離: 自動値 + 手動オフセット
+		// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
+		float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
+
+		// 高さ: 自動値 + (手動オフセット * 比率)
+		// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
+		float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
 
 		// カメラの注視点と位置を計算
 		Vector3 eye = {
-			playerPos.x + std::sin(playerRotY) * baseDistance,
-			playerPos.y + baseHeight,
-			playerPos.z + std::cos(playerRotY) * baseDistance
+			playerPos.x + std::sin(playerRotY) * finalDistance,
+			playerPos.y + finalHeight,
+			playerPos.z + std::cos(playerRotY) * finalDistance
 		};
 
 		// Transform構造体を作成して値をセットする
@@ -242,7 +325,7 @@ void SceneStage01::CameraPart() {
 		// 前進方向が {-sin, -cos} なので、
 		// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
 		cameraTransform.rotate.x = 0.5f;             // 少し見下ろす角度
-		cameraTransform.rotate.y = playerRotY + 3.14159f; // プレイヤーの背中を追う向き
+		cameraTransform.rotate.y = playerRotY + std::numbers::pi_v<float>; // プレイヤーの背中を追う向き
 		cameraTransform.rotate.z = 0.0f;
 
 		camera_->SetCamera(cameraTransform);
@@ -270,8 +353,12 @@ void SceneStage01::ImguiPart() {
 		ImGui::SliderFloat("D_RealValues", &cameraDistance_, 1.0f, 30.0f);
 		ImGui::SliderFloat("D_Multiply", &cameraDistanceMultiply_, 1.0f, 50.0f);
 		ImGui::Separator();
+		ImGui::Text("Height");
 		ImGui::SliderFloat("H_RealValues", &cameraHeight_, 1.0f, 20.0f);
 		ImGui::SliderFloat("H_Multiply", &cameraHeightMultiply_, 1.0f, 50.0f);
+		ImGui::Separator();
+		ImGui::Text("Zoom");
+		ImGui::SliderFloat("Offset", &manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
 		ImGui::End();
 	}
 
@@ -310,36 +397,88 @@ void SceneStage01::ImguiPart() {
 	}
 
 	{
-		// ウィンドウの初期位置を右に設定
+		// ウィンドウ位置設定
 		ImGui::SetNextWindowPos(ImVec2(950, 300), ImGuiCond_Once);
-		ImGui::Begin("Enemy");
-		if (ImGui::Button("ResetPos")) {
-			enemy_->mainPosition.transform.translate = Vector3(10.0f, 0.0f, 10.0f);
+		ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once); // サイズも指定
+
+		ImGui::Begin("Enemy Manager");
+
+		// 全体リセットボタン
+		if (ImGui::Button("Reset All Positions")) {
+			// 初期位置に戻す（簡易的にY=0にする、あるいは初期座標を記憶しておくなどの拡張が可能）
+			// ここでは単純に少し離して整列させ直す例
+			for (int i = 0; i < enemies_.size(); ++i) {
+				float angle = (float)i * (6.28f / enemies_.size());
+				enemies_[i]->mainPosition.transform.translate = {
+					10.0f + std::sin(angle) * 10.0f, 0.0f, 10.0f + std::cos(angle) * 10.0f
+				};
+			}
 		}
-		if (ImGui::TreeNode("Transform")) {
-			ImGui::SliderFloat3("Pos", &enemy_->mainPosition.transform.translate.x, -50.0f, 50.0f);
-			ImGui::SliderFloat3("Rotate", &enemy_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
-			ImGui::SliderFloat3("Scale", &enemy_->mainPosition.transform.scale.x, 0.0f, 5.0f);
-			ImGui::TreePop();
+
+		ImGui::Separator();
+
+		// リスト内のエネミーごとにUIを生成
+		for (int i = 0; i < enemies_.size(); ++i) {
+			Enemy* e = enemies_[i];
+
+			// IDをプッシュ（これがないと全部のスライダーが同期して動いてしまう）
+			ImGui::PushID(i);
+
+			// "Enemy 0", "Enemy 1" ... というヘッダーを作る
+			std::string headerName = "Enemy " + std::to_string(i);
+
+			if (ImGui::CollapsingHeader(headerName.c_str())) {
+
+				// 個別リセット
+				if (ImGui::Button("Reset Pos")) {
+					e->mainPosition.transform.translate = Vector3(10.0f * (i + 1), 0.0f, 10.0f);
+				}
+
+				if (ImGui::TreeNode("Transform")) {
+					ImGui::DragFloat3("Pos", &e->mainPosition.transform.translate.x, 0.1f);
+					ImGui::SliderFloat3("Rotate", &e->mainPosition.transform.rotate.x, -6.5f, 6.5f);
+					ImGui::SliderFloat3("Scale", &e->mainPosition.transform.scale.x, 0.0f, 5.0f);
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("ArmScale")) {
+					// テスト用に強制的に値を書き換えるスライダー
+					// 実際はUpdateで変動するので、一時停止中などに有効
+					ImGui::SliderFloat("ArmScaleL", &e->GetRefArmScaleL(), 0.0f, 50.0f);
+					ImGui::SliderFloat("ArmScaleR", &e->GetRefArmScaleR(), 0.0f, 50.0f);
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("Params")) {
+					ImGui::SliderFloat("DamageCD", &e->GetRefDamageCD(), 0.0f, 5.0f);
+					ImGui::SliderFloat("DamageTimer", &e->GetRefDamageTimer(), 0.0f, 5.0f);
+					ImGui::SliderFloat("KnockbackCD", &e->GetRefKnockbackCD(), 0.0f, 5.0f);
+					ImGui::SliderFloat("KnockbackTimer", &e->GetRefKnockbackTimer(), 0.0f, 5.0f);
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("State")) {
+					ImGui::Text("isDamage:  %d", e->IsDamage());
+					ImGui::Text("isAttackR: %d", e->IsAttackingR());
+					ImGui::Text("isAttackL: %d", e->IsAttackingL());
+					ImGui::TreePop();
+				}
+			}
+
+			// IDをポップ（忘れるとエラーになります）
+			ImGui::PopID();
 		}
-		if (ImGui::TreeNode("ArmScale")) {
-			ImGui::SliderFloat("ArmScaleL", &enemy_->GetRefArmScaleL(), 0.0f, 5.0f);
-			ImGui::SliderFloat("ArmScaleR", &enemy_->GetRefArmScaleR(), 0.0f, 5.0f);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNode("Params")) {
-			ImGui::SliderFloat("DamageCD", &enemy_->GetRefDamageCD(), 0.0f, 5.0f);
-			ImGui::SliderFloat("DamageTimer", &enemy_->GetRefDamageTimer(), 0.0f, 5.0f);
-			ImGui::SliderFloat("KnockbackCD", &enemy_->GetRefKnockbackCD(), 0.0f, 5.0f);
-			ImGui::SliderFloat("KnockbackTimer", &enemy_->GetRefKnockbackTimer(), 0.0f, 5.0f);
-			ImGui::TreePop();
-		}
-		if (ImGui::TreeNode("State")) {
-			ImGui::Text("isDamage:  %d", enemy_->IsDamage());
-			ImGui::Text("isAttackR: %d", enemy_->IsAttackingR());
-			ImGui::Text("isAttackL: %d", enemy_->IsAttackingL());
-			ImGui::TreePop();
-		}
+
+		ImGui::End();
+	}
+
+	{
+		// ウィンドウの初期位置を右下に設定
+        ImGui::SetNextWindowPos(ImVec2(950, 600), ImGuiCond_Once);
+		ImGui::Begin("GuideArrow");
+		ImGui::SliderFloat3("Pos", &guideArrow_->mainPosition.transform.translate.x, -50.0f, 50.0f);
+		ImGui::SliderFloat3("Rotate", &guideArrow_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
+		ImGui::SliderFloat3("Scale", &guideArrow_->mainPosition.transform.scale.x, 0.0f, 5.0f);
 		ImGui::End();
 	}
 
@@ -372,10 +511,10 @@ void SceneStage01::CheckAttackCollision() {
 
 		// 1. 腕のAABBを作成
 		// 解説: 
-		// - 0.5f : モデル自体の半径（1mの立方体の半分）
+		// - kBaseActorScale_ : モデル自体の半径（1mの立方体の半分）
 		// - armScale : 腕自体の膨張率（1.0 ~ 5.0）
 		// - attackerScale : プレイヤーや敵の全体スケール（0.5 や 1.0 など）
-		float armRealRadius = 0.5f * armScale * attackerScale;
+		float armRealRadius = kBaseActorScale_.x * armScale * attackerScale;
 
 		AABB armAABB;
 		armAABB.min = { armPos.x - armRealRadius, armPos.y - armRealRadius, armPos.z - armRealRadius };
@@ -392,33 +531,27 @@ void SceneStage01::CheckAttackCollision() {
 				targetPos.z - armPos.z
 			};
 
-			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-			float len = std::sqrt(distSq);
-
+			float len = std::sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
 			// 4. ノックバック適用
 			if (len > 0.0f) {
+				// 【パンチ挙動】 腕の位置から、体の位置へ向かって吹っ飛ばす
 				Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
 
-				// 威力計算
-				// 威力もスケールに合わせて調整したい場合は、ここにも attackerScale を掛けると良いです
-				// （小さいキャラの攻撃は弱く、大きいキャラは強くなる）
-				float basePower = 8.0f;
+				// 威力: 腕の大きさの2乗
+				float power = 8.0f * (armScale * armScale);
+				Vector3 knockbackForce = { pushDir.x * power, 0.0f, pushDir.z * power };
 
-				// 例: 体のサイズも威力に反映させるなら
-				// float power = basePower * (armScale * armScale) * (attackerScale / 0.5f); 
-				// ※とりあえず今は元のままにしておきます
-				float power = basePower * (armScale * armScale);
-
-				Vector3 knockbackForce = {
-					pushDir.x * power,
-					0.0f,
-					pushDir.z * power
-				};
-
+				// ターゲットに適用（Player/Enemyで分岐）
+				// ※Objectクラスに仮想関数 AddKnockback があれば分岐不要になります
 				if (targetObj == player_) {
 					player_->AddKnockback(knockbackForce);
-				} else if (targetObj == enemy_) {
-					enemy_->AddKnockback(knockbackForce);
+				} else {
+					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
+					// ここでは簡易的に Enemy* へのキャストで対応
+					Enemy* e = dynamic_cast<Enemy*>(targetObj);
+					if (e) {
+						e->AddKnockback(knockbackForce);
+					}
 				}
 			}
 		}
@@ -459,7 +592,7 @@ void SceneStage01::CheckAttackCollision() {
 				bool winB = false;
 				bool draw = false;
 
-				// ★★★ 状態による勝敗判定 ★★★
+				// --- 勝敗判定ロジック ---
 
 				// パターン1: Aが攻撃中で、Bはチャージ中（無防備） -> Aの勝ち
 				if (isAtkA && !isAtkB) {
@@ -471,10 +604,11 @@ void SceneStage01::CheckAttackCollision() {
 				}
 				// パターン3: 状態が同じ（両方攻撃中、または両方チャージ中） -> サイズ勝負
 				else {
-					if (scaleDiff <= drawTolerance) {
-						draw = true; // 引き分け
-					} else if (armScaleA == 1.0f || armScaleB == 1.0f) {
-						draw = true; // どちらかが最小サイズなら引き分け
+					// (どちらかがサイズ1.0なら「ぶつかっただけ」として引き分けにする)
+					if (armScaleA <= 1.01f || armScaleB <= 1.01f) {
+						draw = true;
+					} else if (scaleDiff <= drawTolerance) {
+						draw = true;
 					} else if (armScaleA > armScaleB) {
 						winA = true;
 					} else {
@@ -482,10 +616,10 @@ void SceneStage01::CheckAttackCollision() {
 					}
 				}
 
-				// --- 結果の適用 ---
+				// --- ノックバック適用 ---
 
-				// Aが勝った場合（Bを吹き飛ばす）
 				if (winA) {
+					// Aが勝った場合（Bを吹き飛ばす）
 					Vector3 diff = {
 						objB->mainPosition.transform.translate.x - posA.x,
 						objB->mainPosition.transform.translate.y - posA.y,
@@ -495,17 +629,20 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dir = { diff.x / len, diff.y / len, diff.z / len };
 
-						// カウンター（状態勝ち）なら威力ボーナスを与えても面白いです
 						// ここでは単純にAのサイズパワーで計算
 						float power = basePower * (armScaleA * armScaleA);
 
-						Vector3 knockbackForce = { dir.x * power, 5.0f, dir.z * power };
-						if (objB == player_) player_->AddKnockback(knockbackForce);
-						else if (objB == enemy_) enemy_->AddKnockback(knockbackForce);
+						Vector3 knockbackForce = { dir.x * power, 0.0f, dir.z * power };
+						Enemy* e = dynamic_cast<Enemy*>(objB);
+						if (e) {
+							e->AddKnockback(knockbackForce);
+						}
+						if (objB == player_) {
+							player_->AddKnockback(knockbackForce);
+						}
 					}
-				}
-				// Bが勝った場合（Aを吹き飛ばす）
-				else if (winB) {
+				} else if (winB) {
+					// Bが勝った場合（Aを吹き飛ばす）
 					Vector3 diff = {
 						objA->mainPosition.transform.translate.x - posB.x,
 						objA->mainPosition.transform.translate.y - posB.y,
@@ -515,14 +652,18 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dir = { diff.x / len, diff.y / len, diff.z / len };
 						float power = basePower * (armScaleB * armScaleB);
-						Vector3 knockbackForce = { dir.x * power, 5.0f, dir.z * power };
+						Vector3 knockbackForce = { dir.x * power, 0.0f, dir.z * power };
 
-						if (objA == player_) player_->AddKnockback(knockbackForce);
-						else if (objA == enemy_) enemy_->AddKnockback(knockbackForce);
+						Enemy* e = dynamic_cast<Enemy*>(objA);
+						if (e) {
+							e->AddKnockback(knockbackForce);
+						}
+						if (objA == player_) {
+							player_->AddKnockback(knockbackForce);
+						}
 					}
-				}
-				// 引き分け（両方吹っ飛ぶ）
-				else if (draw) {
+				} else if (draw) {
+					// 引き分け（両方吹っ飛ぶ）
 					Vector3 centerA = objA->mainPosition.transform.translate;
 					Vector3 centerB = objB->mainPosition.transform.translate;
 					Vector3 diffBA = { centerA.x - centerB.x, centerA.y - centerB.y, centerA.z - centerB.z };
@@ -531,16 +672,25 @@ void SceneStage01::CheckAttackCollision() {
 						Vector3 dirA = { diffBA.x / len, diffBA.y / len, diffBA.z / len };
 						Vector3 dirB = { -dirA.x, -dirA.y, -dirA.z };
 
-						float reboundPowerA = basePower * (armScaleA * armScaleA) * 0.8f;
-						float reboundPowerB = basePower * (armScaleB * armScaleB) * 0.8f;
+						float powerA = basePower * (armScaleA * armScaleA) * 0.8f;
+						float powerB = basePower * (armScaleB * armScaleB) * 0.8f;
 
-						Vector3 forceA = { dirA.x * reboundPowerA, 5.0f, dirA.z * reboundPowerA };
+						Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
 						if (objA == player_) player_->AddKnockback(forceA);
-						else if (objA == enemy_) enemy_->AddKnockback(forceA);
-
-						Vector3 forceB = { dirB.x * reboundPowerB, 5.0f, dirB.z * reboundPowerB };
+						else {
+							Enemy* e = dynamic_cast<Enemy*>(objA);
+							if (e) {
+								e->AddKnockback(forceA);
+							}
+						}
+						Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
 						if (objB == player_) player_->AddKnockback(forceB);
-						else if (objB == enemy_) enemy_->AddKnockback(forceB);
+						else {
+							Enemy* e = dynamic_cast<Enemy*>(objB);
+							if (e) {
+								e->AddKnockback(forceB);
+							}
+						}
 					}
 				}
 			}
@@ -548,60 +698,153 @@ void SceneStage01::CheckAttackCollision() {
 
 	// --- 実際の判定実行 ---
 
-	// 準備
-	AABB playerBodyAABB = player_->GetAABB(player_);
-	AABB enemyBodyAABB = enemy_->GetAABB(enemy_);
+	// プレイヤーの情報（ループ外で一度だけ取得）
+	AABB pBodyAABB = player_->GetAABB(player_);
+	float pBodyScale = player_->mainPosition.transform.scale.x;
+	Vector3 pPosR = player_->GetArmPositionR(); float pSclR = player_->GetArmScaleR(); bool pAtkR = player_->IsAttackingR();
+	Vector3 pPosL = player_->GetArmPositionL(); float pSclL = player_->GetArmScaleL(); bool pAtkL = player_->IsAttackingL();
 
-	// 体のスケール取得 (XYZ均等と仮定してXを使う)
-	float pScale = player_->mainPosition.transform.scale.x;
-	float eScale = enemy_->mainPosition.transform.scale.x;
+	// 全エネミーに対してループ処理
+	for (auto* enemy : enemies_) {
 
-	// 腕の情報取得（何度も呼ぶので変数に入れておくと見やすいです）
-	Vector3 pArmPosR = player_->GetArmPositionR();
-	float   pArmSclR = player_->GetArmScaleR();
-	bool    pAtkR = player_->IsAttackingR();
-	Vector3 pArmPosL = player_->GetArmPositionL();
-	float   pArmSclL = player_->GetArmScaleL();
-	bool    pAtkL = player_->IsAttackingL();
+		// エネミーの情報
+		AABB eBodyAABB = enemy->GetAABB(enemy);
+		float eBodyScale = enemy->mainPosition.transform.scale.x;
+		Vector3 ePosR = enemy->GetArmPositionR(); float eSclR = enemy->GetArmScaleR(); bool eAtkR = enemy->IsAttackingR();
+		Vector3 ePosL = enemy->GetArmPositionL(); float eSclL = enemy->GetArmScaleL(); bool eAtkL = enemy->IsAttackingL();
 
-	Vector3 eArmPosR = enemy_->GetArmPositionR();
-	float   eArmSclR = enemy_->GetArmScaleR();
-	bool	eAtkR = enemy_->IsAttackingR();
-	Vector3 eArmPosL = enemy_->GetArmPositionL();
-	float   eArmSclL = enemy_->GetArmScaleL();
-	bool	eAtkL = enemy_->IsAttackingL();
 
-	// 判定処理開始
-	// 1. 敵からの攻撃 (引数の最後に eScale を追加)
-	if (enemy_->IsAttackingR()) {
-         // 敵・右 vs プレイヤー・本体
-		CheckArmCollision(player_, playerBodyAABB, eArmPosR, eArmSclR, eScale);
+		// 1. 敵の攻撃 vs プレイヤーの体
+		if (eAtkR) CheckArmCollision(player_, pBodyAABB, ePosR, eSclR, eBodyScale);
+		if (eAtkL) CheckArmCollision(player_, pBodyAABB, ePosL, eSclL, eBodyScale);
+
+		// 2. プレイヤーの攻撃 vs 敵の体
+		if (pAtkR) CheckArmCollision(enemy, eBodyAABB, pPosR, pSclR, pBodyScale);
+		if (pAtkL) CheckArmCollision(enemy, eBodyAABB, pPosL, pSclL, pBodyScale);
+
+		// 3. 腕同士の衝突 (プレイヤーの腕の状態に関わらず判定してOK、細かい条件は関数内で処理)
+		// 右 vs 右
+		CheckArmToArm(player_, pPosR, pSclR, pBodyScale, pAtkR, enemy, ePosR, eSclR, eBodyScale, eAtkR);
+		// 右 vs 左
+		CheckArmToArm(player_, pPosR, pSclR, pBodyScale, pAtkR, enemy, ePosL, eSclL, eBodyScale, eAtkL);
+		// 左 vs 右
+		CheckArmToArm(player_, pPosL, pSclL, pBodyScale, pAtkL, enemy, ePosR, eSclR, eBodyScale, eAtkR);
+		// 左 vs 左
+		CheckArmToArm(player_, pPosL, pSclL, pBodyScale, pAtkL, enemy, ePosL, eSclL, eBodyScale, eAtkL);
+	}
+}
+
+void SceneStage01::UpdateGuideArrow() {
+	// ▼▼▼▼▼▼▼▼▼ ガイド矢印の制御処理 ▼▼▼▼▼▼▼▼▼
+
+	// 1. プレイヤーの最大腕サイズを取得
+	float pMaxArm = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+
+	// 2. 敵の中で「プレイヤーより腕が大きく」かつ「最も腕が大きい敵」を探す
+	Object* targetEnemy = nullptr;
+	float maxEnemyArm = 0.0f;
+
+	for (auto* enemy : enemies_) {
+		float eArmL = enemy->GetArmScaleL();
+		float eArmR = enemy->GetArmScaleR();
+		float currentEnemyMax = std::max(eArmL, eArmR);
+
+		// プレイヤーより大きく、かつ今まで見た敵の中で一番大きいか
+		if (currentEnemyMax > pMaxArm && currentEnemyMax > maxEnemyArm) {
+			maxEnemyArm = currentEnemyMax;
+			targetEnemy = enemy;
+		}
 	}
 
-	if (enemy_->IsAttackingL()) {
-		// 敵・左 vs プレイヤー・本体
-		CheckArmCollision(player_, playerBodyAABB, eArmPosL, eArmSclL, eScale);
+	// 3. 表示・非表示と座標計算
+	if (targetEnemy != nullptr) {
+		// --- ターゲットが見つかった場合（表示） ---
+
+		Vector3 pPos = player_->mainPosition.transform.translate;
+		Vector3 ePos = targetEnemy->mainPosition.transform.translate;
+
+		// A. 方向ベクトル計算 (プレイヤー -> 敵)
+		float diffX = ePos.x - pPos.x;
+		float diffZ = ePos.z - pPos.z;
+
+		// 距離と正規化（方向）
+		float dist = std::sqrt(diffX * diffX + diffZ * diffZ);
+		Vector3 dir = { 0.0f, 0.0f, 1.0f }; // デフォルト
+		if (dist > 0.0f) {
+			dir = { diffX / dist, 0.0f, diffZ / dist };
+		}
+
+		// B. 矢印の回転 (Y軸回転)
+		// atan2(x, z) で角度(ラジアン)を求める
+		float angleY = std::atan2(diffX, diffZ) + std::numbers::pi_v<float>;
+		guideArrow_->mainPosition.transform.rotate.y = angleY;
+
+
+		// C. 矢印の配置半径 (プレイヤーの腕サイズに合わせて広げる)
+		float baseRadius = 0.5f;
+		float radiusFactor = 1.0f;
+		float currentRadius = baseRadius + (pMaxArm * radiusFactor);
+
+		// プレイヤーの中心から、敵の方向に currentRadius 分だけ進んだ位置
+		guideArrow_->mainPosition.transform.translate = {
+			pPos.x + dir.x * currentRadius,
+			pPos.y + 0.5f, // 地面より少し浮かせる（高さ調整）
+			pPos.z + dir.z * currentRadius
+		};
+
+
+		// D. 矢印の大きさ (プレイヤーの腕サイズに合わせて大きくする)
+		// 1. プレイヤーの全体スケールを取得 (0.5f)
+		float playerGlobalScale = kBaseActorScale_.x;
+
+		// 2. 「基本サイズ」の割合を決める
+		// 0.4f なら「体の40%の大きさ」からスタート
+		float startRatio = 0.4f;
+
+		// 3. 「成長スピード」の割合を決める
+		// 0.1f なら「腕倍率が+1されるごとに、体の10%分だけ大きくなる」
+		// 腕が最大(5.0)になると、(5-1)*0.1 = +0.4 (40%) 増える計算
+		float growthRatio = 0.2f;
+
+		// 計算式: ( 基本割合 + (増えた腕倍率 * 成長割合) ) * 全体スケール
+		// これなら、最大まで腕を大きくしても矢印は「体の80%くらいの大きさ」に収まります
+		float finalScale = (startRatio + (pMaxArm - 1.0f) * growthRatio) * playerGlobalScale;
+
+		guideArrow_->mainPosition.transform.scale = { finalScale, finalScale, finalScale };
+
+	} else {
+		// --- ターゲットがいない（自分が最強）場合（非表示） ---
+		// スケールを0にして見えなくする（または描画スキップ）
+		guideArrow_->mainPosition.transform.scale = { 0.0f, 0.0f, 0.0f };
 	}
 
-	// 2. プレイヤーからの攻撃 (引数の最後に pScale を追加)
-	if (player_->IsAttackingR()) {
-		// 自・右 vs 敵・本体
-		CheckArmCollision(enemy_, enemyBodyAABB, pArmPosR, pArmSclR, pScale);
+	// 4. 矢印の更新（行列計算など）
+	guideArrow_->Update(camera_); // ←忘れずに呼ぶ
+}
+
+void SceneStage01::UpdateCrown() {
+	// 1. 全員の中で「最大の腕サイズ」を持つキャラを探す
+
+	// まずプレイヤーを暫定1位にする
+	Object* topChar = player_;
+	float topArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+
+	// 敵リストを回して比較
+	for (auto* enemy : enemies_) {
+		float eMax = std::max(enemy->GetArmScaleL(), enemy->GetArmScaleR());
+
+		// 現王者より大きければ更新
+		if (eMax > topArmScale) {
+			topArmScale = eMax;
+			topChar = enemy;
+		}
 	}
 
-	if (player_->IsAttackingL()) {
-		// 自・左 vs 敵・本体
-		CheckArmCollision(enemy_, enemyBodyAABB, pArmPosL, pArmSclL, pScale);
+	// 2. 王冠に情報を渡す
+	// SetTarget内で「前回と違うキャラならアニメーション開始」を判定しているので
+	// 毎フレーム渡してOK
+	if (crown_) {
+		crown_->SetTarget(topChar, topArmScale);
+		crown_->Update(camera_);
 	}
-	// 3. 腕 vs 腕 の判定
-	// 自・右 vs 敵・右
-	CheckArmToArm(player_, pArmPosR, pArmSclR, pScale, pAtkR, enemy_, eArmPosR, eArmSclR, eScale, eAtkR);
-	// 自・右 vs 敵・左
-	CheckArmToArm(player_, pArmPosR, pArmSclR, pScale, pAtkR, enemy_, eArmPosL, eArmSclL, eScale, eAtkL);
-	// 自・左 vs 敵・右
-	CheckArmToArm(player_, pArmPosL, pArmSclL, pScale, pAtkL, enemy_, eArmPosR, eArmSclR, eScale, eAtkR);
-	// 自・左 vs 敵・左
-	CheckArmToArm(player_, pArmPosL, pArmSclL, pScale, pAtkL, enemy_, eArmPosL, eArmSclL, eScale, eAtkL);
-
-	// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }

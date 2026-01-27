@@ -105,6 +105,7 @@
     <ClCompile Include="kEngine\core\driver\SrvManager.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.cpp" />
+    <ClCompile Include="kEngine\GameObject\Crown\Crown.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -206,6 +207,7 @@
     <ClInclude Include="kEngine\core\driver\SrvManager.h" />
     <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h" />
     <ClInclude Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.h" />
+    <ClInclude Include="kEngine\GameObject\Crown\Crown.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

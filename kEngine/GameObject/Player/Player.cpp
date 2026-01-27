@@ -143,10 +143,6 @@ void Player::Move() {
     } else {
       // 【旋回】片方のボタンだけ押されている状態
 
-      // 旋回力を固定値、または腕のサイズを加味して計算
-      // (scaleを足すことで、腕が大きいほど急旋回できるようになります)
-      float currentTurnSpeed = kTurnSpeed;
-
       if (pushA) {
         // Aボタン（左腕膨張 = 左の推進力UP）
         // 左が前に出るので、機体は「右」に回る (Y回転プラス)
@@ -155,6 +151,7 @@ void Player::Move() {
         // 腕が大きくなるほど、より鋭く旋回します
         // 係数は調整してください
         float turnSpeed = kTurnSpeed + (armScaleL_ - 1.0f) * 0.02f;
+        turnSpeed = std::min(turnSpeed, kTurnSpeed * 10.0f);
         mainPosition.transform.rotate.y += turnSpeed;
 
         // 攻撃判定解除
@@ -164,6 +161,7 @@ void Player::Move() {
         // 右が前に出るので、機体は「左」に回る (Y回転マイナス)
 
         float turnSpeed = kTurnSpeed + (armScaleR_ - 1.0f) * 0.02f;
+        turnSpeed = std::min(turnSpeed, kTurnSpeed * 10.0f);
         mainPosition.transform.rotate.y -= turnSpeed;
 
         // 攻撃判定解除
