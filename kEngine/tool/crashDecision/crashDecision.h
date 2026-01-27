@@ -166,13 +166,13 @@ bool crashDecision(const Sphere& s1, const Sphere& s2);
 ///// <returns>isHit</returns>
 //bool crashDecision(const Segment& segment, const Triangle& triangle);
 //
-///// <summary>
-///// AABB & AABB Hit Decision
-///// </summary>
-///// <param name="s1">AABB1</param>
-///// <param name="s2">AABB2</param>
-///// <returns>isHit</returns>
-//bool crashDecision(const AABB& aabb1, const AABB& aabb2);
+/// <summary>
+/// AABB & AABB Hit Decision
+/// </summary>
+/// <param name="s1">AABB1</param>
+/// <param name="s2">AABB2</param>
+/// <returns>isHit</returns>
+bool crashDecision(const AABB& aabb1, const AABB& aabb2);
 //
 ///// <summary>
 ///// AABB & Sphere Hit Decision

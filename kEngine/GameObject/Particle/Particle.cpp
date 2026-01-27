@@ -37,7 +37,7 @@ void Particle::Update(Camera* camera) {
 
 			obj->lifeTimeTimer.ToMix();
 			//obj->part->mainPosition.transform.scale *= obj->direction.scale * obj->scaleSpeed * deltaTime;
-			obj->part->mainPosition.transform.rotate += obj->direction.rotate * obj->rotateSpeed * deltaTime;
+			//obj->part->mainPosition.transform.rotate += obj->direction.rotate * obj->rotateSpeed * deltaTime;
 			obj->part->mainPosition.transform.translate += obj->velocity * deltaTime;
 			obj->part->Update(camera);
 			object++;

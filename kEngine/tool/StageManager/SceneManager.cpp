@@ -7,12 +7,26 @@ SceneManager::SceneManager(kEngine* system)
 	sceneFactory_(new SceneFactory(system)) {
 	//sceneUsingHandle_ = SceneNum::S_STAGE_01;
 	//sceneUsingHandle_ = SceneNum::S_BOSSTEST;
-	sceneUsingNameHandle_ = "CGHK2";
-	//sceneUsingNameHandle_ = "TITLE";
+	//sceneUsingHandle_ = SceneNum::S_TESTER;
 	//sceneUsingHandle_ = SceneNum::S_TITLE;
-	//sceneUsingHandle_ = SceneNum::S_STAGE_01;
+	sceneUsingHandle_ = SceneNum::S_STAGE_01;
+	
+	
 
-	helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
+	//InitMaterialConfig(&materialConfig_);
+	//materialConfig_.uvTransformMatrix =
+	//	MakeAffineMatrix(materialConfig_.uvScale, materialConfig_.uvRotate,
+	//		materialConfig_.uvTranslate);
+	//materialConfig_.textureHandle =
+	//	system_->LoadTextrue("resources/TemplateResource/texture/uvChecker.png");
+	// materialConfig_.textureHandle =
+	// system_->LoadTextrue("resources/nullScene.png");
+
+	//for (auto& ptr : stageIsClear_) {
+	//	ptr = false;
+	//}
+
+	helperTextureHandle_ = system_->LoadTextrue("resources/texture/helper.png");
 	helperSprite_ = new SimpleSprite;
 	helperSprite_->IntObject(system_);
 	helperSprite_->CreateDefaultData();
@@ -74,11 +88,15 @@ void SceneManager::SceneChanger() {
 			break;
 
 		}
-
-		if (defaultMenu_->IsBack()) {
-			isSceneChange = true;
-			sceneUsingNameHandle_ = "TITLE";
-		}
+		///  VVVVVVVVVVVVVVVVVVVVVVVV
+		///case SceneNum::S_STAGE_01:
+		///	//sceneUsing_ = new SceneTest(system_);
+		///	//sceneUsing_ = new Scene1(system_);
+        ///    sceneUsing_ = new SceneStage01(system_);
+		///	break;
+		///case SceneNum::S_STAGE_02:
+		///	break;
+		///	 AAAAAAAAAAAAAAAAAAAAAAA
 
 		if (defaultMenu_->IsRetry()) {
 			isSceneChange = true;
