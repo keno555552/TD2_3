@@ -8,8 +8,9 @@
 SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== システム初期化 ============///
 	system_ = system;
-	debugCamera_ = new DebugCamera(system);
-	camera_ = new Camera;
+
+	debugCamera_ = system_->CreateDebugCamera();
+	camera_ = system_->CreateCamera();
 	camera_->Move(Vector3(0.0f, 0.5f, -10.0f));
 
 	/// =========== リソースロード ============///
@@ -18,9 +19,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 	guideArrowModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arrow/arrow.obj");
 	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
-	boxTextureHandle_ = system_->LoadTextrue("resources/texture/testBox.png");
-	tryTextureHandle_ = system_->LoadTextrue("resources/texture/Tryer.png");
-	uvTextureHandle_ = system_->LoadTextrue("resources/TemplateResource/texture/uvChecker.png");
+	boxTextureHandle_ = system_->LoadTexture("resources/texture/testBox.png");
+	tryTextureHandle_ = system_->LoadTexture("resources/texture/Tryer.png");
+	uvTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/uvChecker.png");
 
 	//skydome_->CreateDefaultData();
 	skydome_ = new Object;
@@ -101,8 +102,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 }
 
 SceneStage01::~SceneStage01() {
-	delete camera_;
-	delete debugCamera_;
+	system_->DestroyCamera(camera_);
+	system_->DestroyCamera(debugCamera_);
 
 	delete player_;
 	delete skydome_;
@@ -217,7 +218,7 @@ void SceneStage01::Update() {
 	}
 
 	if (system_->GetTriggerOn(DIK_SPACE)) {
-		ChangeNextStage(SceneNum::S_Result);
+		outcome_ = SceneOutcome::NEXT;
 	}
 }
 
@@ -265,6 +266,7 @@ void SceneStage01::Draw() {
 void SceneStage01::CameraPart() {
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
+		debugCamera_->MouseControlUpdate();
 	} else {
 		// ---------------------------------------------------------
 		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
@@ -331,7 +333,7 @@ void SceneStage01::CameraPart() {
 		camera_->SetCamera(cameraTransform);
 		usingCamera_ = camera_;
 	}
-	usingCamera_->Update();
+	system_->SetCamera(usingCamera_);
 }
 
 #ifdef USE_IMGUI

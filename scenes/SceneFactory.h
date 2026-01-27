@@ -16,6 +16,7 @@
 #include "DefaultMenu/DefaultMenu.h"
 #include "CG4_HK_1/Effect2.h"
 #include "CG3_HK_2/SceneCGHK2.h"
+#include "SceneStage01.h"
 
 // このゲーム用のシーン工場
 class SceneFactory : public BaseSceneFactory

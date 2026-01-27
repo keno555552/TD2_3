@@ -1,5 +1,5 @@
 #pragma once
-#include "Scene.h"
+#include "BaseScene.h"
 #include "Object\Object.h"
 #include "Object\Sprite.h"
 #include "DebugCamera.h"
@@ -12,7 +12,7 @@
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
 
 
-class SceneStage01 :public Scene {
+class SceneStage01 :public BaseScene {
 public:
 	SceneStage01(kEngine *system);
 	~SceneStage01();

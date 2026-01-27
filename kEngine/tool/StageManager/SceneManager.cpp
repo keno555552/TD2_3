@@ -9,7 +9,8 @@ SceneManager::SceneManager(kEngine* system)
 	//sceneUsingHandle_ = SceneNum::S_BOSSTEST;
 	//sceneUsingHandle_ = SceneNum::S_TESTER;
 	//sceneUsingHandle_ = SceneNum::S_TITLE;
-	sceneUsingHandle_ = SceneNum::S_STAGE_01;
+	sceneUsingNameHandle_ = "STAGE_01";
+	//sceneUsingNameHandle_ = "CGHK2";
 	
 	
 
@@ -26,7 +27,7 @@ SceneManager::SceneManager(kEngine* system)
 	//	ptr = false;
 	//}
 
-	helperTextureHandle_ = system_->LoadTextrue("resources/texture/helper.png");
+	helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
 	helperSprite_ = new SimpleSprite;
 	helperSprite_->IntObject(system_);
 	helperSprite_->CreateDefaultData();
