@@ -259,6 +259,28 @@ void SceneStage01::CameraPart() {
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
 	} else {
+		// ---------------------------------------------------------
+		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
+		// ---------------------------------------------------------
+		float dt = system_->GetDeltaTime();
+
+		// Sキー: ズームアウト（距離を足す）
+		if (system_->GetIsPush(DIK_S)) {
+			manualZoomOffset_ += kManualZoomSpeed_ * dt;
+		}
+		// Wキー: ズームイン（距離を引く）
+		else if (system_->GetIsPush(DIK_W)) {
+			manualZoomOffset_ -= kManualZoomSpeed_ * dt;
+		}
+
+		// 行き過ぎないように制限 (Clamp)
+		manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
+
+
+		// ---------------------------------------------------------
+		// 2. カメラ座標の計算
+		// ---------------------------------------------------------
+
 		// プレイヤーの情報を取得
 		Vector3 playerPos = player_->mainPosition.transform.translate;
 		float playerRotY = player_->mainPosition.transform.rotate.y;
@@ -268,14 +290,24 @@ void SceneStage01::CameraPart() {
 		// 腕が大きくなるほど距離(baseDistance)を増やす
 		// 例：基本 + 腕の余剰分 * 倍率
 		// ここの数値をいじると「引き」の強さが変わる
-		float baseDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
-		float baseHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+		float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
+		float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+
+		// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
+
+		// 距離: 自動値 + 手動オフセット
+		// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
+		float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
+
+		// 高さ: 自動値 + (手動オフセット * 比率)
+		// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
+		float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
 
 		// カメラの注視点と位置を計算
 		Vector3 eye = {
-			playerPos.x + std::sin(playerRotY) * baseDistance,
-			playerPos.y + baseHeight,
-			playerPos.z + std::cos(playerRotY) * baseDistance
+			playerPos.x + std::sin(playerRotY) * finalDistance,
+			playerPos.y + finalHeight,
+			playerPos.z + std::cos(playerRotY) * finalDistance
 		};
 
 		// Transform構造体を作成して値をセットする
@@ -286,7 +318,7 @@ void SceneStage01::CameraPart() {
 		// 前進方向が {-sin, -cos} なので、
 		// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
 		cameraTransform.rotate.x = 0.5f;             // 少し見下ろす角度
-		cameraTransform.rotate.y = playerRotY + 3.14159f; // プレイヤーの背中を追う向き
+		cameraTransform.rotate.y = playerRotY + std::numbers::pi_v<float>; // プレイヤーの背中を追う向き
 		cameraTransform.rotate.z = 0.0f;
 
 		camera_->SetCamera(cameraTransform);
@@ -314,8 +346,12 @@ void SceneStage01::ImguiPart() {
 		ImGui::SliderFloat("D_RealValues", &cameraDistance_, 1.0f, 30.0f);
 		ImGui::SliderFloat("D_Multiply", &cameraDistanceMultiply_, 1.0f, 50.0f);
 		ImGui::Separator();
+		ImGui::Text("Height");
 		ImGui::SliderFloat("H_RealValues", &cameraHeight_, 1.0f, 20.0f);
 		ImGui::SliderFloat("H_Multiply", &cameraHeightMultiply_, 1.0f, 50.0f);
+		ImGui::Separator();
+		ImGui::Text("Zoom");
+		ImGui::SliderFloat("Offset", &manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
 		ImGui::End();
 	}
 

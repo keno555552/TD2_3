@@ -37,6 +37,14 @@ private:
 	/// カメラ高さ(実数値)
 	float cameraHeight_ = 9.0f; // 実数値
 	float cameraHeightMultiply_ = 4.0f; // 倍率値
+	// ▼▼▼ 手動ズーム制御用 ▼▼▼
+	float manualZoomOffset_ = 0.0f;        // 現在の手動ズーム量（0が基準）
+	const float kManualZoomSpeed_ = 10.0f; // ズームの変化速度
+	const float kMinManualZoom_ = -5.0f;   // 最大ズームイン（近づける限界）
+	const float kMaxManualZoom_ = 15.0f;   // 最大ズームアウト（離れる限界）
+	// ズームアウトした時に、少し視点も高くするかどうかの係数
+	// (1.0なら距離と同じだけ高さも増える。0.0なら高さは変わらない)
+	const float kManualZoomHeightRatio_ = 0.5f;
 
 	/// =========== リソースハンドル ============///
 	/// モデルハンドル
