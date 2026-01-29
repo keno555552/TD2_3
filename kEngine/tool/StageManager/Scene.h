@@ -8,8 +8,6 @@ class Scene
 public:
 
 	ScenePhase phase_ = ScenePhase::PREPARE;
-	// Scene.h
-	virtual Camera* GetCamera() { return nullptr; }
 
 public:
 	virtual void Update();
