@@ -15,6 +15,11 @@ Player::Player(kEngine *system, const Vector3 &position) {
 
   forward_ = {-std::sin(mainPosition.transform.rotate.y), 0.0f,
               -std::cos(mainPosition.transform.rotate.y)};
+
+  // ■■■ 新しい腕の生成 ■■■
+    // 第2引数に「自分(this)」を渡して追従させる
+  armL_ = new Arm(system, this, false); // 左腕
+  armR_ = new Arm(system, this, true);  // 右腕
 }
 
 void Player::Update(Camera *camera) {
@@ -27,6 +32,27 @@ void Player::Update(Camera *camera) {
   BehaviorRootUpdate();
 
   Object::Update(camera);
+
+  // ■■■ 腕の更新 ■■■
+    // ここで現在の「倍率(armScaleL_/R_)」を渡すだけ！
+  if (armL_) {
+      armL_->Update(camera, armScaleL_);
+  }
+  if (armR_) {
+      armR_->Update(camera, armScaleR_);
+  }
+}
+
+void Player::Draw() {
+    Object::Draw();
+
+    // 腕の描画
+    if (armL_) {
+        armL_->Draw();
+    }
+    if (armR_) {
+        armR_->Draw();
+    }
 }
 
 void Player::AddKnockback(const Vector3 &force) {
@@ -49,6 +75,19 @@ void Player::AddKnockback(const Vector3 &force) {
   isAttackingL_ = false;
   // ノックバック中はダメージも受け付けない
   isDamage_ = true;
+}
+
+void Player::ResetArm(bool isRight) {
+    //if (isDamage_) {
+    //    // ダメージ無効化中はノックバックを受け付けない
+    //    return;
+    //}
+    // 初期サイズに戻す（1.0f または ゲーム開始時のサイズ）
+    if (isRight) {
+        armScaleR_ = 1.0f;
+    } else {
+        armScaleL_ = 1.0f;
+    }
 }
 
 void Player::BehaviorRootUpdate() {
@@ -182,7 +221,7 @@ void Player::Move() {
     mainPosition.transform.scale.z = mainPosition.transform.scale.x;
    
   }
-  // プレイヤーの見た目を更新
+  // プレイヤーの見た目を更新(仮の体部分のため)
   UpdateAppearance();
 }
 
@@ -343,90 +382,83 @@ void Player::UpdateAppearance() {
 
     // 4. 適用
     // 右腕
-    objectParts_[1].transform.scale = { armScaleR_, armScaleR_, armScaleR_ };
+    objectParts_[1].transform.scale = { 0, 0, 0 };
     objectParts_[1].transform.translate =
-        objectParts_[0].transform.translate + Vector3{ -localOffsetR, 0.0f, 0.0f };
+        objectParts_[0].transform.translate + Vector3{ (kPlayerWidth / 2.0f), 0.0f, 0.0f };
     // 左腕
-    objectParts_[2].transform.scale = { armScaleL_, armScaleL_, armScaleL_ };
+    objectParts_[2].transform.scale = { 0, 0, 0 };
     objectParts_[2].transform.translate =
-        objectParts_[0].transform.translate + Vector3{ +localOffsetL, 0.0f, 0.0f };
+        objectParts_[0].transform.translate + Vector3{ -(kPlayerWidth / 2.0f), 0.0f, 0.0f };
 }
 
 // 腕のワールド座標を返す（衝突判定用）
 Vector3 Player::GetArmPositionL() const {
-    // 本体座標と回転量を取得
-    Vector3 centerPos = mainPosition.transform.translate;
+    // 定数は同じ
+    const float kModelBaseScale = 0.09f;
+    const float kBodyAttachmentX = 0.8f;
+    const float kArmOriginalWidth = 11.4f;
+
+    // 左腕のスケールを使用
+    float finalScale = kModelBaseScale * armScaleL_;
+    float currentHalfWidth = (kArmOriginalWidth * finalScale) / 2.0f;
+    float dist = kBodyAttachmentX + currentHalfWidth;
+
+    // プレイヤー(親)のスケールを取得して、距離に掛ける
+    // これで「見た目」の配置距離と一致します
+    float parentScale = mainPosition.transform.scale.x;
+    dist *= parentScale;
+
+    // 左腕はローカル座標で「プラスX方向」
+    float localX = +dist;
+    float localZ = 0.0f;
+
     float rotY = mainPosition.transform.rotate.y;
+    Vector3 centerPos = mainPosition.transform.translate;
 
-    // 1. 親（全体）のスケール
-    float totalScale = mainPosition.transform.scale.x;
+    float worldX = centerPos.x + (localX * std::cos(rotY) + localZ * std::sin(rotY));
+    float worldZ = centerPos.z + (-localX * std::sin(rotY) + localZ * std::cos(rotY));
+    float worldY = centerPos.y;
 
-    // 2. ワールド空間での距離を積み上げる
-    // (a) 体の見た目の半径 = 0.5 * 0.5 = 0.25
-    float worldBodyRadius = (kPlayerWidth / 2.0f) * totalScale;
-
-    // (b) 腕の見た目の半径 = (1.0 * armScale) * 0.5 / 2.0 ... ではなく
-    //     腕パーツ自体の大きさは armScale、それを親が totalScale倍する
-    //     -> 半径 0.5 * armScale * totalScale
-    float worldArmRadius = 0.5f * armScaleL_ * totalScale;
-
-    // (c) 隙間 (ワールド空間では固定値にしたい！)
-    float worldGap = kArmBaseGap_;
-
-    // 3. 全て足す
-    // 中心から、(体) + (隙間) + (腕半径) の距離にあるのが「腕の中心」
-    float worldOffsetDist = worldBodyRadius + worldGap + worldArmRadius;
-
-    // 4. 回転計算
-    float offsetX = +worldOffsetDist; // 左腕はプラス方向（モデルによる）
-    float offsetZ = 0.0f;
-
-    // 回転行列の要領でオフセットを回転させる
-    // (X, Z) を Y軸中心に回転
-    float rotatedX = offsetX * std::cos(rotY) + offsetZ * std::sin(rotY);
-    float rotatedZ = -offsetX * std::sin(rotY) + offsetZ * std::cos(rotY);
-
-    // 本体座標に加算して返す
-    return { centerPos.x + rotatedX,
-            centerPos.y, // 高さは本体と同じと仮定（必要ならオフセットを加算）
-            centerPos.z + rotatedZ };
+    return Vector3{ worldX, worldY, worldZ };
 }
 
 Vector3 Player::GetArmPositionR() const {
-    // 本体座標と回転量を取得
-    Vector3 centerPos = mainPosition.transform.translate;
+    // 1. Arm.h と同じ定数を用意する（★ここがズレると判定もズレます！）
+       // 本当は共通ヘッダー(Const.hなど)に置くのがベストですが、今はここに書きます
+    const float kModelBaseScale = 0.09f;    // モデルの縮小率
+    const float kBodyAttachmentX = 0.8f;   // 肩の付け根の位置
+    const float kArmOriginalWidth = 11.4f;  // モデルの元々の幅
+
+    // 2. Arm::Update と全く同じ計算で「腕の中心までの距離」を出す
+
+    // 現在のゲーム倍率を掛けて、最終的なスケールを出す
+    float finalScale = kModelBaseScale * armScaleR_;
+
+    // 現在の腕の半径（長さの半分）を計算
+    float currentHalfWidth = (kArmOriginalWidth * finalScale) / 2.0f;
+
+    // 「付け根」+「半径」=「中心までの距離」
+    float dist = kBodyAttachmentX + currentHalfWidth;
+
+    // プレイヤー(親)のスケールを取得して、距離に掛ける
+    // これで「見た目」の配置距離と一致します
+    float parentScale = mainPosition.transform.scale.x;
+    dist *= parentScale;
+
+    // 3. ワールド座標への回転変換
+    // 右腕はローカル座標で「マイナスX方向」にあるとします
+    float localX = -dist;
+    float localZ = 0.0f;
+
+    // プレイヤーの回転(Y軸)に合わせて回す
     float rotY = mainPosition.transform.rotate.y;
+    Vector3 centerPos = mainPosition.transform.translate;
 
-    // 1. 親（全体）のスケール
-    float totalScale = mainPosition.transform.scale.x;
+    float worldX = centerPos.x + (localX * std::cos(rotY) + localZ * std::sin(rotY));
+    float worldZ = centerPos.z + (-localX * std::sin(rotY) + localZ * std::cos(rotY));
 
-    // 2. ワールド空間での距離を積み上げる
-    // (a) 体の見た目の半径 = 0.5 * 0.5 = 0.25
-    float worldBodyRadius = (kPlayerWidth / 2.0f) * totalScale;
+    // 高さはとりあえず体の中心と同じにしておく（必要ならオフセットを加算）
+    float worldY = centerPos.y;
 
-    // (b) 腕の見た目の半径 = (1.0 * armScale) * 0.5 / 2.0 ... ではなく
-    //     腕パーツ自体の大きさは armScale、それを親が totalScale倍する
-    //     -> 半径 0.5 * armScale * totalScale
-    float worldArmRadius = 0.5f * armScaleR_ * totalScale;
-
-    // (c) 隙間 (ワールド空間では固定値にしたい！)
-    float worldGap = kArmBaseGap_;
-
-    // 3. 全て足す
-    // 中心から、(体) + (隙間) + (腕半径) の距離にあるのが「腕の中心」
-    float worldOffsetDist = worldBodyRadius + worldGap + worldArmRadius;
-
-    // 4. 回転計算
-    float offsetX = -worldOffsetDist; // 右腕はマイナス方向（モデルによる）
-    float offsetZ = 0.0f;
-
-  // 回転行列の要領でオフセットを回転させる
-  // (X, Z) を Y軸中心に回転
-  float rotatedX = offsetX * std::cos(rotY) + offsetZ * std::sin(rotY);
-  float rotatedZ = -offsetX * std::sin(rotY) + offsetZ * std::cos(rotY);
-
-  // 本体座標に加算して返す
-  return {centerPos.x + rotatedX,
-          centerPos.y, // 高さは本体と同じと仮定（必要ならオフセットを加算）
-          centerPos.z + rotatedZ};
+    return Vector3{ worldX, worldY, worldZ };
 }

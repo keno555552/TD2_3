@@ -5,6 +5,7 @@
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
+#include "Arm/Arm.h"
 
 static inline const float kEnemyWidth = 1.0f;
 
@@ -18,6 +19,11 @@ public:
 
     // 外部から強制的に速度を与える（ノックバック用）
     void AddKnockback(const Vector3& force);
+
+    // 腕のサイズをリセットする関数
+    // isRight: trueなら右腕、falseなら左腕
+    void ResetArm(bool isRight);
+
     // 衝突判定のために腕の情報を公開
     Vector3 GetArmPositionL() const;
     Vector3 GetArmPositionR() const;
@@ -36,6 +42,9 @@ public:
     float &GetRefDamageTimer() { return kDamageParameter_; }
     float &GetRefKnockbackCD() { return knockbackCD_; }
     float &GetRefKnockbackTimer() { return knockbackTimer_; }
+    bool &IsTestExpand() {
+        return isTestExpand_;
+    }
 #endif
 
     bool IsDamage() { return isDamage_; }
@@ -64,6 +73,9 @@ private:
 
     Vector3 forward_;
 
+    // これまでのパーツ管理ではなく、Armクラスを持つ
+    Arm* armL_ = nullptr;
+    Arm* armR_ = nullptr;
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;
@@ -72,6 +84,7 @@ private:
     const float kArmBaseGap_ = 0.2f;
     // テスト用に片腕だけ最初から大きくしておくフラグなど
     bool isTestExpand_ = true;
+    float testReverse_ = -1.0f;
 
 private:
     // 計算用

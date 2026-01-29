@@ -6,6 +6,7 @@
 #include "kEngine.h"
 #include "BaseScene.h"
 #include "GameObject/Object/Corner.h"
+#include "Arm/Arm.h"
 
 // 最大膨張率
 static inline const float kMaxArmScale = 30.0f;
@@ -48,8 +49,14 @@ public:
 
 	void Update(Camera* camera) override;
 
+	void Draw() override;
+
 	// 外部から強制的に速度を与える（ノックバック用）
 	void AddKnockback(const Vector3 &force);
+
+	// 腕のサイズをリセットする関数
+    // isRight: trueなら右腕、falseなら左腕
+	void ResetArm(bool isRight);
 
 	// 衝突判定のために腕の情報を公開
 	Vector3 GetArmPositionL() const;
@@ -138,6 +145,9 @@ private:
 	/// 経過時間
 
 	//////// プレイヤーデータ
+	// これまでのパーツ管理ではなく、Armクラスを持つ
+	Arm* armL_ = nullptr;
+	Arm* armR_ = nullptr;
 	// 左腕のスケール（1.0が通常）
 	float armScaleL_ = 1.0f;
 	// 右腕のスケール

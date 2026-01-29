@@ -436,6 +436,8 @@ void SceneStage01::ImguiPart() {
 					e->mainPosition.transform.translate = Vector3(10.0f * (i + 1), 0.0f, 10.0f);
 				}
 
+				if (ImGui::Checkbox("Test Expand", &e->IsTestExpand()));
+
 				if (ImGui::TreeNode("Transform")) {
 					ImGui::DragFloat3("Pos", &e->mainPosition.transform.translate.x, 0.1f);
 					ImGui::SliderFloat3("Rotate", &e->mainPosition.transform.rotate.x, -6.5f, 6.5f);
@@ -446,8 +448,8 @@ void SceneStage01::ImguiPart() {
 				if (ImGui::TreeNode("ArmScale")) {
 					// テスト用に強制的に値を書き換えるスライダー
 					// 実際はUpdateで変動するので、一時停止中などに有効
-					ImGui::SliderFloat("ArmScaleL", &e->GetRefArmScaleL(), 0.0f, 50.0f);
-					ImGui::SliderFloat("ArmScaleR", &e->GetRefArmScaleR(), 0.0f, 50.0f);
+					ImGui::SliderFloat("ArmScaleL", &e->GetRefArmScaleL(), 1.0f, 50.0f);
+					ImGui::SliderFloat("ArmScaleR", &e->GetRefArmScaleR(), 1.0f, 50.0f);
 					ImGui::TreePop();
 				}
 
@@ -564,16 +566,16 @@ void SceneStage01::CheckAttackCollision() {
 	// objA: A本体, posA: Aの腕位置, armScaleA: Aの腕倍率, bodyScaleA: Aの体倍率
 	// objB: B本体, ... (同上)
 	auto CheckArmToArm = [&](
-		Object* objA, Vector3 posA, float armScaleA, float bodyScaleA, bool isAtkA,
-		Object* objB, Vector3 posB, float armScaleB, float bodyScaleB, bool isAtkB) {
+		Object* objA, Vector3 posA, float armScaleA, float bodyScaleA, bool isRightA, bool isAtkA,
+		Object* objB, Vector3 posB, float armScaleB, float bodyScaleB, bool isRightB, bool isAtkB) {
 			// 1. Aの腕のAABB作成（体スケールも考慮）
-			float radiusA = 0.5f * armScaleA * bodyScaleA;
+			float radiusA = kBaseActorScale_.x * armScaleA * bodyScaleA;
 			AABB boxA;
 			boxA.min = { posA.x - radiusA, posA.y - radiusA, posA.z - radiusA };
 			boxA.max = { posA.x + radiusA, posA.y + radiusA, posA.z + radiusA };
 
 			// 2. Bの腕のAABB作成
-			float radiusB = 0.5f * armScaleB * bodyScaleB;
+			float radiusB = kBaseActorScale_.x * armScaleB * bodyScaleB;
 			AABB boxB;
 			boxB.min = { posB.x - radiusB, posB.y - radiusB, posB.z - radiusB };
 			boxB.max = { posB.x + radiusB, posB.y + radiusB, posB.z + radiusB };
@@ -618,7 +620,7 @@ void SceneStage01::CheckAttackCollision() {
 					}
 				}
 
-				// --- ノックバック適用 ---
+				// --- 結果の適用 ---
 
 				if (winA) {
 					// Aが勝った場合（Bを吹き飛ばす）
@@ -638,9 +640,11 @@ void SceneStage01::CheckAttackCollision() {
 						Enemy* e = dynamic_cast<Enemy*>(objB);
 						if (e) {
 							e->AddKnockback(knockbackForce);
+							e->ResetArm(isRightB);
 						}
 						if (objB == player_) {
 							player_->AddKnockback(knockbackForce);
+							player_->ResetArm(isRightB);
 						}
 					}
 				} else if (winB) {
@@ -659,9 +663,11 @@ void SceneStage01::CheckAttackCollision() {
 						Enemy* e = dynamic_cast<Enemy*>(objA);
 						if (e) {
 							e->AddKnockback(knockbackForce);
+							e->ResetArm(isRightA);
 						}
 						if (objA == player_) {
 							player_->AddKnockback(knockbackForce);
+							player_->ResetArm(isRightA);
 						}
 					}
 				} else if (draw) {
@@ -703,8 +709,10 @@ void SceneStage01::CheckAttackCollision() {
 	// プレイヤーの情報（ループ外で一度だけ取得）
 	AABB pBodyAABB = player_->GetAABB(player_);
 	float pBodyScale = player_->mainPosition.transform.scale.x;
-	Vector3 pPosR = player_->GetArmPositionR(); float pSclR = player_->GetArmScaleR(); bool pAtkR = player_->IsAttackingR();
-	Vector3 pPosL = player_->GetArmPositionL(); float pSclL = player_->GetArmScaleL(); bool pAtkL = player_->IsAttackingL();
+	ArmInfo pArms[2] = {
+	    { false, player_->GetArmPositionL(), player_->GetRefArmScaleL(), player_->IsAttackingL() }, // 左
+	    { true,  player_->GetArmPositionR(), player_->GetRefArmScaleR(), player_->IsAttackingR() }  // 右
+	};
 
 	// 全エネミーに対してループ処理
 	for (auto* enemy : enemies_) {
@@ -712,27 +720,24 @@ void SceneStage01::CheckAttackCollision() {
 		// エネミーの情報
 		AABB eBodyAABB = enemy->GetAABB(enemy);
 		float eBodyScale = enemy->mainPosition.transform.scale.x;
-		Vector3 ePosR = enemy->GetArmPositionR(); float eSclR = enemy->GetArmScaleR(); bool eAtkR = enemy->IsAttackingR();
-		Vector3 ePosL = enemy->GetArmPositionL(); float eSclL = enemy->GetArmScaleL(); bool eAtkL = enemy->IsAttackingL();
+		// 敵の左右の情報（敵が複数の場合はループ内で）
+		ArmInfo eArms[2] = {
+			{ false, enemy->GetArmPositionL(), enemy->GetArmScaleL(), enemy->IsAttackingL() },
+			{ true,  enemy->GetArmPositionR(), enemy->GetArmScaleR(), enemy->IsAttackingR() }
+		};
 
-
-		// 1. 敵の攻撃 vs プレイヤーの体
-		if (eAtkR) CheckArmCollision(player_, pBodyAABB, ePosR, eSclR, eBodyScale);
-		if (eAtkL) CheckArmCollision(player_, pBodyAABB, ePosL, eSclL, eBodyScale);
-
-		// 2. プレイヤーの攻撃 vs 敵の体
-		if (pAtkR) CheckArmCollision(enemy, eBodyAABB, pPosR, pSclR, pBodyScale);
-		if (pAtkL) CheckArmCollision(enemy, eBodyAABB, pPosL, pSclL, pBodyScale);
-
-		// 3. 腕同士の衝突 (プレイヤーの腕の状態に関わらず判定してOK、細かい条件は関数内で処理)
-		// 右 vs 右
-		CheckArmToArm(player_, pPosR, pSclR, pBodyScale, pAtkR, enemy, ePosR, eSclR, eBodyScale, eAtkR);
-		// 右 vs 左
-		CheckArmToArm(player_, pPosR, pSclR, pBodyScale, pAtkR, enemy, ePosL, eSclL, eBodyScale, eAtkL);
-		// 左 vs 右
-		CheckArmToArm(player_, pPosL, pSclL, pBodyScale, pAtkL, enemy, ePosR, eSclR, eBodyScale, eAtkR);
-		// 左 vs 左
-		CheckArmToArm(player_, pPosL, pSclL, pBodyScale, pAtkL, enemy, ePosL, eSclL, eBodyScale, eAtkL);
+		for (int i = 0; i < 2; i++) {
+			// 1. 敵の攻撃 vs プレイヤーの体
+			if (eArms[i].isAtk) CheckArmCollision(player_, pBodyAABB, eArms[i].pos, eArms[i].scale, eBodyScale);
+			// 2. プレイヤーの攻撃 vs 敵の体
+			if (pArms[i].isAtk) CheckArmCollision(enemy, eBodyAABB, pArms[i].pos, pArms[i].scale, pBodyScale);
+			for (int j = 0; j < 2; j++) {
+				// 3. 腕同士の衝突
+				CheckArmToArm(
+					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk, 
+					enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
+			}
+		}
 	}
 }
 
