@@ -45,11 +45,6 @@ public:
 
 	void ResetCamera(); 
 
-
-	Vector3 GetPosition() const {
-		return cameraTransform_.translate;
-	}
-
 private:
 
 	/// 水平方向視野角

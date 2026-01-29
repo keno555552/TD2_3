@@ -10,10 +10,6 @@ public:
 
 	void Update() override;
 	void Draw() override;
-	/// ============== カメラ関連 ==============///
-/// ステージカメラ(mainカメラ)
-	Camera* camera_ = nullptr;
-	Camera* GetCamera() override { return camera_; }
 
 public:
 
