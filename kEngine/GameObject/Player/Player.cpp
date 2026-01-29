@@ -77,6 +77,19 @@ void Player::AddKnockback(const Vector3 &force) {
   isDamage_ = true;
 }
 
+void Player::ResetArm(bool isRight) {
+    //if (isDamage_) {
+    //    // ダメージ無効化中はノックバックを受け付けない
+    //    return;
+    //}
+    // 初期サイズに戻す（1.0f または ゲーム開始時のサイズ）
+    if (isRight) {
+        armScaleR_ = 1.0f;
+    } else {
+        armScaleL_ = 1.0f;
+    }
+}
+
 void Player::BehaviorRootUpdate() {
   /// 衝突情報を初期化
   CollisionMapInfo collisionMapInfo;
@@ -208,7 +221,7 @@ void Player::Move() {
     mainPosition.transform.scale.z = mainPosition.transform.scale.x;
    
   }
-  // プレイヤーの見た目を更新
+  // プレイヤーの見た目を更新(仮の体部分のため)
   UpdateAppearance();
 }
 

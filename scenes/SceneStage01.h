@@ -59,6 +59,13 @@ private:
 	int uvTextureHandle_ = 0;
 
 	/// =========== ゲームオブジェクト ==========///
+	// 左右の情報をまとめる
+	struct ArmInfo {
+		bool isRight;
+		Vector3 pos;
+		float scale;
+		bool isAtk;
+	};
 	Object *skydome_ = nullptr;
 	Player *player_ = nullptr;
 	SimpleSprite *sprite_ = nullptr;

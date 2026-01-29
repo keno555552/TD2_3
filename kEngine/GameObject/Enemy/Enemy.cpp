@@ -155,34 +155,41 @@ void Enemy::Move() {
     }
   }
 
-  if (armScaleR_ > 1.0f) {
-    isAttackingR_ = true;
-  } else {
-      isAttackingR_ = false;
-  }
-  if (armScaleL_ > 1.0f) {
-    isAttackingL_ = true;
-  } else {
-      isAttackingL_ = false;
-  }
-
   float currentTurnSpeed = 0.04f;
 
   // 旋回速度の計算：基本速度 + (膨張分 * 係数)
   // 腕が大きくなるほど、より鋭く旋回します
   float turnSpeed = currentTurnSpeed;
   mainPosition.transform.rotate.y += turnSpeed;
+ 
+  /*if (armScaleR_ > 1.01f) {
+    isAttackingR_ = true;
+  } else {
+      isAttackingR_ = false;
+  }*/
+  if (armScaleL_ > 1.01f) {
+    isAttackingL_ = true;
+  } else {
+      isAttackingL_ = false;
+  }
 
   // テスト: 常に右腕だけ膨らませておく（衝突確認用）
-  // if (isTestExpand_) {
-  //    armScaleR_ = 3.0f; // 大きくしておく
-  //  isAttackingR_ = true; // 攻撃中フラグON
-  //}
+   if (isTestExpand_) {
+       if (armScaleR_ >= 5.0f) {
+           testReverse_ *= -1.0f;
+           isAttackingR_ = true;
+       } else if (armScaleR_ <= 1.0f) {
+           armScaleR_ = 1.0f;
+           testReverse_ *= -1.0f;
+           isAttackingR_ = false;
+       }
+      armScaleR_ += 0.1f * testReverse_; // 大きくしておく
+  }
 
   mainPosition.transform.scale.y = mainPosition.transform.scale.x;
   mainPosition.transform.scale.z = mainPosition.transform.scale.x;
 
-  // 見た目更新
+  // 見た目更新(仮の体部分のため)
   UpdateAppearance();
 }
 
@@ -202,6 +209,18 @@ void Enemy::AddKnockback(const Vector3 &force) {
   isAttackingL_ = false;
   // ノックバック中はダメージも受け付けない
   isDamage_ = true;
+}
+
+void Enemy::ResetArm(bool isRight) {
+    //if (isDamage_) {
+    //    // ダメージ無効化中はノックバックを受け付けない
+    //    return;
+    //}
+    if (isRight) {
+        armScaleR_ = 1.0f;
+    } else {
+        armScaleL_ = 1.0f;
+    }
 }
 
 // 腕のワールド座標を返す（衝突判定用）

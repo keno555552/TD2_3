@@ -54,6 +54,10 @@ public:
 	// 外部から強制的に速度を与える（ノックバック用）
 	void AddKnockback(const Vector3 &force);
 
+	// 腕のサイズをリセットする関数
+    // isRight: trueなら右腕、falseなら左腕
+	void ResetArm(bool isRight);
+
 	// 衝突判定のために腕の情報を公開
 	Vector3 GetArmPositionL() const;
 	Vector3 GetArmPositionR() const;
