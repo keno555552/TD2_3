@@ -257,6 +257,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\SphereMesh.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\Sprite2DMesh.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\TriangleMesh.cpp" />
+    <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
     <ClCompile Include="kEngine\GameObject\Crown\Crown.cpp" />
     <ClCompile Include="kEngine\GameObject\Enemy\Enemy.cpp" />
     <ClCompile Include="kEngine\GameObject\Object\Corner.cpp" />
@@ -285,7 +286,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\core\driver\FrameRateLimiter.cpp" />
     <ClCompile Include="kEngine\core\driver\WinAPI.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\SimpleSpriteMesh.cpp" />
-    <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationEditor.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationSystem.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationUnit.cpp" />
