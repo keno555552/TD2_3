@@ -11,8 +11,6 @@ SceneManager::SceneManager(kEngine* system)
 	//sceneUsingHandle_ = SceneNum::S_TITLE;
 	sceneUsingNameHandle_ = "STAGE_01";
 	//sceneUsingNameHandle_ = "CGHK2";
-	
-	
 
 	//InitMaterialConfig(&materialConfig_);
 	//materialConfig_.uvTransformMatrix =
