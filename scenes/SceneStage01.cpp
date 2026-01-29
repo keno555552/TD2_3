@@ -243,35 +243,31 @@ void SceneStage01::Draw() {
 void SceneStage01::CameraPart() {
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
-	} else {
-		// プレイヤーの情報を取得
+	}
+	else {
 		Vector3 playerPos = player_->mainPosition.transform.translate;
 		float playerRotY = player_->mainPosition.transform.rotate.y;
 
-		// 腕の大きさに応じた距離と高さの計算(ズーム処理)
+		// ★★★ 追加：回転値を [-PI, PI] に正規化 ★★★
+		const float PI = 3.14159265359f;
+		const float TWO_PI = 6.28318530718f;
+		while (playerRotY > PI) playerRotY -= TWO_PI;
+		while (playerRotY < -PI) playerRotY += TWO_PI;
+
 		float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
-		// 腕が大きくなるほど距離(baseDistance)を増やす
-		// 例：基本 + 腕の余剰分 * 倍率
-		// ここの数値をいじると「引き」の強さが変わる
 		float baseDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
 		float baseHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
 
-		// カメラの注視点と位置を計算
 		Vector3 eye = {
 			playerPos.x + std::sin(playerRotY) * baseDistance,
 			playerPos.y + baseHeight,
 			playerPos.z + std::cos(playerRotY) * baseDistance
 		};
 
-		// Transform構造体を作成して値をセットする
 		Transform cameraTransform = CreateDefaultTransform();
 		cameraTransform.translate = eye;
-
-		// 回転の設定
-		// 前進方向が {-sin, -cos} なので、
-		// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
-		cameraTransform.rotate.x = 0.5f;             // 少し見下ろす角度
-		cameraTransform.rotate.y = playerRotY + 3.14159f; // プレイヤーの背中を追う向き
+		cameraTransform.rotate.x = 0.5f;
+		cameraTransform.rotate.y = playerRotY + PI;
 		cameraTransform.rotate.z = 0.0f;
 
 		camera_->SetCamera(cameraTransform);
@@ -279,6 +275,7 @@ void SceneStage01::CameraPart() {
 	}
 	usingCamera_->Update();
 }
+
 
 #ifdef USE_IMGUI
 void SceneStage01::ImguiPart() {

@@ -242,4 +242,9 @@ public:
 	float cursorScaleMin_ = 0.1f;
 	float cursorScaleMax_ = 0.105f;
 
+	//Camera* GetUsingCamera() override;
+	// SceneTitle / SceneStage01
+	Camera* GetCamera() override { return camera_; }
+
+	
 };

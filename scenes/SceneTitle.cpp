@@ -872,6 +872,8 @@ void SceneTitle::Draw() {
             s.obj->Draw();
         }
     }
+
+
 #ifdef _DEBUG
     ImGui::Begin("Gate Debug");
 
@@ -938,6 +940,8 @@ void SceneTitle::Draw() {
     sprite_->Draw();
   
 }
+
+
 
 void SceneTitle::CameraControl()
 {
