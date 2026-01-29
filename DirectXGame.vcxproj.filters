@@ -106,6 +106,7 @@
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.cpp" />
     <ClCompile Include="kEngine\GameObject\Crown\Crown.cpp" />
+    <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -208,6 +209,7 @@
     <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h" />
     <ClInclude Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.h" />
     <ClInclude Include="kEngine\GameObject\Crown\Crown.h" />
+    <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -98,6 +98,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 
+	explosion_ = new Explosion(system_);
 }
 
 SceneStage01::~SceneStage01() {
@@ -206,6 +207,14 @@ void SceneStage01::Update() {
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
 
+
+	if (system_->GetTriggerOn(DIK_F)) {
+		explosion_->SetIsEmitting(true);
+		explosion_->SetPos(player_->mainPosition.transform.translate);
+	}
+	explosion_->Update(usingCamera_);
+	//explosion_->SetIsEmitting(false);
+
 	/// ガイド矢印更新
 	UpdateGuideArrow();
 	/// 王冠の更新
@@ -255,6 +264,8 @@ void SceneStage01::Draw() {
 
 	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+
+	explosion_->Draw();
 
 #ifdef USE_IMGUI
 	/// imgui処理
@@ -545,12 +556,16 @@ void SceneStage01::CheckAttackCollision() {
 				// ※Objectクラスに仮想関数 AddKnockback があれば分岐不要になります
 				if (targetObj == player_) {
 					player_->AddKnockback(knockbackForce);
+					explosion_->SetIsEmitting(true);
+					explosion_->SetPos(player_->mainPosition.transform.translate);
 				} else {
 					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
 					// ここでは簡易的に Enemy* へのキャストで対応
 					Enemy* e = dynamic_cast<Enemy*>(targetObj);
 					if (e) {
 						e->AddKnockback(knockbackForce);
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos(player_->mainPosition.transform.translate);
 					}
 				}
 			}
@@ -616,7 +631,7 @@ void SceneStage01::CheckAttackCollision() {
 					}
 				}
 
-				// --- ノックバック適用 ---
+				// --- ノックバック適用 ---a
 
 				if (winA) {
 					// Aが勝った場合（Bを吹き飛ばす）
@@ -636,9 +651,13 @@ void SceneStage01::CheckAttackCollision() {
 						Enemy* e = dynamic_cast<Enemy*>(objB);
 						if (e) {
 							e->AddKnockback(knockbackForce);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
 						}
 						if (objB == player_) {
 							player_->AddKnockback(knockbackForce);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
 						}
 					}
 				} else if (winB) {
@@ -657,9 +676,13 @@ void SceneStage01::CheckAttackCollision() {
 						Enemy* e = dynamic_cast<Enemy*>(objA);
 						if (e) {
 							e->AddKnockback(knockbackForce);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
 						}
 						if (objA == player_) {
 							player_->AddKnockback(knockbackForce);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
 						}
 					}
 				} else if (draw) {
@@ -676,19 +699,33 @@ void SceneStage01::CheckAttackCollision() {
 						float powerB = basePower * (armScaleB * armScaleB) * 0.8f;
 
 						Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
-						if (objA == player_) player_->AddKnockback(forceA);
+						if (objA == player_) 
+						{
+							player_->AddKnockback(forceA);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
+						}
 						else {
 							Enemy* e = dynamic_cast<Enemy*>(objA);
 							if (e) {
 								e->AddKnockback(forceA);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							}
 						}
 						Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
-						if (objB == player_) player_->AddKnockback(forceB);
+						if (objB == player_) 
+						{
+							player_->AddKnockback(forceB);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
+						}
 						else {
 							Enemy* e = dynamic_cast<Enemy*>(objB);
 							if (e) {
 								e->AddKnockback(forceB);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							}
 						}
 					}
