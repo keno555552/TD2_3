@@ -7,6 +7,12 @@
     <FxCompile Include="resources\Shader\Object3d.VS.hlsl" />
     <FxCompile Include="resources\Shader\Tile2D.PS.hlsl" />
     <FxCompile Include="resources\Shader\Tile2D.VS.hlsl" />
+    <FxCompile Include="resources\Shader\FlameNeonGlow.PS.hlsl" />
+    <FxCompile Include="resources\Shader\FlameNeonGlow.VS.hlsl" />
+    <FxCompile Include="resources\Shader\GlowSphere.PS.hlsl" />
+    <FxCompile Include="resources\Shader\LightingLambert\BlinnPhongReflection.hlsl" />
+    <FxCompile Include="resources\Shader\GlowSphere.VS.hlsl" />
+    <FxCompile Include="resources\Shader\LightingLambert\PhongReflection.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\imgui\imgui_stdlib.cpp" />
@@ -39,7 +45,6 @@
     <ClCompile Include="kEngine\core\Input\inputManager.cpp" />
     <ClCompile Include="kEngine\core\driver\config.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\BasicResource.cpp" />
-    <ClCompile Include="kEngine\tool\CollisionManager\CollisionManager.cpp" />
     <ClCompile Include="kEngine\tool\crashDecision\crashData.cpp" />
     <ClCompile Include="kEngine\tool\crashDecision\crashDecision.cpp" />
     <ClCompile Include="kEngine\tool\DefaultMenu\DefaultMenu.cpp" />
@@ -48,13 +53,11 @@
     <ClCompile Include="kEngine\tool\PerlinNoise\PerlinNoise.cpp" />
     <ClCompile Include="kEngine\tool\mathsUnit\randomMaker.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\Model.cpp" />
-    <ClCompile Include="kEngine\Lighting\LightModelType.cpp" />
     <ClCompile Include="kEngine\material\MaterialConfig.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\ModelGroup.cpp" />
     <ClCompile Include="kEngine\tool\mathsUnit\MathsIncluder.cpp" />
     <ClCompile Include="kEngine\Sound\soundUnit.cpp" />
     <ClCompile Include="kEngine\Sound\soundManager.cpp" />
-    <ClCompile Include="kEngine\tool\StageManager\Scene.cpp" />
     <ClCompile Include="kEngine\tool\StageManager\SceneElement.cpp" />
     <ClCompile Include="kEngine\tool\StringManage\ConvertString.cpp" />
     <ClCompile Include="kEngine\core\driver\DirectXCore.cpp" />
@@ -71,7 +74,6 @@
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ResourceManager.cpp" />
     <ClCompile Include="kEngine\tool\StageManager\SceneManager.cpp" />
     <ClCompile Include="kEngine\core\pso\shader_compile.cpp" />
-    <ClCompile Include="kEngine\tool\StageManager\SceneTester.cpp" />
     <ClCompile Include="kEngine\tool\mathsUnit\Transform.cpp" />
     <ClCompile Include="kEngine\tool\mathsUnit\Vector2.cpp" />
     <ClCompile Include="kEngine\tool\mathsUnit\Vector3.cpp" />
@@ -106,6 +108,30 @@
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.cpp" />
     <ClCompile Include="kEngine\GameObject\Crown\Crown.cpp" />
+    <ClCompile Include="kEngine\GameObject\CountdownTimer\CountdownTimer.cpp" />
+    <ClCompile Include="kEngine\Lighting\AeraLight.cpp" />
+    <ClCompile Include="kEngine\Data\BlendModeType.cpp" />
+    <ClCompile Include="kEngine\tool\DebugTool\DebugObject.cpp" />
+    <ClCompile Include="kEngine\Manager\CameraManager\CameraManager.cpp" />
+    <ClCompile Include="kEngine\Collector\DrawData\DrawDataCollector.cpp" />
+    <ClCompile Include="kEngine\drawEngine\DrawData\CameraData.cpp" />
+    <ClCompile Include="kEngine\drawEngine\DrawData\CameraForGPU.cpp" />
+    <ClCompile Include="kEngine\Data\LightModelType.cpp" />
+    <ClCompile Include="kEngine\tool\StageManager\BaseScene.cpp" />
+    <ClCompile Include="kEngine\Data\Render\Data\DirectionalLightGPU.cpp" />
+    <ClCompile Include="kEngine\Manager\LightManager\LightManager.cpp" />
+    <ClCompile Include="kEngine\Lighting\Light.cpp" />
+    <ClCompile Include="kEngine\Data\Render\Data\LightGPU.cpp" />
+    <ClCompile Include="kEngine\Data\LightingType.cpp" />
+    <ClCompile Include="kEngine\tool\StageManager\BaseSceneFactory.cpp" />
+    <ClCompile Include="scenes\SceneFactory.cpp" />
+    <ClCompile Include="scenes\CG3_HK_2\SceneCGHK2.cpp" />
+    <ClCompile Include="kEngine\Data\PSOType.cpp" />
+    <ClCompile Include="kEngine\GameObject\HPBar\HPBar.cpp" />
+    <ClCompile Include="kEngine\Lighting\PointLight.cpp" />
+    <ClCompile Include="kEngine\Lighting\SpotLight.cpp" />
+    <ClCompile Include="kEngine\Data\Render\Queue\RenderData.cpp" />
+    <ClCompile Include="kEngine\GameObject\StartTimer\StartTimer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -133,7 +159,6 @@
     <ClInclude Include="kEngine\core\Input\inputManager.h" />
     <ClInclude Include="kEngine\core\driver\config.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\BasicResource.h" />
-    <ClInclude Include="kEngine\tool\CollisionManager\CollisionManager.h" />
     <ClInclude Include="kEngine\tool\crashDecision\crashData.h" />
     <ClInclude Include="kEngine\tool\crashDecision\crashDecision.h" />
     <ClInclude Include="kEngine\tool\DefaultMenu\DefaultMenu.h" />
@@ -142,13 +167,11 @@
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\VertexIndex.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\randomMaker.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\Model.h" />
-    <ClInclude Include="kEngine\Lighting\LightModelType.h" />
     <ClInclude Include="kEngine\material\MaterialConfig.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\ModelGroup.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\MathsIncluder.h" />
     <ClInclude Include="kEngine\Sound\soundUnit.h" />
     <ClInclude Include="kEngine\Sound\soundManager.h" />
-    <ClInclude Include="kEngine\tool\StageManager\Scene.h" />
     <ClInclude Include="kEngine\tool\StageManager\SceneElement.h" />
     <ClInclude Include="kEngine\tool\StringManage\ConvertString.h" />
     <ClInclude Include="kEngine\core\driver\DirectXController.h" />
@@ -167,7 +190,6 @@
     <ClInclude Include="kEngine\tool\mathsUnit\Matrix4x4.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ResourceManager.h" />
     <ClInclude Include="kEngine\tool\StageManager\SceneManager.h" />
-    <ClInclude Include="kEngine\tool\StageManager\SceneTester.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\Transform.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\Vector2.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\Vector3.h" />
@@ -208,6 +230,30 @@
     <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h" />
     <ClInclude Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.h" />
     <ClInclude Include="kEngine\GameObject\Crown\Crown.h" />
+    <ClInclude Include="kEngine\GameObject\CountdownTimer\CountdownTimer.h" />
+    <ClInclude Include="kEngine\Lighting\AeraLight.h" />
+    <ClInclude Include="kEngine\Data\BlendModeType.h" />
+    <ClInclude Include="kEngine\tool\DebugTool\DebugObject.h" />
+    <ClInclude Include="kEngine\Manager\CameraManager\CameraManager.h" />
+    <ClInclude Include="kEngine\Collector\DrawData\DrawDataCollector.h" />
+    <ClInclude Include="kEngine\drawEngine\DrawData\CameraData.h" />
+    <ClInclude Include="kEngine\drawEngine\DrawData\CameraForGPU.h" />
+    <ClInclude Include="kEngine\Data\LightModelType.h" />
+    <ClInclude Include="kEngine\tool\StageManager\BaseScene.h" />
+    <ClInclude Include="kEngine\Data\Render\Data\DirectionalLightGPU.h" />
+    <ClInclude Include="kEngine\tool\StageManager\BaseSceneFactory.h" />
+    <ClInclude Include="scenes\SceneFactory.h" />
+    <ClInclude Include="scenes\CG3_HK_2\SceneCGHK2.h" />
+    <ClInclude Include="kEngine\Data\LightingType.h" />
+    <ClInclude Include="kEngine\Data\PSOType.h" />
+    <ClInclude Include="kEngine\GameObject\HPBar\HPBar.h" />
+    <ClInclude Include="kEngine\Lighting\Light.h" />
+    <ClInclude Include="kEngine\Lighting\PointLight.h" />
+    <ClInclude Include="kEngine\Lighting\SpotLight.h" />
+    <ClInclude Include="kEngine\Manager\LightManager\LightManager.h" />
+    <ClInclude Include="kEngine\Data\Render\Data\LightGPU.h" />
+    <ClInclude Include="kEngine\Data\Render\Queue\RenderData.h" />
+    <ClInclude Include="kEngine\GameObject\StartTimer\StartTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -246,10 +246,16 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="kEngine\Data\PSOType.cpp" />
+    <ClCompile Include="kEngine\Data\Render\Queue\RenderData.cpp" />
     <ClCompile Include="kEngine\GameObject\CountdownTimer\CountdownTimer.cpp" />
+    <ClCompile Include="kEngine\GameObject\HPBar\HPBar.cpp" />
+    <ClCompile Include="kEngine\GameObject\StartTimer\StartTimer.cpp" />
     <ClCompile Include="kEngine\Lighting\AeraLight.cpp" />
     <ClCompile Include="kEngine\Lighting\DirectionalLight.cpp" />
     <ClCompile Include="kEngine\Data\BlendModeType.cpp" />
+    <ClCompile Include="kEngine\Lighting\PointLight.cpp" />
+    <ClCompile Include="kEngine\Lighting\SpotLight.cpp" />
     <ClCompile Include="kEngine\tool\DebugTool\DebugObject.cpp" />
     <ClCompile Include="kEngine\Manager\CameraManager\CameraManager.cpp" />
     <ClCompile Include="kEngine\Collector\DrawData\DrawDataCollector.cpp" />
@@ -380,10 +386,20 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="kEngine\Data\LightingType.h" />
+    <ClInclude Include="kEngine\Data\PSOType.h" />
+    <ClInclude Include="kEngine\Data\Render\Data\LightGPU.h" />
+    <ClInclude Include="kEngine\Data\Render\Queue\RenderData.h" />
     <ClInclude Include="kEngine\GameObject\CountdownTimer\CountdownTimer.h" />
+    <ClInclude Include="kEngine\GameObject\HPBar\HPBar.h" />
+    <ClInclude Include="kEngine\GameObject\StartTimer\StartTimer.h" />
     <ClInclude Include="kEngine\Lighting\AeraLight.h" />
     <ClInclude Include="kEngine\Lighting\DirectionalLight.h" />
     <ClInclude Include="kEngine\Data\BlendModeType.h" />
+    <ClInclude Include="kEngine\Lighting\Light.h" />
+    <ClInclude Include="kEngine\Lighting\PointLight.h" />
+    <ClInclude Include="kEngine\Lighting\SpotLight.h" />
+    <ClInclude Include="kEngine\Manager\LightManager\LightManager.h" />
     <ClInclude Include="kEngine\tool\DebugTool\DebugObject.h" />
     <ClInclude Include="kEngine\Manager\CameraManager\CameraManager.h" />
     <ClInclude Include="kEngine\Collector\DrawData\DrawDataCollector.h" />
