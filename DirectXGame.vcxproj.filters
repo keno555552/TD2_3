@@ -107,6 +107,7 @@
     <ClCompile Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.cpp" />
     <ClCompile Include="kEngine\GameObject\Crown\Crown.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
+    <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -210,6 +211,7 @@
     <ClInclude Include="kEngine\GameObject\Particle\P_PlaneReduction\P_PlaneReduction.h" />
     <ClInclude Include="kEngine\GameObject\Crown\Crown.h" />
     <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
+    <ClInclude Include="kEngine\GameObject\Arm\Arm.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -286,6 +286,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\core\driver\FrameRateLimiter.cpp" />
     <ClCompile Include="kEngine\core\driver\WinAPI.cpp" />
     <ClCompile Include="kEngine\drawEngine\ResourceManager\ObjectResource\SimpleSpriteMesh.cpp" />
+    <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationEditor.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationSystem.cpp" />
     <ClCompile Include="kEngine\tool\AnimationSystem\AnimationUnit.cpp" />
@@ -384,6 +385,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\core\driver\FrameRateLimiter.h" />
     <ClInclude Include="kEngine\core\driver\WinAPI.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\SimpleSpriteMesh.h" />
+    <ClInclude Include="kEngine\GameObject\Arm\Arm.h" />
     <ClInclude Include="kEngine\tool\AnimationSystem\AnimationEditor.h" />
     <ClInclude Include="kEngine\tool\AnimationSystem\AnimationSystem.h" />
     <ClInclude Include="kEngine\tool\AnimationSystem\AnimationUnit.h" />
