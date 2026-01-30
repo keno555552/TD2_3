@@ -749,8 +749,8 @@ void SceneStage01::CheckAttackCollision() {
 	AABB pBodyAABB = player_->GetAABB(player_);
 	float pBodyScale = player_->mainPosition.transform.scale.x;
 	ArmInfo pArms[2] = {
-	    { false, player_->GetArmPositionL(), player_->GetRefArmScaleL(), player_->IsAttackingL() }, // 左
-	    { true,  player_->GetArmPositionR(), player_->GetRefArmScaleR(), player_->IsAttackingR() }  // 右
+	    { false, player_->GetArmPositionL(), player_->GetArmScaleL(), player_->IsAttackingL() }, // 左
+	    { true,  player_->GetArmPositionR(), player_->GetArmScaleR(), player_->IsAttackingR() }  // 右
 	};
 
 	// 全エネミーに対してループ処理
