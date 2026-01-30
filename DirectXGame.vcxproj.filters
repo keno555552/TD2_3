@@ -132,6 +132,8 @@
     <ClCompile Include="kEngine\Lighting\SpotLight.cpp" />
     <ClCompile Include="kEngine\Data\Render\Queue\RenderData.cpp" />
     <ClCompile Include="kEngine\GameObject\StartTimer\StartTimer.cpp" />
+    <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
+    <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -254,6 +256,8 @@
     <ClInclude Include="kEngine\Data\Render\Data\LightGPU.h" />
     <ClInclude Include="kEngine\Data\Render\Queue\RenderData.h" />
     <ClInclude Include="kEngine\GameObject\StartTimer\StartTimer.h" />
+    <ClInclude Include="kEngine\GameObject\Arm\Arm.h" />
+    <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
