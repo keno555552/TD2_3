@@ -44,6 +44,7 @@ SceneTitle::SceneTitle(kEngine* system) {
           
     };
 
+
     const char* texturePaths[kGatePartCount] = {
         "resources/gate/model/door.png",
         "resources/gate/model/door.png",
