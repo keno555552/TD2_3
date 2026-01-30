@@ -799,73 +799,117 @@ void SceneStage01::UpdateGuideArrow() {
 		if (currentEnemyMax > pMaxArm && currentEnemyMax > maxEnemyArm) {
 			maxEnemyArm = currentEnemyMax;
 			targetEnemy = enemy;
-		}
+		} 
 	}
 
 	// 3. 表示・非表示と座標計算
+	// 目標スケール変数を定義（初期値は 0.0f = 非表示）
+	float targetScale = 0.0f;
+
 	if (targetEnemy != nullptr) {
 		// --- ターゲットが見つかった場合（表示） ---
 
 		Vector3 pPos = player_->mainPosition.transform.translate;
 		Vector3 ePos = targetEnemy->mainPosition.transform.translate;
 
-		// A. 方向ベクトル計算 (プレイヤー -> 敵)
+		// A. 目標角度の計算
 		float diffX = ePos.x - pPos.x;
 		float diffZ = ePos.z - pPos.z;
 
-		// 距離と正規化（方向）
-		float dist = std::sqrt(diffX * diffX + diffZ * diffZ);
-		Vector3 dir = { 0.0f, 0.0f, 1.0f }; // デフォルト
-		if (dist > 0.0f) {
-			dir = { diffX / dist, 0.0f, diffZ / dist };
-		}
+		// ターゲットへの本来の角度 (atan2(x, z) で計算)
+		// ※ +PIしているのはモデルの向き合わせのため（元のコード準拠）
+		float targetAngleY = std::atan2(diffX, diffZ) + std::numbers::pi_v<float>;
+		float currentAngleY = guideArrow_->mainPosition.transform.rotate.y;
 
-		// B. 矢印の回転 (Y軸回転)
-		// atan2(x, z) で角度(ラジアン)を求める
-		float angleY = std::atan2(diffX, diffZ) + std::numbers::pi_v<float>;
-		guideArrow_->mainPosition.transform.rotate.y = angleY;
+		// ■■■ 角度の最短補間処理 ■■■
+
+		// 1. 差分を計算
+		float deltaAngle = targetAngleY - currentAngleY;
+
+		// 2. 差分を -PI ～ +PI の範囲に正規化する（最短ルート判定）
+		// これをしないと、350度→10度の時にぐるっと遠回りしてしまいます
+		while (deltaAngle > std::numbers::pi_v<float>)  deltaAngle -= 2.0f * std::numbers::pi_v<float>;
+		while (deltaAngle < -std::numbers::pi_v<float>) deltaAngle += 2.0f * std::numbers::pi_v<float>;
+
+		// 3. 補間係数 (0.0f ～ 1.0f)
+		// デルタタイム実装後は、ここを (speed * deltaTime) に置き換えてください。
+		// 今は仮の値 (0.1f = 1フレームで差の10%縮まる) を入れます。
+		float lerpFactor = 0.1f;
+
+		// 4. 現在の角度に「差分の一部」を足す
+		guideArrow_->mainPosition.transform.rotate.y += deltaAngle * lerpFactor;
 
 
-		// C. 矢印の配置半径 (プレイヤーの腕サイズに合わせて広げる)
+		// ■■■ 補間後の角度を使って座標を決める ■■■
+		// (重要) 補間中の angleY を使って方向ベクトル(dir)を作り直します
+		// 元のコードの dir 計算は使わず、今の回転角度から逆算します
+
+		// 現在の矢印の向き（補間中）を取得
+		float smoothAngle = guideArrow_->mainPosition.transform.rotate.y;
+
+		// +PI していた分を引いて、純粋な方向計算用角度に戻す
+		float directionAngle = smoothAngle - std::numbers::pi_v<float>;
+
+		// 角度から方向ベクトルを作成 (sin, cos)
+		Vector3 dir = {
+			std::sin(directionAngle),
+			0.0f,
+			std::cos(directionAngle)
+		};
+
+		// C. 矢印の配置半径
 		float baseRadius = 0.5f;
 		float radiusFactor = 1.0f;
 		float currentRadius = baseRadius + (pMaxArm * radiusFactor);
 
-		// プレイヤーの中心から、敵の方向に currentRadius 分だけ進んだ位置
+		// プレイヤーの中心から、現在の角度(dir)方向に配置
 		guideArrow_->mainPosition.transform.translate = {
 			pPos.x + dir.x * currentRadius,
-			pPos.y + 0.5f, // 地面より少し浮かせる（高さ調整）
+			pPos.y + 0.5f,
 			pPos.z + dir.z * currentRadius
 		};
 
 
-		// D. 矢印の大きさ (プレイヤーの腕サイズに合わせて大きくする)
-		// 1. プレイヤーの全体スケールを取得 (0.5f)
+		// D. 矢印の大きさ
 		float playerGlobalScale = kBaseActorScale_.x;
-
-		// 2. 「基本サイズ」の割合を決める
-		// 0.4f なら「体の40%の大きさ」からスタート
 		float startRatio = 0.4f;
-
-		// 3. 「成長スピード」の割合を決める
-		// 0.1f なら「腕倍率が+1されるごとに、体の10%分だけ大きくなる」
-		// 腕が最大(5.0)になると、(5-1)*0.1 = +0.4 (40%) 増える計算
 		float growthRatio = 0.2f;
-
-		// 計算式: ( 基本割合 + (増えた腕倍率 * 成長割合) ) * 全体スケール
-		// これなら、最大まで腕を大きくしても矢印は「体の80%くらいの大きさ」に収まります
-		float finalScale = (startRatio + (pMaxArm - 1.0f) * growthRatio) * playerGlobalScale;
-
-		guideArrow_->mainPosition.transform.scale = { finalScale, finalScale, finalScale };
+		// ここでは「代入」ではなく「目標値の設定」だけを行う
+		targetScale = (startRatio + (pMaxArm - 1.0f) * growthRatio) * playerGlobalScale;
 
 	} else {
-		// --- ターゲットがいない（自分が最強）場合（非表示） ---
-		// スケールを0にして見えなくする（または描画スキップ）
-		guideArrow_->mainPosition.transform.scale = { 0.0f, 0.0f, 0.0f };
+		// --- ターゲットなしの場合 ---
+
+		// 目標スケールは 0.0f (初期値のまま)
+		targetScale = 0.0f;
+
+		// 【重要】フェードアウト中も矢印がその場に置き去りにならないようにする工夫
+		// ターゲットがいなくても、矢印は「直前の位置」あるいは「プレイヤーのそば」にいてほしいです。
+		// 簡易的に「プレイヤーの位置 + 直前のオフセット」で更新し続けるか、
+		// あるいは何もしなければ「最後にターゲットがいた方向」でその場で縮んで消えます。
+		// (今回はシンプルに位置更新はせず、その場で縮む挙動になります)
 	}
 
-	// 4. 矢印の更新（行列計算など）
-	guideArrow_->Update(camera_); // ←忘れずに呼ぶ
+	// ▼▼▼ 共通処理：サイズの滑らかな更新（フェードイン・アウト） ▼▼▼
+
+	float currentScale = guideArrow_->mainPosition.transform.scale.x;
+
+	// 補間係数 (回転と同じ lerpFactor を使うと統一感が出ます)
+	float lerpFactor = 0.1f;
+
+	// 現在値から目標値へ近づける
+	float nextScale = currentScale + (targetScale - currentScale) * lerpFactor;
+
+	// 計算誤差で完全に0にならないのを防ぐ（0.001未満なら0にする）
+	if (std::abs(nextScale) < 0.001f) {
+		nextScale = 0.0f;
+	}
+
+	guideArrow_->mainPosition.transform.scale = { nextScale, nextScale, nextScale };
+
+
+	// 4. 矢印の更新
+	guideArrow_->Update(camera_);
 }
 
 void SceneStage01::UpdateCrown() {
