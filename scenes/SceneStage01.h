@@ -21,9 +21,7 @@ public:
 	void Draw() override;
 
 
-	Vector3 GetPosition() const {
-		return cameraTransform_.translate;
-	}
+	Camera* GetCamera() override { return camera_; }
 private:
 	kEngine *system_ = nullptr;				// 借り
 
