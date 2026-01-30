@@ -6,7 +6,7 @@ SceneManager::SceneManager(kEngine* system) {
 	//sceneUsingHandle_ = SceneNum::S_BOSSTEST;
 	//sceneUsingHandle_ = SceneNum::S_TESTER;
 	//sceneUsingHandle_ = SceneNum::S_TITLE;
-	sceneUsingHandle_ = SceneNum::S_STAGE_01;
+	sceneUsingHandle_ = SceneNum::S_TITLE;
 	
 	
 
