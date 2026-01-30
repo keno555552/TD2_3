@@ -143,32 +143,6 @@ void SceneManager::Render() {
 #endif
 }
 
-//void SceneManager::StageCheckBoxUpdate() {
-//	int checker = 0;
-//	int newStageNum = -1;
-//
-//	for (int i = 0; i < 10; ++i) {
-//		if (stage[i]) {
-//			checker++;
-//			if (i != static_cast<int>(sceneUsingHandle_)) {
-//				newStageNum = i;
-//			}
-//		}
-//	}
-//
-//	if (checker > 1 && newStageNum != -1) {
-//		ClearStage();
-//		stage[newStageNum] = true;
-//		sceneUsingHandle_ = static_cast<SceneNum>(newStageNum);
-//	}
-//
-//	if (checker == 0) {
-//		ClearStage();
-//		stage[0] = true;
-//		sceneUsingHandle_ = SceneNum::S_SELECT;
-//	}
-//}
-
 
 void SceneManager::ClearStage() {
 	for (auto& ptr : stage) {

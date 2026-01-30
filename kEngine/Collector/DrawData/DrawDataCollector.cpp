@@ -80,6 +80,7 @@ void DrawDataCollector::Collect3D(ObjectData* object) {
 	/// nullチェック
 	if (!object)return;
 
+	int modelCounter = 0;
 	for (auto& objectPart : object->objectParts_) {
 
 		/// ========================================  RenderData作成  ========================================///
@@ -88,7 +89,7 @@ void DrawDataCollector::Collect3D(ObjectData* object) {
 		RenderData renderData;
 
 		/// メッシュ設定
-		renderData.mesh = resourceManager_->meshBufferList_[object->modelHandle_];
+		renderData.mesh = resourceManager_->modelGroupList_[object->modelHandle_]->GetModel(modelCounter);
 
 		/// マテリアル設定
 		objectPart.materialConfig->MakeUVMatrix();
@@ -105,6 +106,8 @@ void DrawDataCollector::Collect3D(ObjectData* object) {
 
 		/// ========================================  バケット振り分け  ========================================///
 		AddObjectToBucket(renderData, object->modelHandle_);
+
+		modelCounter++;
 	}
 }
 
