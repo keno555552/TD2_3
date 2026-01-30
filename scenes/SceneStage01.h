@@ -10,6 +10,7 @@
 #include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
+#include "GameObject/Particle/explosion/Explosion.h"
 
 
 class SceneStage01 :public BaseScene {
@@ -84,6 +85,8 @@ private:
 
 	P_PlaneReduction* planeReductionEffectL_ = nullptr;
 	P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+	Explosion* explosion_ = nullptr;
 
 	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
 
