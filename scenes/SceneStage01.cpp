@@ -283,11 +283,11 @@ void SceneStage01::CameraPart() {
 		float dt = system_->GetDeltaTime();
 
 		// Sキー: ズームアウト（距離を足す）
-		if (system_->GetIsPush(DIK_S)) {
+		if (system_->GetIsPush(DIK_S) || system_->GetGamepadIsPush(VK_PAD_A)) {
 			manualZoomOffset_ += kManualZoomSpeed_ * dt;
 		}
 		// Wキー: ズームイン（距離を引く）
-		else if (system_->GetIsPush(DIK_W)) {
+		else if (system_->GetIsPush(DIK_W) || system_->GetGamepadIsPush(VK_PAD_B)) {
 			manualZoomOffset_ -= kManualZoomSpeed_ * dt;
 		}
 

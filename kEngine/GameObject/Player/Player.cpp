@@ -121,8 +121,12 @@ Vector3 Player::CornerPosition(const Vector3 &center, Corner4 corner) {
 
 void Player::Move() {
   // 入力状態の取得
-  bool pushA = system_->GetIsPush(DIK_A);
-  bool pushD = system_->GetIsPush(DIK_D);
+  bool pushA = 
+      system_->GetIsPush(DIK_A) 
+      || system_->GetGamepadIsPush(VK_PAD_LSHOULDER);
+  bool pushD = 
+      system_->GetIsPush(DIK_D) 
+      || system_->GetGamepadIsPush(VK_PAD_RSHOULDER);
 
   // 腕の膨張・収縮処理
   // Aキーで左腕、Dキーで右腕を膨らませる
