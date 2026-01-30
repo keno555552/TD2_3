@@ -244,7 +244,7 @@ public:
 
 	//Camera* GetUsingCamera() override;
 	// SceneTitle / SceneStage01
-	Camera* GetCamera() override { return camera_; }
+	/*Camera* GetCamera() override { return camera_; }*/
 
 
 };
