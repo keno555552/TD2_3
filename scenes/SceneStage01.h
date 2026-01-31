@@ -94,6 +94,26 @@ private:
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
 
+
+
+
+
+
+
+	// ===== 門パーツ =====
+	static constexpr int kDoujouPartCount = 10;
+
+	Object* Doujous_[kDoujouPartCount] = {};
+	uint32_t  DoujouModels_[kDoujouPartCount] = {};
+	int      DoujouTextures_[kDoujouPartCount] = {};
+
+
+	// ===== Gate Debug =====
+	Vector3 DoujouPos_[kDoujouPartCount];
+	Vector3 DoujouRot_[kDoujouPartCount];
+	Vector3 DoujouScale_[kDoujouPartCount];
+
+
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();

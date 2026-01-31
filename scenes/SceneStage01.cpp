@@ -22,6 +22,87 @@ SceneStage01::SceneStage01(kEngine *system) {
 	tryTextureHandle_ = system_->LoadTextrue("resources/texture/Tryer.png");
 	uvTextureHandle_ = system_->LoadTextrue("resources/TemplateResource/texture/uvChecker.png");
 
+
+	// =====================
+   // 門モデル一覧（画像の通り）
+   // =====================
+	const char* DoujouModelPaths[kDoujouPartCount] = {
+		"resources/gate/model/door_left.obj",
+		"resources/gate/model/door_right.obj",
+		"resources/gate/model/door_peace.obj",
+		"resources/gate/model/roof.obj",
+		"resources/gate/model/signboard.obj",
+		"resources/gate/model/simenawa.obj",
+		"resources/gate/model/tourou.obj",
+		"resources/gate/model/wall_stone.obj",
+		"resources/gate/model/wall_wood.obj",
+		  "resources/gate/model/ground.obj",
+
+
+	};
+
+
+	const char* DoujouTexturePaths[kDoujouPartCount] = {
+		"resources/gate/model/door.png",
+		"resources/gate/model/door.png",
+		"resources/gate/model/door_peace.png",
+		"resources/gate/model/roof.png",
+		"resources/gate/model/door.png",
+		"resources/gate/model/simenawa.png",
+		"resources/gate/model/tourou.png",
+		"resources/gate/model/wall_stone.png",
+		"resources/gate/model/wall_wood.png",
+		 "resources/gate/model/ground.png",
+
+	};
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!DoujouModelPaths[i] || !DoujouTexturePaths[i]) {
+			continue;
+		}
+
+		DoujouModels_[i] = system_->SetModelObj(DoujouModelPaths[i]);
+		DoujouTextures_[i] = system_->LoadTextrue(DoujouTexturePaths[i]);
+
+		Doujous_[i] = new Object;
+		Doujous_[i]->IntObject(system_);
+
+		// ★ 別プロジェクト寄せ：最低1パーツ確保
+		Doujous_[i]->CreateDefaultData();
+		Doujous_[i]->CreateModelData(DoujouModels_[i]);
+		Doujous_[i]->mainPosition.transform.translate = Vector3(4.5f, 0, 0.0f);
+
+		Doujous_[i]->mainPosition.transform.scale = Vector3(0.1f, 0.1f, 0.1f);
+
+		// ★ モデルごとにテクスチャを明示設定
+		for (auto& part : Doujous_[i]->objectParts_) {
+			if (!part.materialConfig) {
+				part.materialConfig = std::make_shared<MaterialConfig>();
+			}
+
+			part.materialConfig->useModelTexture = false;
+			part.materialConfig->textureHandle = DoujouTextures_[i];
+
+			// ★ ライティングは有効化（ライトで色味を作る）
+			part.materialConfig->enableLighting = true;
+
+			// ★ textureColor は触らない（ここ重要）
+		}
+
+		//Doujous_[i]->Update(usingCamera_);
+	}
+	
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!Doujous_[i]) continue;
+
+		DoujouPos_[i] = Doujous_[i]->mainPosition.transform.translate;
+		DoujouRot_[i] = Doujous_[i]->mainPosition.transform.rotate;
+		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
+	}
+
+
+
 	//skydome_->CreateDefaultData();
 	skydome_ = new Object;
 	skydome_->IntObject(system_);
@@ -220,6 +301,22 @@ void SceneStage01::Update() {
 	/// 王冠の更新
 	UpdateCrown();
 
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!Doujous_[i]) continue;
+
+		Doujous_[i]->mainPosition.transform.translate = DoujouPos_[i];
+		Doujous_[i]->mainPosition.transform.rotate = DoujouRot_[i];
+		Doujous_[i]->mainPosition.transform.scale = DoujouScale_[i];
+	}
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (Doujous_[i]) {
+			Doujous_[i]->Update(usingCamera_);
+		}
+	}
+
+
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
@@ -266,6 +363,14 @@ void SceneStage01::Draw() {
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 	explosion_->Draw();
+
+
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (Doujous_[i]) {
+			Doujous_[i]->Draw();
+		}
+	}
 
 #ifdef USE_IMGUI
 	/// imgui処理
