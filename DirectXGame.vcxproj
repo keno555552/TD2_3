@@ -250,7 +250,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="kEngine\Data\Render\Queue\RenderData.cpp" />
     <ClCompile Include="kEngine\GameObject\CountdownTimer\CountdownTimer.cpp" />
     <ClCompile Include="kEngine\GameObject\HPBar\HPBar.cpp" />
-    <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
     <ClCompile Include="kEngine\GameObject\StartTimer\StartTimer.cpp" />
     <ClCompile Include="kEngine\Lighting\AeraLight.cpp" />
     <ClCompile Include="kEngine\Lighting\DirectionalLight.cpp" />
@@ -394,7 +393,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\Data\Render\Queue\RenderData.h" />
     <ClInclude Include="kEngine\GameObject\CountdownTimer\CountdownTimer.h" />
     <ClInclude Include="kEngine\GameObject\HPBar\HPBar.h" />
-    <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
     <ClInclude Include="kEngine\GameObject\StartTimer\StartTimer.h" />
     <ClInclude Include="kEngine\Lighting\AeraLight.h" />
     <ClInclude Include="kEngine\Lighting\DirectionalLight.h" />
