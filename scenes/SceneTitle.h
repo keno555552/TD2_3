@@ -1,5 +1,5 @@
 #pragma once
-#include "Scene.h"
+#include "BaseScene.h"
 #include "Object/Object.h"  
 #include "Object\Sprite.h"
 #include "DebugCamera.h"
@@ -76,6 +76,10 @@ public:
 	float gateShakeTime_ = 0.0f;
 	float gateShakeStrength_ = 0.16f; // 揺れの強さ（小さめ）
 	float gateShakeFreq_ = 202.0f;     // 揺れ速度
+
+
+	/// ========= Lighting関連 =========/// <<<<<<<<<<<<<<<<<<<<<<<
+	DirectionalLight eveningLight_{};
 
 
 	// ===== 文字パーツ =====

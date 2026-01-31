@@ -188,14 +188,14 @@ void DrawEngine::EndDraw() {
 	}
 }
 
-void DrawEngine::SetDirectionalLight(DirectionalLightGPU* light) {
-	if (light) {
-		if (!directionalLightData) {
-			directionalLightData = new DirectionalLightGPU;
-		}
-		*directionalLightData = *light;
-	}
-}
+//void DrawEngine::SetDirectionalLight(DirectionalLightGPU* light) {
+//	if (light) {
+//		if (!directionalLightData) {
+//			directionalLightData = new DirectionalLightGPU;
+//		}
+//		*directionalLightData = *light;
+//	}
+//}
 
 void DrawEngine::PSODecision(MaterialConfig& material) {
 	bool psoChanged = false;

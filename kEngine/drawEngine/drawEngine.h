@@ -42,7 +42,7 @@ public:
 	void CommitDraw();
 	void EndDraw();
 
-	void SetDirectionalLight(DirectionalLightGPU* light);
+	//void SetDirectionalLight(DirectionalLightGPU* light);
 
 	/// 三角形関連
 	void DrawTriangle(TransformationMatrix* wvpData, MaterialConfig material);

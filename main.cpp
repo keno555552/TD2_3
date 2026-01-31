@@ -17,20 +17,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	kEngine* system(new kEngine);
 	system->Initialize(kWindowTitle, kWindowWidth, kWindowHeight);
 
-	//SceneManager* sceneManager = new SceneManager(system);
-	SceneManager::Initialize(system);
+	SceneManager* sceneManager = new SceneManager(system);
+	//SceneManager::Initialize(system);
 
 	///========================Main処理=====================///
 	while (system->ProcessMessage() && kEngine::GameOn()) {
 
 
 		///====================ゲーム処理====================///
-		SceneManager::GetInstance().Update();
+		//SceneManager::GetInstance().Update();
+		sceneManager->Update();
 
 		///=====================描画処理=====================///
 		system->StartFrame();
 
-		SceneManager::GetInstance().Render();
+		//SceneManager::GetInstance().Render();
+		sceneManager->Render();
 
 		system->EndFrame();
 

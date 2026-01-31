@@ -42,7 +42,7 @@ public:
 
 	void EndFrame();
 
-	void SetDirectionalLight(DirectionalLightGPU* light);
+	//void SetDirectionalLight(DirectionalLightGPU* light);
 
 	bool ProcessMessage();
 

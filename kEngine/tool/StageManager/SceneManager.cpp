@@ -1,11 +1,11 @@
 #include "SceneManager.h"
 #include <cmath>
 
-// š ƒeƒNƒXƒ`ƒƒ‚Íuˆê“x‚¾‚¯ƒ[ƒh‚µ‚Äg‚¢‰ñ‚·v(2‰ñ–ÚˆÈ~‚Ì–¢“K—p‘Îô)
+// â˜… ãƒ†ã‚¯ã‚¹ãƒãƒ£ã¯ã€Œä¸€åº¦ã ã‘ãƒ­ãƒ¼ãƒ‰ã—ã¦ä½¿ã„å›ã™ã€(2å›ç›®ä»¥é™ã®æœªé©ç”¨å¯¾ç­–)
 static int gShojiFrameTexHandle = -1;
 static int gShojiPaperTexHandle = -1;
 
-// ===== è“®•ûŒüŒvZ =====
+// ===== æ‰‹å‹•æ–¹å‘è¨ˆç®— =====
 static Vector3 NormalizeSafe(const Vector3& v) {
 	float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 	if (len < 1e-6f) return Vector3(0.0f, 0.0f, 1.0f);
@@ -24,9 +24,9 @@ static Vector3 CalcForward(Vector3 r) {
 	const float PI = 3.14159265359f;
 	const float TWO_PI = 6.28318530718f;
 
-	// â˜Eä¿®æ­£Ešåº¦æ•°â†’ãƒ©ã‚¸ã‚¢ãƒ³å¤‰æ›ã®èª¤çˆE‚’é˜²ãE
-	// ã€E.28ã‚ˆã‚Šå¤§ãã„Eåº¦ã€ã¨æ±ºã‚æ‰“ã¡ã™ã‚‹ã¨ã€ãƒ©ã‚¸ã‚¢ãƒ³è“E©ã§å¿Ešå£Šã‚Œã‚‹ã€E
-	// åº¦æ•°ã¯æ™®é€E0EE60Eˆã›ãEœãE±360E‰ãªã®ã§ã€ãã®ç¯E›²ã ã‘åº¦ã¨ã—ã¦æ‰±ãE€E
+	// ç¬˜ãƒ»è«ï½®è±ï½£ãƒ»å£¼ï½ºï½¦è¬¨ï½°ç«ŠåµÎ›ç¹§ï½¸ç¹§ï½¢ç¹ï½³èŸç”»é‹¤ç¸ºï½®éš±ï½¤è¾·ãƒ»ï½’é«¦ï½²ç¸ºãƒ»
+	// ç¸²ãƒ».28ç¹§åŒ»ï½ŠèŸï½§ç¸ºé˜ªï¼ãƒ»æ™ï½ºï½¦ç¸²é˜ªâ†’è±ï½ºç¹§âˆµé ç¸ºï½¡ç¸ºå¶ï½‹ç¸ºï½¨ç¸²âˆšÎ›ç¹§ï½¸ç¹§ï½¢ç¹ï½³é—¢ãƒ»ï½©é˜ªã€’è ¢ãƒ»â˜…è¢ç¿«ï½Œç¹§ä¹Â€ãƒ»
+	// è ï½¦è¬¨ï½°ç¸ºï½¯è­ï½®é¨¾ãƒ»0ãƒ»ãƒ»60ãƒ»åŒ»â—‹ç¸ºãƒ»â—ç¸ºãƒ»ï½±360ãƒ»å³¨â†‘ç¸ºï½®ç¸ºï½§ç¸²âˆšâ—ç¸ºï½®é½ãƒ»å³‡ç¸ºï£°ç¸ºå¤§ï½ºï½¦ç¸ºï½¨ç¸ºåŠ±â€»è¬‡ï½±ç¸ºãƒ»Â€ãƒ»
 	if ((std::fabs(r.x) > TWO_PI && std::fabs(r.x) <= 360.0f) ||
 		(std::fabs(r.y) > TWO_PI && std::fabs(r.y) <= 360.0f) ||
 		(std::fabs(r.z) > TWO_PI && std::fabs(r.z) <= 360.0f)) {
@@ -36,7 +36,7 @@ static Vector3 CalcForward(Vector3 r) {
 		r.z *= DEG2RAD;
 	}
 
-	// š Šp“x‚Í³‹K‰»‚µ‚ÄˆÀ’è‰»iAù‰ñ‚Å•‰•ûŒü‚ÉÏ‚ñ‚Å‚à”j’]‚µ‚È‚¢j
+	// â˜… è§’åº¦ã¯æ­£è¦åŒ–ã—ã¦å®‰å®šåŒ–ï¼ˆAæ—‹å›ã§è² æ–¹å‘ã«ç©ã‚“ã§ã‚‚ç ´ç¶»ã—ãªã„ï¼‰
 	while (r.y > PI) r.y -= TWO_PI;
 	while (r.y < -PI) r.y += TWO_PI;
 
@@ -87,7 +87,7 @@ static Vector3 CalcBaseFromCamera(
 	return base;
 }
 
-// ===== EasingF‚¾‚ñ‚¾‚ñ’x‚­‚È‚é =====
+// ===== Easingï¼šã ã‚“ã ã‚“é…ããªã‚‹ =====
 static float EaseOutSine(float t) {
 	if (t < 0.0f) t = 0.0f;
 	if (t > 1.0f) t = 1.0f;
@@ -99,7 +99,9 @@ static float EaseOutSine(float t) {
 
 SceneManager::SceneManager(kEngine* system) {
 	system_ = system;
-	sceneUsingHandle_ = SceneNum::S_TITLE;
+	sceneFactory_ = new SceneFactory(system_);
+
+	sceneUsingNameHandle_ = "TITLE";
 
 	helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
 	helperSprite_ = new SimpleSprite;
@@ -109,12 +111,12 @@ SceneManager::SceneManager(kEngine* system) {
 	helperSprite_->mainPosition.transform.translate = { 0.0f,550.0f,0.0f };
 	helperSprite_->objectParts_[0].materialConfig->textureHandle = helperTextureHandle_;
 
-	// š áqƒeƒNƒXƒ`ƒƒ‚àu‚±‚±‚Å1‰ñ‚¾‚¯vƒ[ƒhi2‰ñ–ÚˆÈ~‚Ì–¢“K—p‘Îôj
+	// â˜… éšœå­ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚‚ã€Œã“ã“ã§1å›ã ã‘ã€ãƒ­ãƒ¼ãƒ‰ï¼ˆ2å›ç›®ä»¥é™ã®æœªé©ç”¨å¯¾ç­–ï¼‰
 	if (gShojiFrameTexHandle < 0) {
-		gShojiFrameTexHandle = system_->LoadTextrue("resources/gate/model/wood_tate.png");
+		gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
 	}
 	if (gShojiPaperTexHandle < 0) {
-		gShojiPaperTexHandle = system_->LoadTextrue("resources/gate/model/paper.png");
+		gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
 	}
 
 	defaultMenu_ = new DefaultMenu(system_);
@@ -130,7 +132,7 @@ SceneManager::~SceneManager() {
 	if (sceneOld_) { delete sceneOld_; sceneOld_ = nullptr; }
 }
 
-Camera* SceneManager::ResolveCamera(Scene* s) {
+Camera* SceneManager::ResolveCamera(BaseScene* s) {
 	if (!s) return nullptr;
 	if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
 	if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
@@ -138,66 +140,144 @@ Camera* SceneManager::ResolveCamera(Scene* s) {
 	return nullptr;
 }
 
-void SceneManager::SpawnSceneByHandle(SceneNum handle) {
-	switch (handle) {
-	case SceneNum::S_TITLE:    sceneUsing_ = new SceneTitle(system_); break;
-	case SceneNum::S_STAGE_01: sceneUsing_ = new SceneStage01(system_); break;
-	case SceneNum::S_TESTER:   sceneUsing_ = new SceneTester(system_); break;
-	case SceneNum::S_Result:   sceneUsing_ = new SceneResult(system_); break;
-	default: sceneUsing_ = nullptr; break;
-	}
-	sceneJustSpawned_ = (sceneUsing_ != nullptr);
-}
+//void SceneManager::SpawnSceneByHandle(SceneNum handle) {
+//	switch (handle) {
+//	case SceneNum::S_TITLE:    sceneUsing_ = new SceneTitle(system_); break;
+//	case SceneNum::S_STAGE_01: sceneUsing_ = new SceneStage01(system_); break;
+//	case SceneNum::S_TESTER:   sceneUsing_ = new SceneTester(system_); break;
+//	case SceneNum::S_Result:   sceneUsing_ = new SceneResult(system_); break;
+//	default: sceneUsing_ = nullptr; break;
+//	}
+//	sceneJustSpawned_ = (sceneUsing_ != nullptr);
+//}
 
 void SceneManager::SceneChanger() {
 
 	if (sceneUsing_ && !shojiPlaying_) {
-		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
 
-			nextAfterShoji_ = sceneUsing_->GetNextStage();
-			Camera* cam = ResolveCamera(sceneUsing_);
-			if (!cam) {
-				sceneUsingHandle_ = nextAfterShoji_;
-				delete sceneUsing_;
-				sceneUsing_ = nullptr;
-				return;
+		bool isSceneChange = false;
+
+		switch (sceneUsing_->GetOutcome()) {
+
+		case SceneOutcome::NEXT:
+		{
+			auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
+			if (targetScene != sceneFlow_.end()) {
+
+				nextAfterShoji_ = targetScene->second;
+				Camera* cam = ResolveCamera(sceneUsing_);
+				if (!cam) {
+					sceneUsingNameHandle_ = nextAfterShoji_;
+					isSceneChange = true;
+					return;
+				}
+
+				shojiCam_ = cam;
+
+				// ã‚«ãƒ¡ãƒ©ãƒ­ãƒ¼ã‚«ãƒ«ã‚ªãƒ•ã‚»ãƒƒãƒˆï¼ˆä¿æŒï¼‰
+				shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+
+				Vector3 camPos = shojiCam_->GetPosition();
+				Vector3 camRot = shojiCam_->GetTransform().rotate;
+				Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+
+				// ã“ã“ã‹ã‚‰ã€Œå…ƒã®éšœå­ç”Ÿæˆãƒ–ãƒ­ãƒƒã‚¯ã€ã‚’é–¢æ•°ã«ç§»ã—ãŸã ã‘
+				Shoji_CreateAll(camRot);
+
+				// åˆæœŸä½ç½®ï¼ˆé–‹ã„ãŸçŠ¶æ…‹ï¼‰
+				Shoji_SetInitialOpenPose(base, camRot);
+
+				shojiT_ = 0.0f;
+				shojiWaitT_ = 0.0f;
+				shojiPhase_ = ShojiPhase::Closing;
+				shojiPlaying_ = true;
+
+			} else {
+				Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
 			}
-
-			shojiCam_ = cam;
-
-			// ƒJƒƒ‰ƒ[ƒJƒ‹ƒIƒtƒZƒbƒgi•Ûj
-			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
-
-			Vector3 camPos = shojiCam_->GetPosition();
-			Vector3 camRot = shojiCam_->GetTransform().rotate;
-			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
-
-			// ‚±‚±‚©‚çuŒ³‚Ìáq¶¬ƒuƒƒbƒNv‚ğŠÖ”‚ÉˆÚ‚µ‚½‚¾‚¯
-			Shoji_CreateAll(camRot);
-
-			// ‰ŠúˆÊ’uiŠJ‚¢‚½ó‘Ôj
-			Shoji_SetInitialOpenPose(base, camRot);
-
-			shojiT_ = 0.0f;
-			shojiWaitT_ = 0.0f;
-			shojiPhase_ = ShojiPhase::Closing;
-			shojiPlaying_ = true;
-			return;
 		}
-	}
+		break;
 
-	if (sceneUsing_) {
-		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
-			sceneUsingHandle_ = sceneUsing_->GetNextStage();
-			delete sceneUsing_;
-			sceneUsing_ = nullptr;
+		case SceneOutcome::RETRY:
+			isSceneChange = true;
+			break;
+
+		case SceneOutcome::RETURN:
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+			break;
+		case SceneOutcome::EXIT:
+			kEngine::EndGame();
+			break;
+
 		}
+
+		if (defaultMenu_->IsBack()) {
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+		}
+
+		if (defaultMenu_->IsRetry()) {
+			isSceneChange = true;
+		}
+
+		if (!isSceneChange)return;
+
+		delete sceneUsing_, sceneUsing_ = nullptr;
 	}
 
-	if (!sceneUsing_) {
-		SpawnSceneByHandle(sceneUsingHandle_);
-	}
+	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
 }
+
+//void SceneManager::SceneChanger() {
+//
+//	if (sceneUsing_ && !shojiPlaying_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//
+//			nextAfterShoji_ = sceneUsing_->GetNextStage();
+//			Camera* cam = ResolveCamera(sceneUsing_);
+//			if (!cam) {
+//				sceneUsingHandle_ = nextAfterShoji_;
+//				delete sceneUsing_;
+//				sceneUsing_ = nullptr;
+//				return;
+//			}
+//
+//			shojiCam_ = cam;
+//
+//			// ã‚«ãƒ¡ãƒ©ãƒ­ãƒ¼ã‚«ãƒ«ã‚ªãƒ•ã‚»ãƒƒãƒˆï¼ˆä¿æŒï¼‰
+//			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+//
+//			Vector3 camPos = shojiCam_->GetPosition();
+//			Vector3 camRot = shojiCam_->GetTransform().rotate;
+//			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+//
+//			// ã“ã“ã‹ã‚‰ã€Œå…ƒã®éšœå­ç”Ÿæˆãƒ–ãƒ­ãƒƒã‚¯ã€ã‚’é–¢æ•°ã«ç§»ã—ãŸã ã‘
+//			Shoji_CreateAll(camRot);
+//
+//			// åˆæœŸä½ç½®ï¼ˆé–‹ã„ãŸçŠ¶æ…‹ï¼‰
+//			Shoji_SetInitialOpenPose(base, camRot);
+//
+//			shojiT_ = 0.0f;
+//			shojiWaitT_ = 0.0f;
+//			shojiPhase_ = ShojiPhase::Closing;
+//			shojiPlaying_ = true;
+//			return;
+//		}
+//	}
+//
+//	if (sceneUsing_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//			sceneUsingHandle_ = sceneUsing_->GetNextStage();
+//			delete sceneUsing_;
+//			sceneUsing_ = nullptr;
+//		}
+//	}
+//
+//	if (!sceneUsing_) {
+//		SpawnSceneByHandle(sceneUsingHandle_);
+//	}
+//}
 
 void SceneManager::Update() {
 
@@ -207,7 +287,7 @@ void SceneManager::Update() {
 		if (dt > 0.1f) dt = 0.1f;
 		if (dt < 0.0f) dt = 0.0f;
 
-		// š–Ø˜g‚¾‚¯‚Å‚È‚­†‚à•K{
+		// â˜…æœ¨æ ã ã‘ã§ãªãç´™ã‚‚å¿…é ˆ
 		if (!shojiL_ || !shojiR_ || !shojiL_paper_ || !shojiR_paper_) return;
 
 		// Closing / Opening
@@ -216,15 +296,15 @@ void SceneManager::Update() {
 			return;
 		}
 
-		// •Â‚¶‚½‚Ü‚Ü‘Ò‚Âi‹ŒƒV[ƒ“j
+		// é–‰ã˜ãŸã¾ã¾å¾…ã¤ï¼ˆæ—§ã‚·ãƒ¼ãƒ³ï¼‰
 		if (shojiPhase_ == ShojiPhase::WaitBeforeTransition) {
 			Shoji_UpdateWaitBeforeTransition(dt);
-			// Œ³ƒR[ƒh‚Æ“¯‚¶ return ğŒiWait ‚ª‘«‚è‚È‚¢‚Í’†‚Å return ‚µ‚Ä‚éj
+			// å…ƒã‚³ãƒ¼ãƒ‰ã¨åŒã˜ return æ¡ä»¶ï¼ˆWait ãŒè¶³ã‚Šãªã„æ™‚ã¯ä¸­ã§ return ã—ã¦ã‚‹ï¼‰
 			if (shojiPhase_ == ShojiPhase::WaitNewCamera) return;
 			return;
 		}
 
-		// ‘JˆÚæƒJƒƒ‰‘Ò‚¿iVƒV[ƒ“j
+		// é·ç§»å…ˆã‚«ãƒ¡ãƒ©å¾…ã¡ï¼ˆæ–°ã‚·ãƒ¼ãƒ³ï¼‰
 		if (shojiPhase_ == ShojiPhase::WaitNewCamera) {
 			Shoji_UpdateWaitNewCamera(dt);
 			return;
@@ -253,24 +333,24 @@ void SceneManager::Render() {
 
 
 // =====================================================
-// š áqFŠÖ”‰»iƒƒWƒbƒNE•Ï”–¼E‡˜‚ÍŒ³‚Ì‚Ü‚Üj
+// â˜… éšœå­ï¼šé–¢æ•°åŒ–ï¼ˆãƒ­ã‚¸ãƒƒã‚¯ãƒ»å¤‰æ•°åãƒ»é †åºã¯å…ƒã®ã¾ã¾ï¼‰
 // =====================================================
 
 void SceneManager::Shoji_CreateAll(const Vector3& camRot) {
 
 	// =========================
-	// áqF–Ø˜g
+	// éšœå­ï¼šæœ¨æ 
 	// =========================
 	shojiL_ = new Object;
 	shojiR_ = new Object;
 	shojiL_->IntObject(system_);
 	shojiR_->IntObject(system_);
 
-	// š CreateDefaultData ‚ÍŒÄ‚Î‚È‚¢iCreateModelData ‚ª objectParts_ ‚ğì‚è’¼‚·‚½‚ßj
+	// â˜… CreateDefaultData ã¯å‘¼ã°ãªã„ï¼ˆCreateModelData ãŒ objectParts_ ã‚’ä½œã‚Šç›´ã™ãŸã‚ï¼‰
 	shojiL_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left.obj"));
 	shojiR_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right.obj"));
 
-	// š ƒeƒNƒXƒ`ƒƒİ’èi–Ø˜gj¦CreateModelData ‚ÌŒã‚Éuˆê“x‚¾‚¯vİ’è
+	// â˜… ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®šï¼ˆæœ¨æ ï¼‰â€»CreateModelData ã®å¾Œã«ã€Œä¸€åº¦ã ã‘ã€è¨­å®š
 	for (auto& part : shojiL_->objectParts_) {
 		if (!part.materialConfig)
 			part.materialConfig = std::make_shared<MaterialConfig>();
@@ -292,18 +372,18 @@ void SceneManager::Shoji_CreateAll(const Vector3& camRot) {
 	shojiR_->mainPosition.transform.rotate = camRot;
 
 	// =========================
-	// áqF†
+	// éšœå­ï¼šç´™
 	// =========================
 	shojiL_paper_ = new Object;
 	shojiR_paper_ = new Object;
 	shojiL_paper_->IntObject(system_);
 	shojiR_paper_->IntObject(system_);
 
-	// š CreateDefaultData ‚ÍŒÄ‚Î‚È‚¢iCreateModelData ‚ª objectParts_ ‚ğì‚è’¼‚·‚½‚ßj
+	// â˜… CreateDefaultData ã¯å‘¼ã°ãªã„ï¼ˆCreateModelData ãŒ objectParts_ ã‚’ä½œã‚Šç›´ã™ãŸã‚ï¼‰
 	shojiL_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left_paper.obj"));
 	shojiR_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right_paper.obj"));
 
-	// š ƒeƒNƒXƒ`ƒƒİ’èi˜a†j¦CreateModelData ‚ÌŒã‚Éuˆê“x‚¾‚¯vİ’è
+	// â˜… ãƒ†ã‚¯ã‚¹ãƒãƒ£è¨­å®šï¼ˆå’Œç´™ï¼‰â€»CreateModelData ã®å¾Œã«ã€Œä¸€åº¦ã ã‘ã€è¨­å®š
 	for (auto& part : shojiL_paper_->objectParts_) {
 		if (!part.materialConfig)
 			part.materialConfig = std::make_shared<MaterialConfig>();
@@ -330,28 +410,28 @@ void SceneManager::Shoji_SetInitialOpenPose(const Vector3& base, const Vector3& 
 
 	const float off = 10.2f;
 
-	// å·¦Eˆæœ¨æ EE
+	// èŸ¾ï½¦ãƒ»åŸŸæƒ è­«ï£°ãƒ»ãƒ»
 	Vector3 leftPos = base;
 	leftPos.x -= right.x * off;
 	leftPos.y -= right.y * off;
 	leftPos.z -= right.z * off;
 	shojiL_->mainPosition.transform.translate = leftPos;
 
-	// å³Eˆæœ¨æ EE
+	// èœ¿ï½³ãƒ»åŸŸæƒ è­«ï£°ãƒ»ãƒ»
 	Vector3 rightPos = base;
 	rightPos.x += right.x * off;
 	rightPos.y += right.y * off;
 	rightPos.z += right.z * off;
 	shojiR_->mainPosition.transform.translate = rightPos;
 
-	// å·¦Eˆç´™ï¼E
+	// èŸ¾ï½¦ãƒ»è‚²ï½´å‘»ï½¼ãƒ»
 	Vector3 leftPaperPos = base;
 	leftPaperPos.x -= right.x * off;
 	leftPaperPos.y -= right.y * off;
 	leftPaperPos.z -= right.z * off;
 	shojiL_paper_->mainPosition.transform.translate = leftPaperPos;
 
-	// ‰Ei†j
+	// å³ï¼ˆç´™ï¼‰
 	Vector3 rightPaperPos = base;
 	rightPaperPos.x += right.x * off;
 	rightPaperPos.y += right.y * off;
@@ -371,7 +451,7 @@ void SceneManager::Shoji_DestroyAll() {
 
 void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 
-	// ššš ’Ç‰ÁFOpening ’†‚Å‚àƒV[ƒ“‚ğXV‚·‚é ššš
+	// â˜…â˜…â˜… è¿½åŠ ï¼šOpening ä¸­ã§ã‚‚ã‚·ãƒ¼ãƒ³ã‚’æ›´æ–°ã™ã‚‹ â˜…â˜…â˜…
 	if (shojiPhase_ == ShojiPhase::Opening && sceneUsing_) {
 		sceneUsing_->Update();
 	}
@@ -416,7 +496,7 @@ void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 		shojiWaitT_ = 0.0f;
 	}
 	if (shojiPhase_ == ShojiPhase::Opening && shojiT_ <= 0.0f) {
-		// Œ³ƒR[ƒh‚Æ“¯‚¶ delete ‡E‘ã“ü
+		// å…ƒã‚³ãƒ¼ãƒ‰ã¨åŒã˜ delete é †ãƒ»ä»£å…¥
 		delete shojiL_; shojiL_ = nullptr;
 		delete shojiR_; shojiR_ = nullptr;
 		delete shojiL_paper_; shojiL_paper_ = nullptr;
@@ -449,14 +529,26 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 		shojiR_paper_->Update(shojiCam_);
 	}
 
+	/// å¾…æ©Ÿæ™‚é–“è¨ˆæ¸¬
 	shojiWaitT_ += dt;
+	/// å¾…æ©Ÿæ™‚é–“çµ‚äº†ã¾ã§æˆ»ã‚‹
 	if (shojiWaitT_ < shojiWaitDuration_) return;
 
-	sceneUsingHandle_ = nextAfterShoji_;
-	delete sceneUsing_;
-	sceneUsing_ = nullptr;
+	/// å¾…æ©Ÿæ™‚é–“çµ‚äº†ã—ãŸã‚‰ã‚·ãƒ¼ãƒ³åˆ‡ã‚Šæ›¿ãˆ
+	auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
+	if (targetScene != sceneFlow_.end()) {
 
-	SpawnSceneByHandle(sceneUsingHandle_);
+			sceneUsingNameHandle_ = nextAfterShoji_;
+			return;
+	} else {
+		Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
+	}
+
+	/// å…ƒã‚³ãƒ¼ãƒ‰ã¨åŒã˜ delete é †ãƒ»ä»£å…¥
+	delete sceneUsing_, sceneUsing_ = nullptr;
+	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+	sceneUsing_->Update();
+
 	shojiCam_ = nullptr;
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }

@@ -75,9 +75,9 @@ void kEngine::EndFrame() {
 	drawEngine->EndDraw();
 }
 
-void kEngine::SetDirectionalLight(DirectionalLightGPU* light) {
-	drawEngine->SetDirectionalLight(light);
-}
+//void kEngine::SetDirectionalLight(DirectionalLightGPU* light) {
+//	drawEngine->SetDirectionalLight(light);
+//}
 
 bool kEngine::ProcessMessage() {
 	return dxComm->ProcessMessage();

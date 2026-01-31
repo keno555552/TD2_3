@@ -17,8 +17,11 @@
 class SceneManager {
 public:
 
-	static void Initialize(kEngine* system);
-	static SceneManager& GetInstance();
+	//static void Initialize(kEngine* system) {};
+	//static SceneManager& GetInstance(){};
+
+	SceneManager(kEngine* system);
+	~SceneManager();
 
 	// 複製禁止
 	SceneManager(const SceneManager&) = delete;
@@ -30,7 +33,7 @@ public:
 	void Render();
 ;
 
-	bool GetIsEnd();
+	//bool GetIsEnd(){};
 
 
 	// 障子（タイトルと同じ Object）
@@ -45,7 +48,7 @@ public:
 	float shojiT_ = 0.0f;
 
 	// 退避
-	SceneNum nextAfterShoji_ = SceneNum::S_NONE;
+	std::string nextAfterShoji_ = "NONE";
 	Camera* shojiCam_ = nullptr;
 	// SceneManager.h 内
 
@@ -61,8 +64,8 @@ public:
 
 private:
 	// ★追加：カメラ取得 & 生成を関数化
-	Camera* ResolveCamera(Scene* s);
-	void SpawnSceneByHandle(SceneNum handle);
+	Camera* ResolveCamera(BaseScene* s);
+	//void SpawnSceneByHandle(SceneNum handle);
 
 private:
 	// ★追加：障子の状態
@@ -100,8 +103,6 @@ private:
 private:
 	static SceneManager* sceneManager_;
 
-	SceneManager(kEngine* system);
-	~SceneManager();
 private:
 	BaseScene* sceneUsing_ = nullptr;
 	BaseScene* sceneOld_ = nullptr;
@@ -141,10 +142,10 @@ private:
 
 private:
 	/// ============= ステージマネージメント ============///
-	void ClearStage();
+	//void ClearStage();
 
 #ifdef USE_IMGUI
-	void ImGuiPart();
+	//void ImGuiPart();
 #endif
 };
 
