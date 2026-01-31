@@ -51,6 +51,11 @@ public:
 
 	void ResetCamera(); 
 
+
+	Vector3 GetPosition() const {
+		return cameraTransform_.translate;
+	}
+
 private:
 	/// =============　将来カメラは必ずエンジン側で管理されるべき ============= ///
 	Camera();

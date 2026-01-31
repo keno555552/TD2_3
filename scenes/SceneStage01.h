@@ -21,6 +21,7 @@ public:
 	void Draw() override;
 
 
+	Camera* GetCamera() override { return camera_; }
 private:
 	kEngine *system_ = nullptr;				// 借り
 

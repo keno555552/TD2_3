@@ -305,6 +305,12 @@ void SceneStage01::CameraPart() {
 		Vector3 playerPos = player_->mainPosition.transform.translate;
 		float playerRotY = player_->mainPosition.transform.rotate.y;
 
+		// ★★★ 旧版から統合：回転値を [-PI, PI] に正規化 ★★★
+		const float PI = 3.14159265359f;
+		const float TWO_PI = 6.28318530718f;
+		while (playerRotY > PI) playerRotY -= TWO_PI;
+		while (playerRotY < -PI) playerRotY += TWO_PI;
+
 		// 腕の大きさに応じた距離と高さの計算(ズーム処理)
 		float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
 		// 腕が大きくなるほど距離(baseDistance)を増やす
