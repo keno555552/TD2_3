@@ -101,7 +101,7 @@ private:
 
 
 	// ===== 門パーツ =====
-	static constexpr int kDoujouPartCount = 10;
+	static constexpr int kDoujouPartCount = 2;
 
 	Object* Doujous_[kDoujouPartCount] = {};
 	uint32_t  DoujouModels_[kDoujouPartCount] = {};
@@ -112,6 +112,10 @@ private:
 	Vector3 DoujouPos_[kDoujouPartCount];
 	Vector3 DoujouRot_[kDoujouPartCount];
 	Vector3 DoujouScale_[kDoujouPartCount];
+
+	// タイル畳（畳 + フレーム）の実体置き場
+	std::vector<Object*> tatamiTiles_;   // 畳
+	std::vector<Object*> tatamiFrames_;  // フレーム
 
 
 private:

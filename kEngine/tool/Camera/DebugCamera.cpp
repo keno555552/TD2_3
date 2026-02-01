@@ -18,21 +18,21 @@ void DebugCamera::MouseControlUpdate() {
 
 	///keyboard移動
 	Transform cameraTransform = CreateDefaultTransform();
-	if (system_->GetIsPush(DIK_Q) && isQ_) cameraTransform.translate.z += 0.01f;
-	if (system_->GetIsPush(DIK_E) && isE_) cameraTransform.translate.z -= 0.01f;
-	if (system_->GetIsPush(DIK_A) && isA_) cameraTransform.translate.x -= 0.01f;
-	if (system_->GetIsPush(DIK_D) && isD_) cameraTransform.translate.x += 0.01f;
-	if (system_->GetIsPush(DIK_W) && isW_) cameraTransform.translate.y += 0.01f;
-	if (system_->GetIsPush(DIK_S) && isS_) cameraTransform.translate.y -= 0.01f;
-	if (system_->GetIsPush(DIK_Z) && isZ_) cameraTransform.rotate.y += 0.01f;
-	if (system_->GetIsPush(DIK_C) && isC_) cameraTransform.rotate.y -= 0.01f;
+	if (system_->GetIsPush(DIK_Q) && isQ_) cameraTransform.translate.z += 2.01f;
+	if (system_->GetIsPush(DIK_E) && isE_) cameraTransform.translate.z -= 2.01f;
+	if (system_->GetIsPush(DIK_A) && isA_) cameraTransform.translate.x -= 2.01f;
+	if (system_->GetIsPush(DIK_D) && isD_) cameraTransform.translate.x += 2.01f;
+	if (system_->GetIsPush(DIK_W) && isW_) cameraTransform.translate.y += 2.01f;
+	if (system_->GetIsPush(DIK_S) && isS_) cameraTransform.translate.y -= 2.01f;
+	if (system_->GetIsPush(DIK_Z) && isZ_) cameraTransform.rotate.y += 2.01f;
+	if (system_->GetIsPush(DIK_C) && isC_) cameraTransform.rotate.y -= 2.01f;
 	cameraTransform.translate.z += system_->GetMouseScroll();
 
 	///マウス操作
 	//中鍵平行移動
 	if (system_->GetMouseIsPush(2) && isMouseM_) {
-		cameraTransform.translate.x += (float)system_->GetMousePosXIns() * -0.005f;
-		cameraTransform.translate.y += (float)system_->GetMousePosYIns() * 0.005f;
+		cameraTransform.translate.x += (float)system_->GetMousePosXIns() * -0.025f;
+		cameraTransform.translate.y += (float)system_->GetMousePosYIns() * 0.025f;
 	}
 	//右鍵視覚移動
 	if (system_->GetMouseIsPush(1) && isMouseR_) {

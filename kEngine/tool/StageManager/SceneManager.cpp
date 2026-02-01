@@ -99,7 +99,7 @@ static float EaseOutSine(float t) {
 
 SceneManager::SceneManager(kEngine* system) {
 	system_ = system;
-	sceneUsingHandle_ = SceneNum::S_TITLE;
+	sceneUsingHandle_ = SceneNum::S_STAGE_01;
 
 	helperTextureHandle_ = system_->LoadTextrue("resources/texture/helper.png");
 	helperSprite_ = new SimpleSprite;
