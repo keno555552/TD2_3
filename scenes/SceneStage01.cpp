@@ -29,15 +29,24 @@ SceneStage01::SceneStage01(kEngine *system) {
    // 門モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
+	　　//掛け軸
 		"resources/game/model/doujou_kakeziku.obj",
 		"resources/game/model/doujou_kakeziku_flame.obj",
 		"resources/game/model/doujou_kakeziku_mozi.obj",
-		"resources/game/model/doujou_wall.obj",
+	
+		//白い壁
+		"resources/game/model/doujou_wall_roof.obj",
+		"resources/game/model/doujou_wall_back.obj",
+		"resources/game/model/doujou_wall_front.obj",
+		"resources/game/model/doujou_wall_right.obj",
+		"resources/game/model/doujou_wall_left.obj",
+		//木の部分
 		"resources/game/model/doujou_roof.obj",
 		"resources/game/model/doujou_wood_back.obj",
 		"resources/game/model/doujou_wood_front.obj",
 		"resources/game/model/doujou_wood_right.obj",
 		"resources/game/model/doujou_wood_left.obj",
+		//畳（床）
 		"resources/game/model/tatami.obj",
 		"resources/game/model/tatami_flame.obj",
 		
@@ -49,12 +58,19 @@ SceneStage01::SceneStage01(kEngine *system) {
 		"resources/game/texture/paper.png",
 		"resources/game/texture/ohuda_flame.png",
 		"resources/gate/model/punch.png",
+
 		"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
+
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
+
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
 		
@@ -97,8 +113,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	
 
 	}
-	Doujous_[3]->mainPosition.transform.translate = Vector3(49.87f, 18.03f, 48.15f);
-
+	
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!Doujous_[i]) continue;
 
@@ -107,8 +122,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
 	}
 
-	constexpr int IDX_TATAMI = 9;
-	constexpr int IDX_TATAMI_FRAME = 10;
+	constexpr int IDX_TATAMI = 13;
+	constexpr int IDX_TATAMI_FRAME = 14;
 
 	constexpr int TATAMI_X = 4;
 	constexpr int TATAMI_Z = 7;
@@ -412,7 +427,7 @@ void SceneStage01::Update() {
 	/// 王冠の更新
 	UpdateCrown();
 
-
+	//背景オブジェクト
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!Doujous_[i]) continue;
 
@@ -426,6 +441,7 @@ void SceneStage01::Update() {
 			Doujous_[i]->Update(usingCamera_);
 		}
 	}
+	//畳（床）
 	for (auto* t : tatamiTiles_)  t->Update(usingCamera_);
 	for (auto* f : tatamiFrames_) f->Update(usingCamera_);
 
@@ -482,12 +498,12 @@ void SceneStage01::Draw() {
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 	explosion_->Draw();
-
+	//畳（床）
 	for (auto* t : tatamiTiles_)  t->Draw();
 	for (auto* f : tatamiFrames_) f->Draw();
 
-
-	for (int i = 0; i < kDoujouPartCount; i++) {
+	//背景オブジェクト
+	for (int i = 0; i < kDoujouPartCount-2; i++) {
 		if (Doujous_[i]) {
 			Doujous_[i]->Draw();
 		}
