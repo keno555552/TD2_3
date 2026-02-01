@@ -11,7 +11,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 	debugCamera_ = new DebugCamera(system);
 	camera_ = new Camera;
 	camera_->Move(Vector3(0.0f, 0.5f, -10.0f));
-
+	camera_->SetFarClip(20000.0f);
+	debugCamera_->SetFarClip(20000.0f);
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
 	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
@@ -84,8 +85,10 @@ SceneStage01::SceneStage01(kEngine *system) {
 		}
 
 		//Doujous_[i]->Update(usingCamera_);
-	}
 	
+
+	}
+	Doujous_[3]->mainPosition.transform.translate = Vector3(49.87f, 18.03f, 48.15f);
 
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!Doujous_[i]) continue;
@@ -453,7 +456,7 @@ void SceneStage01::Draw() {
 	for (auto* f : tatamiFrames_) f->Draw();
 
 
-	for (int i = 0; i < kDoujouPartCount; i++) {
+	for (int i = 0; i < kDoujouPartCount-2; i++) {
 		if (Doujous_[i]) {
 			Doujous_[i]->Draw();
 		}
