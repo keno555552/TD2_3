@@ -33,7 +33,11 @@ SceneStage01::SceneStage01(kEngine *system) {
 		"resources/game/model/doujou_kakeziku_flame.obj",
 		"resources/game/model/doujou_kakeziku_mozi.obj",
 		"resources/game/model/doujou_wall.obj",
-		"resources/game/model/doujou_wood.obj",
+		"resources/game/model/doujou_roof.obj",
+		"resources/game/model/doujou_wood_back.obj",
+		"resources/game/model/doujou_wood_front.obj",
+		"resources/game/model/doujou_wood_right.obj",
+		"resources/game/model/doujou_wood_left.obj",
 		"resources/game/model/tatami.obj",
 		"resources/game/model/tatami_flame.obj",
 		
@@ -46,6 +50,10 @@ SceneStage01::SceneStage01(kEngine *system) {
 		"resources/game/texture/ohuda_flame.png",
 		"resources/gate/model/punch.png",
 		"resources/game/texture/paper.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
@@ -99,8 +107,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
 	}
 
-	constexpr int IDX_TATAMI = 5;
-	constexpr int IDX_TATAMI_FRAME = 6;
+	constexpr int IDX_TATAMI = 9;
+	constexpr int IDX_TATAMI_FRAME = 10;
 
 	constexpr int TATAMI_X = 4;
 	constexpr int TATAMI_Z = 7;
@@ -479,7 +487,7 @@ void SceneStage01::Draw() {
 	for (auto* f : tatamiFrames_) f->Draw();
 
 
-	for (int i = 0; i < kDoujouPartCount-2; i++) {
+	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (Doujous_[i]) {
 			Doujous_[i]->Draw();
 		}
