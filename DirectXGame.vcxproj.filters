@@ -134,6 +134,7 @@
     <ClCompile Include="kEngine\GameObject\StartTimer\StartTimer.cpp" />
     <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
+    <ClCompile Include="kEngine\GameObject\Tutorial\Tutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -258,6 +259,7 @@
     <ClInclude Include="kEngine\GameObject\StartTimer\StartTimer.h" />
     <ClInclude Include="kEngine\GameObject\Arm\Arm.h" />
     <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
+    <ClInclude Include="kEngine\GameObject\Tutorial\Tutorial.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
