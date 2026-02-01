@@ -52,7 +52,10 @@ public:
     bool IsAttackingR() const { return isAttackingR_; }
     bool IsAttackingL() const { return isAttackingL_; }
 
-private:
+    // セッター
+    void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
+
+private: // メンバ関数
     void Move(); // 将来AIを入れる場所
 
 private:
@@ -69,9 +72,12 @@ private:
 
 private:
     /// 移動速度
-    Vector3 velocity_ = {};
+    Vector3 velocity_ = {}; // 最終的に位置に加算する速度
+    Vector3 forward_; // 正面方向
+    float currentSpeed_; // 正面方向にかける為のスピード
+    const float kBaseSpeed = 3.0f;
 
-    Vector3 forward_;
+    Vector3 targetPos_{}; // 向かう敵(orプレイヤー)の位置
 
     // これまでのパーツ管理ではなく、Armクラスを持つ
     Arm* armL_ = nullptr;
@@ -87,10 +93,6 @@ private:
     float testReverse_ = -1.0f;
 
 private:
-    // 計算用
-    float deltaTime_{};
-
-private:
     // ダメージフラグ
     bool isDamage_ = false;
     // 攻撃中フラグ
@@ -98,6 +100,10 @@ private:
     bool isAttackingL_ = false;
 
 private:
+    // 計算用
+    float deltaTime_{};
+
+private: // パーティクル用メンバ変数
 
     P_DashWind* dashWindEffectL_ = nullptr;
     P_DashWind* dashWindEffectR_ = nullptr;

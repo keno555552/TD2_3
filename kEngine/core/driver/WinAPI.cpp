@@ -1,4 +1,7 @@
 #include "WinAPI.h"
+#ifdef USE_IMGUI
+#include "ImGuiManager.h"
+#endif
 
 WinAPI::~WinAPI() {
 }
@@ -41,9 +44,9 @@ bool WinAPI::ProcessMessage() {
 		DispatchMessage(&msg);
 	}
 	if (msg.message == WM_QUIT) {
-		return true;
+		return false;
 	}
-	return false;
+	return true;
 }
 
 bool WinAPI::RegisterWindowClass() {

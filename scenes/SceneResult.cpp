@@ -4,11 +4,11 @@
 SceneResult::SceneResult(kEngine* system) {
 	system_ = system;
 
-	camera_ = new Camera;
+	camera_ = system_->CreateCamera();
 	camera_->Move(Vector3(0.0f, 0.0f, -5.0f));
 	camera_->Update();
 
-	testTextResult = system_->LoadTextrue("resources/texture/sceneTest/result.png");
+	testTextResult = system_->LoadTexture("resources/texture/sceneTest/result.png");
 
 	sprite_ = new SimpleSprite;
 	sprite_->IntObject(system_);
@@ -18,7 +18,7 @@ SceneResult::SceneResult(kEngine* system) {
 
 SceneResult::~SceneResult() {
 	delete sprite_;
-	delete camera_;
+	camera_ = nullptr;
 }
 
 void SceneResult::Update() {
@@ -27,7 +27,7 @@ void SceneResult::Update() {
 	camera_->Update();
 
 	if (system_->GetTriggerOn(DIK_SPACE)) {
-		ChangeNextStage(SceneNum::S_TITLE);
+		outcome_ = SceneOutcome::NEXT;
 	}
 }
 

@@ -8,7 +8,7 @@
 
 #pragma region Input
 
-bool CheakXInputDeviceConnected() {
+bool CheckXInputDeviceConnected() {
 	XINPUT_STATE state;
 	ZeroMemory(&state, sizeof(XINPUT_STATE));
 
@@ -17,7 +17,7 @@ bool CheakXInputDeviceConnected() {
 		if (XInputGetState(i, &state) == ERROR_SUCCESS) {
 			bool boool = true;
 			config::SetGamePadType(XINPUT);
-			config::SetConnetGamePad(&boool);
+			config::SetConnectGamePad(&boool);
 			config::SetXInputIp(i);
 			return true; // 見つけたtrue
 		}
@@ -78,11 +78,11 @@ DirectXCore::~DirectXCore() {
 	//CloseHandle(fenceEvent);
 }
 
-uint32_t DirectXCore::GetDesriptorSizeRTV() {
+uint32_t DirectXCore::GetDescriptorSizeRTV() {
 	return device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-uint32_t DirectXCore::GetDesriptorSizeDSV() {
+uint32_t DirectXCore::GetDescriptorSizeDSV() {
 	return device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
@@ -108,7 +108,7 @@ bool DirectXCore::isDirectInputCreated() {
 void DirectXCore::SetDirectXInputKeyBoard() {
 	SetDirectXInput(Keyboard, keyBoardDevice);
 	bool boool = true;
-	config::SetConnetKeyboard(&boool);
+	config::SetConnectKeyboard(&boool);
 }
 
 void DirectXCore::ReleaseDirectXInputKeyBoard() {
@@ -117,14 +117,14 @@ void DirectXCore::ReleaseDirectXInputKeyBoard() {
 		keyBoardDevice->Release();
 		keyBoardDevice = nullptr;
 		bool boool = false;
-		config::SetConnetKeyboard(&boool);
+		config::SetConnectKeyboard(&boool);
 	}
 }
 
 void DirectXCore::SetDirectXInputMouse() {
 	SetDirectXInput(Mouse, mouseDevice);
 	bool boool = true;
-	config::SetConnetMouse(&boool);
+	config::SetConnectMouse(&boool);
 }
 
 void DirectXCore::ReleaseDirectXInputMouse() {
@@ -133,14 +133,14 @@ void DirectXCore::ReleaseDirectXInputMouse() {
 		mouseDevice->Release();
 		mouseDevice = nullptr;
 		bool boool = false;
-		config::SetConnetMouse(&boool);
+		config::SetConnectMouse(&boool);
 	}
 }
 
 void DirectXCore::SetDirectXInputGamepad() {
 	SetDirectXInput(GamePad, gamepadDevice);
 	bool boool = true;
-	config::SetConnetGamePad(&boool);
+	config::SetConnectGamePad(&boool);
 }
 
 void DirectXCore::ReleaseDirectXInputGamepad() {
@@ -149,7 +149,7 @@ void DirectXCore::ReleaseDirectXInputGamepad() {
 		gamepadDevice->Release();
 		gamepadDevice = nullptr;
 		bool boool = false;
-		config::SetConnetGamePad(&boool);
+		config::SetConnectGamePad(&boool);
 	}
 }
 
@@ -241,9 +241,9 @@ void DirectXCore::SetDirectXInput(InputType type, IDirectInputDevice8*& drive) {
 		result = directInput->CreateDevice(GUID_SysKeyboard, &drive, NULL);
 		if (SUCCEEDED(result)) {
 			boool = true;
-			config::SetConnetKeyboard(&boool);
+			config::SetConnectKeyboard(&boool);
 		} else {
-			config::SetConnetKeyboard(&boool);
+			config::SetConnectKeyboard(&boool);
 			skip = true;
 			break;
 		}
@@ -258,9 +258,9 @@ void DirectXCore::SetDirectXInput(InputType type, IDirectInputDevice8*& drive) {
 		result = directInput->CreateDevice(GUID_SysMouse, &drive, NULL);
 		if (SUCCEEDED(result)) {
 			boool = true;
-			config::SetConnetMouse(&boool);
+			config::SetConnectMouse(&boool);
 		} else {
-			config::SetConnetMouse(&boool);
+			config::SetConnectMouse(&boool);
 			skip = true;
 			break;
 		}
@@ -275,10 +275,10 @@ void DirectXCore::SetDirectXInput(InputType type, IDirectInputDevice8*& drive) {
 		result = directInput->CreateDevice(GUID_Joystick, &drive, NULL);
 		if (SUCCEEDED(result)) {
 			boool = true;
-			config::SetConnetGamePad(&boool);
+			config::SetConnectGamePad(&boool);
 			config::SetGamePadType(DIRECTINPUT);
 		} else {
-			config::SetConnetGamePad(&boool);
+			config::SetConnectGamePad(&boool);
 			config::SetGamePadType(NODEVICE);
 			skip = true;
 			break;
@@ -298,7 +298,7 @@ void DirectXCore::SetDirectXInput(InputType type, IDirectInputDevice8*& drive) {
 }
 
 void DirectXCore::SetXInput() {
-	CheakXInputDeviceConnected();
+	CheckXInputDeviceConnected();
 }
 
 
@@ -423,9 +423,6 @@ void DirectXCore::InitializeDrive(const char* kClientTitle, int kClientWidth, in
 	winAPI_ = new WinAPI();
 	winAPI_->Initialize(kClientTitle, kClientWidth, kClientHeight);
 
-	config::SaveClientWidth(kClientWidth);
-	config::SaveClientHeight(kClientHeight);
-
 	/// DXGIファクトリーの生成
 	dxgiFactory = nullptr;
 	// HRESULTはWindows系のエラーコードであり、
@@ -510,6 +507,7 @@ void DirectXCore::Finalize() {
 #ifdef _DEBUG
 	/// リソースリークチェック
 	IDXGIDebug1* debug;
+	//if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {
 	if (SUCCEEDED(DXGIGetDebugInterface1(1, IID_PPV_ARGS(&debug)))) {
 		//debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);///また未解放要素がある
 		debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL);

@@ -24,9 +24,9 @@ static Vector3 CalcForward(Vector3 r) {
 	const float PI = 3.14159265359f;
 	const float TWO_PI = 6.28318530718f;
 
-	// ★ 修正：度数→ラジアン変換の誤爆を防ぐ
-	// 「6.28より大きい＝度」と決め打ちすると、ラジアン蓄積で必ず壊れる。
-	// 度数は普通 0～360（せいぜい±360）なので、その範囲だけ度として扱う。
+	// 笘・菫ｮ豁｣・壼ｺｦ謨ｰ竊偵Λ繧ｸ繧｢繝ｳ螟画鋤縺ｮ隱､辷・ｒ髦ｲ縺・
+	// 縲・.28繧医ｊ螟ｧ縺阪＞・晏ｺｦ縲阪→豎ｺ繧∵遠縺｡縺吶ｋ縺ｨ縲√Λ繧ｸ繧｢繝ｳ闢・ｩ阪〒蠢・★螢翫ｌ繧九・
+	// 蠎ｦ謨ｰ縺ｯ譎ｮ騾・0・・60・医○縺・●縺・ｱ360・峨↑縺ｮ縺ｧ縲√◎縺ｮ遽・峇縺縺大ｺｦ縺ｨ縺励※謇ｱ縺・・
 	if ((std::fabs(r.x) > TWO_PI && std::fabs(r.x) <= 360.0f) ||
 		(std::fabs(r.y) > TWO_PI && std::fabs(r.y) <= 360.0f) ||
 		(std::fabs(r.z) > TWO_PI && std::fabs(r.z) <= 360.0f)) {
@@ -99,9 +99,12 @@ static float EaseOutSine(float t) {
 
 SceneManager::SceneManager(kEngine* system) {
 	system_ = system;
-	sceneUsingHandle_ = SceneNum::S_STAGE_01;
 
-	helperTextureHandle_ = system_->LoadTextrue("resources/texture/helper.png");
+	sceneFactory_ = new SceneFactory(system_);
+
+	sceneUsingNameHandle_ = "TITLE";
+
+	helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
 	helperSprite_ = new SimpleSprite;
 	helperSprite_->IntObject(system_);
 	helperSprite_->CreateDefaultData();
@@ -111,10 +114,10 @@ SceneManager::SceneManager(kEngine* system) {
 
 	// ★ 障子テクスチャも「ここで1回だけ」ロード（2回目以降の未適用対策）
 	if (gShojiFrameTexHandle < 0) {
-		gShojiFrameTexHandle = system_->LoadTextrue("resources/gate/model/wood_tate.png");
+		gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
 	}
 	if (gShojiPaperTexHandle < 0) {
-		gShojiPaperTexHandle = system_->LoadTextrue("resources/gate/model/paper.png");
+		gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
 	}
 
 	defaultMenu_ = new DefaultMenu(system_);
@@ -130,7 +133,7 @@ SceneManager::~SceneManager() {
 	if (sceneOld_) { delete sceneOld_; sceneOld_ = nullptr; }
 }
 
-Camera* SceneManager::ResolveCamera(Scene* s) {
+Camera* SceneManager::ResolveCamera(BaseScene* s) {
 	if (!s) return nullptr;
 	if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
 	if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
@@ -138,66 +141,144 @@ Camera* SceneManager::ResolveCamera(Scene* s) {
 	return nullptr;
 }
 
-void SceneManager::SpawnSceneByHandle(SceneNum handle) {
-	switch (handle) {
-	case SceneNum::S_TITLE:    sceneUsing_ = new SceneTitle(system_); break;
-	case SceneNum::S_STAGE_01: sceneUsing_ = new SceneStage01(system_); break;
-	case SceneNum::S_TESTER:   sceneUsing_ = new SceneTester(system_); break;
-	case SceneNum::S_Result:   sceneUsing_ = new SceneResult(system_); break;
-	default: sceneUsing_ = nullptr; break;
-	}
-	sceneJustSpawned_ = (sceneUsing_ != nullptr);
-}
+//void SceneManager::SpawnSceneByHandle(SceneNum handle) {
+//	switch (handle) {
+//	case SceneNum::S_TITLE:    sceneUsing_ = new SceneTitle(system_); break;
+//	case SceneNum::S_STAGE_01: sceneUsing_ = new SceneStage01(system_); break;
+//	case SceneNum::S_TESTER:   sceneUsing_ = new SceneTester(system_); break;
+//	case SceneNum::S_Result:   sceneUsing_ = new SceneResult(system_); break;
+//	default: sceneUsing_ = nullptr; break;
+//	}
+//	sceneJustSpawned_ = (sceneUsing_ != nullptr);
+//}
 
 void SceneManager::SceneChanger() {
 
 	if (sceneUsing_ && !shojiPlaying_) {
-		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
 
-			nextAfterShoji_ = sceneUsing_->GetNextStage();
-			Camera* cam = ResolveCamera(sceneUsing_);
-			if (!cam) {
-				sceneUsingHandle_ = nextAfterShoji_;
-				delete sceneUsing_;
-				sceneUsing_ = nullptr;
-				return;
+		bool isSceneChange = false;
+
+		switch (sceneUsing_->GetOutcome()) {
+
+		case SceneOutcome::NEXT:
+		{
+			auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
+			if (targetScene != sceneFlow_.end()) {
+
+				nextAfterShoji_ = targetScene->second;
+				Camera* cam = ResolveCamera(sceneUsing_);
+				if (!cam) {
+					sceneUsingNameHandle_ = nextAfterShoji_;
+					isSceneChange = true;
+					return;
+				}
+
+				shojiCam_ = cam;
+
+				// カメラローカルオフセット（保持）
+				shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+
+				Vector3 camPos = shojiCam_->GetPosition();
+				Vector3 camRot = shojiCam_->GetTransform().rotate;
+				Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+
+				// ここから「元の障子生成ブロック」を関数に移しただけ
+				Shoji_CreateAll(camRot);
+
+				// 初期位置（開いた状態）
+				Shoji_SetInitialOpenPose(base, camRot);
+
+				shojiT_ = 0.0f;
+				shojiWaitT_ = 0.0f;
+				shojiPhase_ = ShojiPhase::Closing;
+				shojiPlaying_ = true;
+
+			} else {
+				Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
 			}
-
-			shojiCam_ = cam;
-
-			// カメラローカルオフセット（保持）
-			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
-
-			Vector3 camPos = shojiCam_->GetPosition();
-			Vector3 camRot = shojiCam_->GetTransform().rotate;
-			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
-
-			// ここから「元の障子生成ブロック」を関数に移しただけ
-			Shoji_CreateAll(camRot);
-
-			// 初期位置（開いた状態）
-			Shoji_SetInitialOpenPose(base, camRot);
-
-			shojiT_ = 0.0f;
-			shojiWaitT_ = 0.0f;
-			shojiPhase_ = ShojiPhase::Closing;
-			shojiPlaying_ = true;
-			return;
 		}
-	}
+		break;
 
-	if (sceneUsing_) {
-		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
-			sceneUsingHandle_ = sceneUsing_->GetNextStage();
-			delete sceneUsing_;
-			sceneUsing_ = nullptr;
+		case SceneOutcome::RETRY:
+			isSceneChange = true;
+			break;
+
+		case SceneOutcome::RETURN:
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+			break;
+		case SceneOutcome::EXIT:
+			kEngine::EndGame();
+			break;
+
 		}
+
+		if (defaultMenu_->IsBack()) {
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+		}
+
+		if (defaultMenu_->IsRetry()) {
+			isSceneChange = true;
+		}
+
+		if (!isSceneChange)return;
+
+		delete sceneUsing_, sceneUsing_ = nullptr;
 	}
 
-	if (!sceneUsing_) {
-		SpawnSceneByHandle(sceneUsingHandle_);
-	}
+	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
 }
+
+//void SceneManager::SceneChanger() {
+//
+//	if (sceneUsing_ && !shojiPlaying_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//
+//			nextAfterShoji_ = sceneUsing_->GetNextStage();
+//			Camera* cam = ResolveCamera(sceneUsing_);
+//			if (!cam) {
+//				sceneUsingHandle_ = nextAfterShoji_;
+//				delete sceneUsing_;
+//				sceneUsing_ = nullptr;
+//				return;
+//			}
+//
+//			shojiCam_ = cam;
+//
+//			// カメラローカルオフセット（保持）
+//			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+//
+//			Vector3 camPos = shojiCam_->GetPosition();
+//			Vector3 camRot = shojiCam_->GetTransform().rotate;
+//			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+//
+//			// ここから「元の障子生成ブロック」を関数に移しただけ
+//			Shoji_CreateAll(camRot);
+//
+//			// 初期位置（開いた状態）
+//			Shoji_SetInitialOpenPose(base, camRot);
+//
+//			shojiT_ = 0.0f;
+//			shojiWaitT_ = 0.0f;
+//			shojiPhase_ = ShojiPhase::Closing;
+//			shojiPlaying_ = true;
+//			return;
+//		}
+//	}
+//
+//	if (sceneUsing_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//			sceneUsingHandle_ = sceneUsing_->GetNextStage();
+//			delete sceneUsing_;
+//			sceneUsing_ = nullptr;
+//		}
+//	}
+//
+//	if (!sceneUsing_) {
+//		SpawnSceneByHandle(sceneUsingHandle_);
+//	}
+//}
 
 void SceneManager::Update() {
 
@@ -330,21 +411,21 @@ void SceneManager::Shoji_SetInitialOpenPose(const Vector3& base, const Vector3& 
 
 	const float off = 10.2f;
 
-	// 左（木枠）
+	// 蟾ｦ・域惠譫・・
 	Vector3 leftPos = base;
 	leftPos.x -= right.x * off;
 	leftPos.y -= right.y * off;
 	leftPos.z -= right.z * off;
 	shojiL_->mainPosition.transform.translate = leftPos;
 
-	// 右（木枠）
+	// 蜿ｳ・域惠譫・・
 	Vector3 rightPos = base;
 	rightPos.x += right.x * off;
 	rightPos.y += right.y * off;
 	rightPos.z += right.z * off;
 	shojiR_->mainPosition.transform.translate = rightPos;
 
-	// 左（紙）
+	// 蟾ｦ・育ｴ呻ｼ・
 	Vector3 leftPaperPos = base;
 	leftPaperPos.x -= right.x * off;
 	leftPaperPos.y -= right.y * off;
@@ -449,14 +530,26 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 		shojiR_paper_->Update(shojiCam_);
 	}
 
+	/// 待機時間計測
 	shojiWaitT_ += dt;
+	/// 待機時間終了まで戻る
 	if (shojiWaitT_ < shojiWaitDuration_) return;
 
-	sceneUsingHandle_ = nextAfterShoji_;
-	delete sceneUsing_;
-	sceneUsing_ = nullptr;
+	/// 待機時間終了したらシーン切り替え
+	auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
+	if (targetScene != sceneFlow_.end()) {
 
-	SpawnSceneByHandle(sceneUsingHandle_);
+			sceneUsingNameHandle_ = nextAfterShoji_;
+			return;
+	} else {
+		Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
+	}
+
+	/// 元コードと同じ delete 順・代入
+	delete sceneUsing_, sceneUsing_ = nullptr;
+	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+	sceneUsing_->Update();
+
 	shojiCam_ = nullptr;
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "MaterialConfig.h"
-#include "Scene.h"
+#include "SceneFactory.h"
+#include "BaseScene.h"
 #include "SceneTitle.h"
 #include "Scene1.h"
 #include "SceneStage01.h"
@@ -15,13 +16,24 @@
 #include "Object/Object.h"  
 class SceneManager {
 public:
+
+	//static void Initialize(kEngine* system) {};
+	//static SceneManager& GetInstance(){};
+
 	SceneManager(kEngine* system);
 	~SceneManager();
 
+	// 複製禁止
+	SceneManager(const SceneManager&) = delete;
+	SceneManager& operator=(const SceneManager&) = delete;
+	SceneManager(SceneManager&&) = delete;
+	SceneManager& operator=(SceneManager&&) = delete;
+
 	void Update();
 	void Render();
+;
 
-	bool GetIsEnd();
+	//bool GetIsEnd(){};
 
 
 	// 障子（タイトルと同じ Object）
@@ -36,7 +48,7 @@ public:
 	float shojiT_ = 0.0f;
 
 	// 退避
-	SceneNum nextAfterShoji_ = SceneNum::S_NONE;
+	std::string nextAfterShoji_ = "NONE";
 	Camera* shojiCam_ = nullptr;
 	// SceneManager.h 内
 
@@ -52,8 +64,8 @@ public:
 
 private:
 	// ★追加：カメラ取得 & 生成を関数化
-	Camera* ResolveCamera(Scene* s);
-	void SpawnSceneByHandle(SceneNum handle);
+	Camera* ResolveCamera(BaseScene* s);
+	//void SpawnSceneByHandle(SceneNum handle);
 
 private:
 	// ★追加：障子の状態
@@ -77,18 +89,28 @@ private:
 
 
 public:
-	SceneNum sceneUsingHandle_ = SceneNum::S_NONE;
-	void SceneChanger();
+	std::string sceneUsingNameHandle_ = "NONE";
 
-	void StageCheckBoxUpdate();
+	void SceneChanger();
+	//void StageCheckBoxUpdate();
+
+private:
+	std::map<std::string,std::string> sceneFlow_ = {
+		{"TITLE","STAGE_01"},
+	};
 
 
 private:
-	Scene* sceneUsing_ = nullptr;
-	Scene* sceneOld_ = nullptr;
+	static SceneManager* sceneManager_;
+
+private:
+	BaseScene* sceneUsing_ = nullptr;
+	BaseScene* sceneOld_ = nullptr;
 
 private:
 	kEngine* system_ = nullptr; // 借り
+
+	SceneFactory* sceneFactory_ = nullptr;
 
 	DefaultMenu* defaultMenu_ = nullptr;
 
@@ -120,10 +142,10 @@ private:
 
 private:
 	/// ============= ステージマネージメント ============///
-	void ClearStage();
+	//void ClearStage();
 
 #ifdef USE_IMGUI
-	void ImguiPart();
+	//void ImGuiPart();
 #endif
 };
 

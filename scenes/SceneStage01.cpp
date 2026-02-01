@@ -8,8 +8,9 @@
 SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== システム初期化 ============///
 	system_ = system;
-	debugCamera_ = new DebugCamera(system);
-	camera_ = new Camera;
+
+	debugCamera_ = system_->CreateDebugCamera();
+	camera_ = system_->CreateCamera();
 	camera_->Move(Vector3(0.0f, 0.5f, -10.0f));
 	camera_->SetFarClip(20000.0f);
 	debugCamera_->SetFarClip(20000.0f);
@@ -19,9 +20,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 	guideArrowModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arrow/arrow.obj");
 	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
-	boxTextureHandle_ = system_->LoadTextrue("resources/texture/testBox.png");
-	tryTextureHandle_ = system_->LoadTextrue("resources/texture/Tryer.png");
-	uvTextureHandle_ = system_->LoadTextrue("resources/TemplateResource/texture/uvChecker.png");
+	boxTextureHandle_ = system_->LoadTexture("resources/texture/testBox.png");
+	tryTextureHandle_ = system_->LoadTexture("resources/texture/Tryer.png");
+	uvTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/uvChecker.png");
 
 
 	// =====================
@@ -256,8 +257,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 }
 
 SceneStage01::~SceneStage01() {
-	delete camera_;
-	delete debugCamera_;
+	system_->DestroyCamera(camera_);
+	system_->DestroyCamera(debugCamera_);
 
 	delete player_;
 	delete skydome_;
@@ -301,6 +302,28 @@ void SceneStage01::Update() {
 
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
+
+		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		float nearDistance = distance;
+		Vector3 nearPos = player_->mainPosition.transform.translate;
+		for (auto* other : enemies_) {
+			if (other == enemy) continue; // 自身は除外
+
+			// 差分を計算
+			difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+			// 距離を計算
+			distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+
+			if (distance < nearDistance) {
+				nearDistance = distance; // 一番近い距離の変更
+				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+			}
+		}
+
+
+		enemy->SetTargetPos(nearPos);
+
 		enemy->Update(usingCamera_);
 	}
 
@@ -309,7 +332,7 @@ void SceneStage01::Update() {
 
 	// 攻撃当たり判定処理
 	CheckAttackCollision();
-
+	// 壁と自機の当たり判定
 	for (int i = 0; i < 4; i++) {
 		wall_[i]->Update(usingCamera_);
 		if (crashDecision(wall_[i]->GetAABB(wall_[i]), player_->GetAABB(player_))) {
@@ -330,7 +353,7 @@ void SceneStage01::Update() {
 		}
 	}
 
-	Vector3 playerPos = player_->mainPosition.transform.translate;
+#pragma region 自機用パーティクル
 	Vector3 forward = player_->GetForward();
 
 	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL()-0.5f,0.0f));
@@ -374,7 +397,7 @@ void SceneStage01::Update() {
 		explosion_->SetPos(player_->mainPosition.transform.translate);
 	}
 	explosion_->Update(usingCamera_);
-	//explosion_->SetIsEmitting(false);
+#pragma endregion
 
 	/// ガイド矢印更新
 	UpdateGuideArrow();
@@ -408,7 +431,7 @@ void SceneStage01::Update() {
 	}
 
 	if (system_->GetTriggerOn(DIK_SPACE)) {
-		ChangeNextStage(SceneNum::S_Result);
+		outcome_ = SceneOutcome::NEXT;
 	}
 
 
@@ -471,6 +494,7 @@ void SceneStage01::Draw() {
 void SceneStage01::CameraPart() {
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
+		debugCamera_->MouseControlUpdate();
 	} else {
 		// ---------------------------------------------------------
 		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
@@ -543,7 +567,7 @@ void SceneStage01::CameraPart() {
 		camera_->SetCamera(cameraTransform);
 		usingCamera_ = camera_;
 	}
-	usingCamera_->Update();
+	system_->SetCamera(usingCamera_);
 }
 
 #ifdef USE_IMGUI

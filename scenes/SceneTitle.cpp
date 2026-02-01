@@ -4,16 +4,23 @@ SceneTitle::SceneTitle(kEngine* system) {
     system_ = system;
 
     // ===== カメラ（SceneTest基準）=====
-    camera_ = new Camera;
+	camera_ = system_->CreateCamera();
     camera_->Move(Vector3(-0.6f, 16.0f, -25.0f));
     usingCamera_ = camera_;
-    usingCamera_->Update();
+	system->SetCamera(usingCamera_);
     cameraStartPos_ = { -8.8f, 16.0f, -25.0f };
     cameraEndPos_ = { -8.8f, 8.5f, -34.5f };
     cameraPrevPos_ = cameraStartPos_;
 
+	/// ========= Lighting関連 =========/// <<<<<<<<<<<<<<<<<<<<<<<
+    eveningLight_.color = { 1.00f, 0.78f, 0.55f };
+    eveningLight_.direction = { -0.35f, -0.65f, 0.25f };
+    eveningLight_.intensity = 0.85f;
+
+    system_->AddLight(&eveningLight_);
+
     // ===== タイトルスプライト =====
-    testTextTitle = system_->LoadTextrue("resources/texture/sceneTest/title.png");
+    testTextTitle = system_->LoadTexture("resources/texture/sceneTest/title.png");
 
     sprite_->IntObject(system_);
     sprite_->CreateDefaultData();
@@ -65,7 +72,7 @@ SceneTitle::SceneTitle(kEngine* system) {
         }
 
         gateModels_[i] = system_->SetModelObj(modelPaths[i]);
-        gateTextures_[i] = system_->LoadTextrue(texturePaths[i]);
+        gateTextures_[i] = system_->LoadTexture(texturePaths[i]);
 
         gates_[i] = new Object;
         gates_[i]->IntObject(system_);
@@ -152,7 +159,7 @@ SceneTitle::SceneTitle(kEngine* system) {
         }
 
         selectModels_[i] = system_->SetModelObj(modelPaths2[i]);
-        selectTextures_[i] = system_->LoadTextrue(texturePaths2[i]);
+        selectTextures_[i] = system_->LoadTexture(texturePaths2[i]);
 
         selects_[i] = new Object;
         selects_[i]->IntObject(system_);
@@ -197,7 +204,7 @@ SceneTitle::SceneTitle(kEngine* system) {
 // こぶしモデル（門とは別）
 // =====================
     punchModelHandle_ = system_->SetModelObj("resources/gate/model/punch.obj");
-    punchTexture_ = system_->LoadTextrue("resources/gate/model/punch.png");
+    punchTexture_ = system_->LoadTexture("resources/gate/model/punch.png");
 
     punch_ = new Object;
     punch_->IntObject(system_);
@@ -235,7 +242,7 @@ SceneTitle::SceneTitle(kEngine* system) {
 
     // 穴あきモデル（アイリスイン用）
     irisHoleModelHandle_ = system_->SetModelObj("resources/gate/model/irisin.obj");
-    irisHoleTex_ = system_->LoadTextrue("resources/gate/model/paper.png");
+    irisHoleTex_ = system_->LoadTexture("resources/gate/model/paper.png");
 
     irisHole_ = new Object;
     irisHole_->IntObject(system_);
@@ -282,7 +289,7 @@ SceneTitle::SceneTitle(kEngine* system) {
         }
 
         moziModels_[i] = system_->SetModelObj(mozi_modelPaths[i]);
-        moziTextures_[i] = system_->LoadTextrue(mozi_texturePaths[i]);
+        moziTextures_[i] = system_->LoadTexture(mozi_texturePaths[i]);
 
         mozis_[i] = new Object;
         mozis_[i]->IntObject(system_);
@@ -355,15 +362,16 @@ SceneTitle::~SceneTitle() {
     delete sprite_;
     sprite_ = nullptr;
 
-    delete camera_;
-    camera_ = nullptr;
+	system_->RemoveLight(&eveningLight_);
+
+	system_->DestroyCamera(camera_);
 
     usingCamera_ = nullptr;
 }
 
 void SceneTitle::Update() {
     CameraControl();
-    usingCamera_->Update();
+	system_->SetCamera(usingCamera_);
     // =====================
 // セレクト操作
 // =====================
@@ -407,14 +415,7 @@ void SceneTitle::Update() {
     // ★ 念のため：毎フレ同じ夕方ライトを再適用したい場合はここ
     // （エンジン側でライトが毎回初期化されるタイプなら効く）
     // =====================================================
-    {
-        DirectionalLight eveningLight{};
-        eveningLight.color = { 1.00f, 0.78f, 0.55f, 1.00f };
-        eveningLight.direction = { -0.35f, -0.65f, 0.25f };
-        eveningLight.intensity = 0.85f;
 
-        system_->SetDirectionalLight(&eveningLight);
-    }
     for (int i = 0; i < kGatePartCount; i++) {
         if (!gates_[i]) continue;
 
@@ -831,7 +832,7 @@ void SceneTitle::Update() {
     sprite_->Update(usingCamera_);
 
     if (system_->GetTriggerOn(DIK_SPACE)) {
-        ChangeNextStage(SceneNum::S_STAGE_01);
+		outcome_ = SceneOutcome::NEXT;
     }
 }
 
@@ -1045,7 +1046,7 @@ void SceneTitle::UpdateSparkEffect() {
                 }
                 part.materialConfig->useModelTexture = false;
                 part.materialConfig->textureHandle =
-                    system_->LoadTextrue("resources/gate/model/punch.png");
+                    system_->LoadTexture("resources/gate/model/punch.png");
                 part.materialConfig->enableLighting = false;
             }
 
@@ -1185,7 +1186,7 @@ void SceneTitle::UpdateSparkEffect2() {
                 }
                 part.materialConfig->useModelTexture = false;
                 part.materialConfig->textureHandle =
-                    system_->LoadTextrue("resources/gate/model/punch.png");
+                    system_->LoadTexture("resources/gate/model/punch.png");
                 part.materialConfig->enableLighting = false;
             }
 

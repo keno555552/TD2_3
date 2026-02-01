@@ -9,11 +9,14 @@ Enemy::Enemy(kEngine *system, const Vector3 &position) {
   mainPosition.transform.translate = position;
   objectParts_[0].materialConfig->lightModelType = LightModelType::HalfLambert;
 
+  currentSpeed_ = 2.0f;
+
   // ■■■ 新しい腕の生成 ■■■
     // 第2引数に「自分(this)」を渡して追従させる
   armL_ = new Arm(system, this, false); // 左腕
   armR_ = new Arm(system, this, true);  // 右腕
 
+#pragma region パーティクル
   dashWindEffectL_ = new P_DashWind(system_);
   dashWindEffectR_ = new P_DashWind(system_);
 
@@ -23,6 +26,7 @@ Enemy::Enemy(kEngine *system, const Vector3 &position) {
   planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
   planeReductionEffectR_ = new P_PlaneReduction(system_);
   planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+#pragma endregion
 }
 
 void Enemy::Update(Camera *camera) {
@@ -32,6 +36,9 @@ void Enemy::Update(Camera *camera) {
   // 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
   // これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます
   deltaTime_ = std::min(rawDeltaTime, 0.1f);
+
+  forward_ = { -std::sin(mainPosition.transform.rotate.y), 0.0f,
+                -std::cos(mainPosition.transform.rotate.y) };
 
   // ノックバック処理
   if (knockbackTimer_ > 0.0f) {
@@ -48,12 +55,9 @@ void Enemy::Update(Camera *camera) {
     Move();
   }
 
-  forward_ = { -std::sin(mainPosition.transform.rotate.y), 0.0f,
-                -std::cos(mainPosition.transform.rotate.y) };
-
   MoveEnemyByResult();
 
-  // パーティクル
+#pragma region パーティクル
   dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_/2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
   dashWindEffectL_->SetTargetForward(forward_);
   dashWindEffectL_->SetArmScale(GetArmScaleL());
@@ -103,6 +107,7 @@ void Enemy::Update(Camera *camera) {
   planeReductionEffectR_->SetTargetPos(GetArmPositionR());
   planeReductionEffectR_->SetTargetScale(GetArmScaleR());
   planeReductionEffectR_->Update(camera);
+#pragma endregion
 
   // 親クラスの更新（描画など）
   Object::Update(camera);
@@ -155,39 +160,78 @@ void Enemy::Move() {
     }
   }
 
-  float currentTurnSpeed = 0.04f;
 
-  // 旋回速度の計算：基本速度 + (膨張分 * 係数)
-  // 腕が大きくなるほど、より鋭く旋回します
-  float turnSpeed = currentTurnSpeed;
-  mainPosition.transform.rotate.y += turnSpeed;
- 
-  /*if (armScaleR_ > 1.01f) {
-    isAttackingR_ = true;
+  // 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
+  float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
+  if (maxExtraScale > 0.0f) {
+      // 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
+      // 1.0(最大) ～ 0.0(縮みきり) の割合を算出
+      float boostRatio = maxExtraScale / (30.0f - 1.0f);
+      currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
+  } else {
+      currentSpeed_ = kBaseSpeed;
+  }
+
+  // 攻撃フラグ管理
+  if (armScaleR_ > 1.01f) {
+      isAttackingR_ = true;
   } else {
       isAttackingR_ = false;
-  }*/
+  }
   if (armScaleL_ > 1.01f) {
-    isAttackingL_ = true;
+      isAttackingL_ = true;
   } else {
       isAttackingL_ = false;
   }
 
-  // テスト: 常に右腕だけ膨らませておく（衝突確認用）
-   if (isTestExpand_) {
-       if (armScaleR_ >= 5.0f) {
-           testReverse_ *= -1.0f;
-           isAttackingR_ = true;
-       } else if (armScaleR_ <= 1.0f) {
-           armScaleR_ = 1.0f;
-           testReverse_ *= -1.0f;
-           isAttackingR_ = false;
-       }
-      armScaleR_ += 0.1f * testReverse_; // 大きくしておく
+  // 自身から見て右か左か
+  Vector3 toTarget = targetPos_ - mainPosition.transform.translate;
+  toTarget.y = 0.0f;
+  toTarget = Normalize(toTarget);
+  forward_.y = 0.0f;
+  forward_ = Normalize(forward_);
+  float crossY = Cross(forward_, toTarget).y;
+
+  constexpr float kTurnEpsilon = 0.2f; // 許容範囲
+
+  if (crossY > kTurnEpsilon) { // 左
+
+      armScaleL_ += 0.3f * deltaTime_;
+
+      float turnSpeed = 0.01f + (armScaleL_ - 1.0f) * 0.02f;
+      turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
+      mainPosition.transform.rotate.y += turnSpeed;
+
+      // 攻撃判定解除
+      isAttackingL_ = false;
+  } else {
+      armScaleL_ -= 0.4f * deltaTime_;
+      if (armScaleL_ <= 1.0f) {
+          armScaleL_ = 1.0f;
+      }
   }
+  if (crossY < -kTurnEpsilon) { // 右
+
+      armScaleR_ += 0.3f * deltaTime_;
+
+      float turnSpeed = 0.01f + (armScaleR_ - 1.0f) * 0.02f;
+      turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
+      mainPosition.transform.rotate.y -= turnSpeed;
+
+      // 攻撃判定解除
+      isAttackingR_ = false;
+  } else {
+      armScaleR_ -= 0.4f * deltaTime_;
+      if (armScaleR_ <= 1.0f) {
+          armScaleR_ = 1.0f;
+      }
+  }
+  armScaleL_ = std::clamp(armScaleL_, 1.0f, 30.0f);
 
   mainPosition.transform.scale.y = mainPosition.transform.scale.x;
   mainPosition.transform.scale.z = mainPosition.transform.scale.x;
+
+  velocity_ = forward_ * currentSpeed_; // 速度を正面に設定
 
   // 見た目更新(仮の体部分のため)
   UpdateAppearance();
