@@ -11,6 +11,7 @@
 #include "kEngine/GameObject/Particle/Suction/P_Suction.h"
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
 #include "GameObject/Particle/explosion/Explosion.h"
+#include "Tutorial/Tutorial.h"
 
 
 class SceneStage01 :public BaseScene {
@@ -90,6 +91,9 @@ private:
 	Explosion* explosion_ = nullptr;
 
 	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
+
+	// チュートリアルお試し用
+	Tutorial* tutorial_ = nullptr;
 
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;

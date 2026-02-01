@@ -100,6 +100,26 @@ SceneStage01::SceneStage01(kEngine *system) {
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 
 	explosion_ = new Explosion(system_);
+
+
+	/// --- チュートリアルお試し ---
+	tutorial_ = new Tutorial(system_);
+
+	// ■■■ まとめて登録（リスト化） ■■■
+	// フォルダ内のファイルを順番に登録するイメージです
+	std::vector<std::string> fileList = {
+		"resources/TemplateResource/object/plane/plane.obj"
+		// 例
+		//"resources/tutorial/text_move.obj",   // 0: 移動説明
+		//"resources/tutorial/text_attack.obj", // 1: 攻撃説明
+		//"resources/tutorial/text_skill.obj",  // 2: スキル説明
+		//"resources/tutorial/text_win.obj"     // 3: 勝利条件
+	};
+
+	for (const auto& path : fileList) {
+		tutorial_->AddPage(path);
+	}
+	/// -------------------------------------------
 }
 
 SceneStage01::~SceneStage01() {
@@ -124,9 +144,29 @@ SceneStage01::~SceneStage01() {
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
         }
+
+	delete tutorial_;
 }
 
 void SceneStage01::Update() {
+	tutorial_->Update(usingCamera_);
+
+	// チュートリアル中はゲームを止める場合
+	if (tutorial_->IsActive()) {
+		return;
+	}
+
+	// ゲーム開始時やイベント発生時に呼び出し
+	if (system_->GetTriggerOn(DIK_T)) {
+		tutorial_->Open(0); // 最初から再生
+	}
+
+	//// 特定の条件で途中から再生(イメージ)
+	//if (isSkillUnlocked) {
+	//	tutorial_->Open(2); // スキル説明(2番)だけを表示
+	//	isSkillUnlocked = false; // 一度だけ出すフラグ管理など
+	//}
+
 	/// カメラ処理
 	CameraPart();
 
@@ -289,6 +329,10 @@ void SceneStage01::Draw() {
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 	explosion_->Draw();
+
+
+	// チュートリアルお試し
+	tutorial_->Draw(); // 最前面に描画
 
 #ifdef USE_IMGUI
 	/// imgui処理
