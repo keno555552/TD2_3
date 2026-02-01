@@ -409,85 +409,97 @@ void SceneStage01::Update() {
 
 	// 攻撃当たり判定処理
 	CheckAttackCollision();
-	// ■■■ 壁と自機の当たり判定（範囲制限版） ■■■
-    // プレイヤーの半径（半幅）
-	float pRadiusX = player_->mainPosition.transform.scale.x / 2.0f;
-	float pRadiusZ = player_->mainPosition.transform.scale.z / 2.0f;
+	// ■■■ 壁との当たり判定（共通関数化） ■■■
 
-	for (int i = 0; i < 4; i++) {
-		// 壁情報の更新と取得
-		wall_[i]->Update(usingCamera_);
-		Vector3 wPos = wall_[i]->mainPosition.transform.translate;
-		Vector3 wScale = wall_[i]->mainPosition.transform.scale;
-		float wRadiusX = wScale.x / 2.0f;
-		float wRadiusZ = wScale.z / 2.0f;
+    // 引数: 対象のオブジェクト (Player または Enemy)
+	auto CheckWallCollision = [&](Object* targetObj) {
 
-		// 現在のプレイヤー位置
-		Vector3 pPos = player_->mainPosition.transform.translate;
+		// 対象の半径（半幅）
+		float radiusX = targetObj->mainPosition.transform.scale.x / 2.0f;
+		float radiusZ = targetObj->mainPosition.transform.scale.z / 2.0f;
+		Vector3 targetPos = targetObj->mainPosition.transform.translate;
 
-		// ■ 1. まずは大まかな衝突判定 (AABB)
-		// 高速移動ですり抜けないよう、本来のサイズより少し大きめに判定枠を取る
-		// (壁の範囲 + プレイヤー半径) の範囲内にプレイヤー中心がいれば衝突とみなす
-		bool isHitX = (pPos.x >= wPos.x - wRadiusX - pRadiusX) && (pPos.x <= wPos.x + wRadiusX + pRadiusX);
-		bool isHitZ = (pPos.z >= wPos.z - wRadiusZ - pRadiusZ) && (pPos.z <= wPos.z + wRadiusZ + pRadiusZ);
+		// 1. 壁との衝突判定ループ
+		for (int i = 0; i < 4; i++) {
+			wall_[i]->Update(usingCamera_);
+			Vector3 wPos = wall_[i]->mainPosition.transform.translate;
+			Vector3 wScale = wall_[i]->mainPosition.transform.scale;
+			float wRadiusX = wScale.x / 2.0f;
+			float wRadiusZ = wScale.z / 2.0f;
 
-		if (isHitX && isHitZ) {
-			// ■ 2. 衝突した場合、「X方向」と「Z方向」どちらのめり込みが浅いか調べる
-			// 浅い方に押し出すことで、自然な挙動になります。
+			// AABB判定
+			bool isHitX = (targetPos.x >= wPos.x - wRadiusX - radiusX) && (targetPos.x <= wPos.x + wRadiusX + radiusX);
+			bool isHitZ = (targetPos.z >= wPos.z - wRadiusZ - radiusZ) && (targetPos.z <= wPos.z + wRadiusZ + radiusZ);
 
-			float diffX = pPos.x - wPos.x;
-			float diffZ = pPos.z - wPos.z;
+			if (isHitX && isHitZ) {
+				float diffX = targetPos.x - wPos.x;
+				float diffZ = targetPos.z - wPos.z;
+				float overlapX = (wRadiusX + radiusX) - std::abs(diffX);
+				float overlapZ = (wRadiusZ + radiusZ) - std::abs(diffZ);
 
-			// めり込みの深さ（絶対値が小さいほど、その面に近い）
-			// (半径の合計) - (実際の距離)
-			float overlapX = (wRadiusX + pRadiusX) - std::abs(diffX);
-			float overlapZ = (wRadiusZ + pRadiusZ) - std::abs(diffZ);
+				// 速度リセット用のベクトル
+				Vector3 hitNormal = { 0,0,0 };
 
-			// --- X軸方向の補正 (横壁に当たった) ---
-			if (overlapX < overlapZ) {
-				// プレイヤーが壁より「左」にいるなら、左側の境界へ戻す
-				if (diffX < 0) {
-					player_->mainPosition.transform.translate.x = (wPos.x - wRadiusX - pRadiusX) - 0.001f;
-					// 右方向への速度成分があれば消す（壁に吸われないように）
-					player_->OnWallHit(Vector3(1.0f, 0.0f, 0.0f));
+				// 座標補正
+				if (overlapX < overlapZ) {
+					if (diffX < 0) {
+						targetObj->mainPosition.transform.translate.x = (wPos.x - wRadiusX - radiusX) - 0.001f;
+						hitNormal = { 1.0f, 0.0f, 0.0f };
+					} else {
+						targetObj->mainPosition.transform.translate.x = (wPos.x + wRadiusX + radiusX) + 0.001f;
+						hitNormal = { -1.0f, 0.0f, 0.0f };
+					}
+				} else {
+					if (diffZ < 0) {
+						targetObj->mainPosition.transform.translate.z = (wPos.z - wRadiusZ - radiusZ) - 0.001f;
+						hitNormal = { 0.0f, 0.0f, 1.0f };
+					} else {
+						targetObj->mainPosition.transform.translate.z = (wPos.z + wRadiusZ + radiusZ) + 0.001f;
+						hitNormal = { 0.0f, 0.0f, -1.0f };
+					}
 				}
-				// プレイヤーが壁より「右」にいるなら、右側の境界へ戻す
-				else {
-					player_->mainPosition.transform.translate.x = (wPos.x + wRadiusX + pRadiusX) + 0.001f;
-					// 左方向への速度成分があれば消す
-					player_->OnWallHit(Vector3(-1.0f, 0.0f, 0.0f));
+
+				// OnWallHitの呼び出し（PlayerかEnemyか判定して呼ぶ）
+				if (targetObj == player_) {
+					player_->OnWallHit(hitNormal);
+				} else {
+					Enemy* e = dynamic_cast<Enemy*>(targetObj);
+					if (e) e->OnWallHit(hitNormal);
 				}
-			}
-			// --- Z軸方向の補正 (奥・手前の壁に当たった) ---
-			else {
-				// 手前 (Zマイナス)
-				if (diffZ < 0) {
-					player_->mainPosition.transform.translate.z = (wPos.z - wRadiusZ - pRadiusZ) - 0.001f;
-					player_->OnWallHit(Vector3(0.0f, 0.0f, 1.0f));
-				}
-				// 奥 (Zプラス)
-				else {
-					player_->mainPosition.transform.translate.z = (wPos.z + wRadiusZ + pRadiusZ) + 0.001f;
-					player_->OnWallHit(Vector3(0.0f, 0.0f, -1.0f));
-				}
+
+				// 座標更新されたのでローカル変数も更新
+				targetPos = targetObj->mainPosition.transform.translate;
 			}
 		}
-	}
-	// ...上記のループ処理の後、あるいはループ内で「明らかに部屋の外に出た」場合の保険...
 
-	float limitX = 99.0f - pRadiusX; // 壁の位置 - プレイヤーサイズ
-	if (player_->mainPosition.transform.translate.x > limitX) {
-		player_->mainPosition.transform.translate.x = limitX;
-	}
-	if (player_->mainPosition.transform.translate.x < 1) {
-		player_->mainPosition.transform.translate.x = 1;
-	}
-	float limitZ = 99.0f - pRadiusZ; // 壁の位置 - プレイヤーサイズ
-	if (player_->mainPosition.transform.translate.z > limitZ) {
-		player_->mainPosition.transform.translate.z = limitZ;
-	}
-	if (player_->mainPosition.transform.translate.z < 1) {
-		player_->mainPosition.transform.translate.z = 1;
+		// 2. 部屋の外に出た場合の保険（Clamp処理）
+		// ※壁の位置が変わらないなら定数でOKですが、壁の厚みなどを考慮した汎用的な値にするとベターです
+		float limitX = 99.0f - radiusX;
+		float limitZ = 99.0f - radiusZ;
+		float minLimit = 1.0f; // 下限
+
+		if (targetObj->mainPosition.transform.translate.x > limitX) {
+			targetObj->mainPosition.transform.translate.x = limitX;
+		}
+		if (targetObj->mainPosition.transform.translate.x < minLimit) {
+			targetObj->mainPosition.transform.translate.x = minLimit;
+		}
+		if (targetObj->mainPosition.transform.translate.z > limitZ) {
+			targetObj->mainPosition.transform.translate.z = limitZ;
+		}
+		if (targetObj->mainPosition.transform.translate.z < minLimit) {
+			targetObj->mainPosition.transform.translate.z = minLimit;
+		}
+		};
+
+	// ■■■ 実行部分 ■■■
+
+	// 1. プレイヤーの判定
+	CheckWallCollision(player_);
+
+	// 2. 全エネミーの判定
+	for (auto* enemy : enemies_) {
+		CheckWallCollision(enemy);
 	}
 
 #pragma region 自機用パーティクル
@@ -911,7 +923,7 @@ void SceneStage01::CheckAttackCollision() {
 	// 引数に「attackerScale（攻撃主のスケール）」を追加しました
 	auto CheckArmCollision = [&](Object* targetObj, const AABB& targetAABB, Vector3 armPos, float armScale, float attackerScale) {
 		// ▼▼▼ 追加修正1: 既にダメージを受けている相手は無視する ▼▼▼
-	    // これがないと、触れている間ずっとスローがかかり続けます
+		// これがないと、触れている間ずっとスローがかかり続けます
 		if (targetObj == player_) {
 			if (player_->IsDamage()) return;
 		} else {
@@ -948,7 +960,7 @@ void SceneStage01::CheckAttackCollision() {
 				Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
 
 				// ▼▼▼ 追加修正2: 最小ノックバック量の保証 ▼▼▼
-			    // 計算上の威力
+				// 計算上の威力
 				float rawPower = 8.0f * (armScale * armScale);
 				// どんなに弱くても「10.0f」の力は保証する（値は調整してください）
 				// これにより、確実に相手と距離が離れます
@@ -1130,7 +1142,7 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dirA = { diffBA.x / len, diffBA.y / len, diffBA.z / len };
 						Vector3 dirB = { -dirA.x, -dirA.y, -dirA.z };
-						
+
 						// Aへの適用
 						bool ignoreA = (objA == player_ && player_->IsDamage()) || (dynamic_cast<Enemy*>(objA) && dynamic_cast<Enemy*>(objA)->IsDamage());
 						if (!ignoreA) {
@@ -1188,8 +1200,8 @@ void SceneStage01::CheckAttackCollision() {
 	AABB pBodyAABB = player_->GetAABB(player_);
 	float pBodyScale = player_->mainPosition.transform.scale.x;
 	ArmInfo pArms[2] = {
-	    { false, player_->GetArmPositionL(), player_->GetArmScaleL(), player_->IsAttackingL() }, // 左
-	    { true,  player_->GetArmPositionR(), player_->GetArmScaleR(), player_->IsAttackingR() }  // 右
+		{ false, player_->GetArmPositionL(), player_->GetArmScaleL(), player_->IsAttackingL() }, // 左
+		{ true,  player_->GetArmPositionR(), player_->GetArmScaleR(), player_->IsAttackingR() }  // 右
 	};
 
 	// 全エネミーに対してループ処理
@@ -1212,8 +1224,69 @@ void SceneStage01::CheckAttackCollision() {
 			for (int j = 0; j < 2; j++) {
 				// 3. 腕同士の衝突
 				CheckArmToArm(
-					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk, 
+					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk,
 					enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
+			}
+		}
+	}
+
+	// ▼▼▼▼▼▼▼▼▼ 【追加】敵同士の総当たり判定 ▼▼▼▼▼▼▼▼▼
+
+	size_t enemyCount = enemies_.size();
+	for (size_t i = 0; i < enemyCount; ++i) {
+		// j は i + 1 から始めることで、(A, B) を判定したら (B, A) は判定しないようにする（重複防止）
+		for (size_t j = i + 1; j < enemyCount; ++j) {
+
+			Enemy* enemyA = enemies_[i];
+			Enemy* enemyB = enemies_[j];
+
+			// --- Aの情報取得 ---
+			AABB bodyAABB_A = enemyA->GetAABB(enemyA);
+			float bodyScaleA = enemyA->mainPosition.transform.scale.x;
+			ArmInfo armsA[2] = {
+				{ false, enemyA->GetArmPositionL(), enemyA->GetArmScaleL(), enemyA->IsAttackingL() },
+				{ true,  enemyA->GetArmPositionR(), enemyA->GetArmScaleR(), enemyA->IsAttackingR() }
+			};
+
+			// --- Bの情報取得 ---
+			AABB bodyAABB_B = enemyB->GetAABB(enemyB);
+			float bodyScaleB = enemyB->mainPosition.transform.scale.x;
+			ArmInfo armsB[2] = {
+				{ false, enemyB->GetArmPositionL(), enemyB->GetArmScaleL(), enemyB->IsAttackingL() },
+				{ true,  enemyB->GetArmPositionR(), enemyB->GetArmScaleR(), enemyB->IsAttackingR() }
+			};
+
+			// --- 判定実行 ---
+
+			// 左右の腕についてループ
+			for (int aIdx = 0; aIdx < 2; aIdx++) {
+
+				// 1. Aの攻撃 vs Bの体 (AがBを殴った)
+				if (armsA[aIdx].isAtk) {
+					CheckArmCollision(enemyB, bodyAABB_B, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA);
+				}
+
+				// 2. Bの攻撃 vs Aの体 (BがAを殴った)
+				// ※ループの構造上、ここで逆方向もチェックする必要があります
+				// (armsBのループを別途回すより、ここでまとめてチェックした方が効率的です)
+				// ただし、腕インデックスを合わせる必要はないので、このループ内でBの左右両方を確認します。
+			}
+
+			// B側の攻撃チェック（Aの体に対して）
+			for (int bIdx = 0; bIdx < 2; bIdx++) {
+				if (armsB[bIdx].isAtk) {
+					CheckArmCollision(enemyA, bodyAABB_A, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB);
+				}
+			}
+
+			// 3. 腕同士の衝突 (Aの左右 × Bの左右)
+			for (int aIdx = 0; aIdx < 2; aIdx++) {
+				for (int bIdx = 0; bIdx < 2; bIdx++) {
+					CheckArmToArm(
+						enemyA, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA, armsA[aIdx].isRight, armsA[aIdx].isAtk,
+						enemyB, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB, armsB[bIdx].isRight, armsB[bIdx].isAtk
+					);
+				}
 			}
 		}
 	}

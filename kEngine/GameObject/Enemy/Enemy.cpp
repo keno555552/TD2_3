@@ -298,6 +298,21 @@ Vector3 Enemy::GetArmPositionL() const {
     return Vector3{ worldX, worldY, worldZ };
 }
 
+void Enemy::OnWallHit(const Vector3& normal) {
+    // X方向の壁（左右）
+    if (normal.x != 0.0f) {
+        if ((normal.x > 0 && velocity_.x < 0) || (normal.x < 0 && velocity_.x > 0)) {
+            velocity_.x = 0.0f;
+        }
+    }
+    // Z方向の壁（奥・手前）
+    if (normal.z != 0.0f) {
+        if ((normal.z > 0 && velocity_.z < 0) || (normal.z < 0 && velocity_.z > 0)) {
+            velocity_.z = 0.0f;
+        }
+    }
+}
+
 Vector3 Enemy::GetArmPositionR() const {
     // 1. Arm.h と同じ定数を用意する（★ここがズレると判定もズレます！）
        // 本当は共通ヘッダー(Const.hなど)に置くのがベストですが、今はここに書きます

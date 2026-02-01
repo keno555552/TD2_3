@@ -24,6 +24,9 @@ public:
     // isRight: trueなら右腕、falseなら左腕
     void ResetArm(bool isRight);
 
+    // 壁ヒット時に速度を殺すための関数
+    void OnWallHit(const Vector3& normal);
+
     // 衝突判定のために腕の情報を公開
     Vector3 GetArmPositionL() const;
     Vector3 GetArmPositionR() const;
