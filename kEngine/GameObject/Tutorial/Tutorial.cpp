@@ -33,6 +33,7 @@ void Tutorial::AddPage(const std::string& modelPath) {
 	newPage->mainPosition.transform.translate = { 0.0f, 0.0f, 0.0f };
 	newPage->mainPosition.transform.scale = { 0.0f, 0.0f, 0.0f }; // 最初は非表示
 	newPage->isBillboard_ = true;
+	newPage->objectParts_[0].materialConfig.get()->enableLighting = false;
 
 	// 4. リストに追加
 	pages_.push_back(newPage);
@@ -174,10 +175,5 @@ void Tutorial::UpdateCurrentPageAnim(float scale, Camera* camera) {
 			camPos.y + forward.y * distance,
 			camPos.z + forward.z * distance
 		};
-
-		// 3. 回転の同期
-		// Planeなどの2D板ポリゴンは、カメラと同じ向きにしないと裏が見えたり薄くなったりします
-		// isBillboard_ = true にしていても、基本の回転は合わせておくと安全です
-		obj->mainPosition.transform.rotate = camRot;
 	}
 }
