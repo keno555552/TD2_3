@@ -26,7 +26,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 
 
 	// =====================
-   // 門モデル一覧（画像の通り）
+   // 背景モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
 	//掛け軸
@@ -58,19 +58,19 @@ SceneStage01::SceneStage01(kEngine *system) {
 		"resources/game/texture/paper.png",
 		"resources/game/texture/ohuda_flame.png",
 		"resources/gate/model/punch.png",
-
+		//白い壁
 		"resources/game/texture/paper.png",
 		"resources/game/texture/paper.png",
 		"resources/game/texture/paper.png",
 		"resources/game/texture/paper.png",
 		"resources/game/texture/paper.png",
-
+		//木の部分
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
-
+		//畳（床）
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
 		
