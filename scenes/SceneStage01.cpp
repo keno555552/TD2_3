@@ -328,6 +328,20 @@ void SceneStage01::Update() {
 	//	isSkillUnlocked = false; // 一度だけ出すフラグ管理など
 	//}
 
+	// ▼▼▼ ヒットストップの管理処理 (Updateの冒頭推奨) ▼▼▼
+	if (hitStopTimer_ > 0.0f) {
+		// タイマーを減らす
+		// ★重要: ここは「実時間 (GetDeltaTime)」を使う！
+		hitStopTimer_ -= system_->GetDeltaTime();
+
+		// 時間切れで元に戻す
+		if (hitStopTimer_ <= 0.0f) {
+			hitStopTimer_ = 0.0f;
+			system_->SetTimeScale(1.0f); // 等速に戻す
+		}
+	}
+	// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 	/// カメラ処理
 	CameraPart();
 
@@ -372,25 +386,85 @@ void SceneStage01::Update() {
 
 	// 攻撃当たり判定処理
 	CheckAttackCollision();
-	// 壁と自機の当たり判定
-	for (int i = 0; i < 4; i++) {
-		wall_[i]->Update(usingCamera_);
-		if (crashDecision(wall_[i]->GetAABB(wall_[i]), player_->GetAABB(player_))) {
-			// 衝突処理
-			if (i == 0) {
-				player_->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x + wall_[i]->mainPosition.transform.scale.x / 2.0f + player_->mainPosition.transform.scale.x / 2.0f;
-			}
-			if (i == 1) {
-				player_->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z - wall_[i]->mainPosition.transform.scale.z / 2.0f - player_->mainPosition.transform.scale.z / 2.0f;
-			}
-			if (i == 2) {
-				player_->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x - wall_[i]->mainPosition.transform.scale.x / 2.0f - player_->mainPosition.transform.scale.x / 2.0f;
-			}
-			if(i == 3) {
-				player_->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z + wall_[i]->mainPosition.transform.scale.z / 2.0f + player_->mainPosition.transform.scale.z / 2.0f;
-			}
+	// ■■■ 壁と自機の当たり判定（範囲制限版） ■■■
+    // プレイヤーの半径（半幅）
+	float pRadiusX = player_->mainPosition.transform.scale.x / 2.0f;
+	float pRadiusZ = player_->mainPosition.transform.scale.z / 2.0f;
 
+	for (int i = 0; i < 4; i++) {
+		// 壁情報の更新と取得
+		wall_[i]->Update(usingCamera_);
+		Vector3 wPos = wall_[i]->mainPosition.transform.translate;
+		Vector3 wScale = wall_[i]->mainPosition.transform.scale;
+		float wRadiusX = wScale.x / 2.0f;
+		float wRadiusZ = wScale.z / 2.0f;
+
+		// 現在のプレイヤー位置
+		Vector3 pPos = player_->mainPosition.transform.translate;
+
+		// ■ 1. まずは大まかな衝突判定 (AABB)
+		// 高速移動ですり抜けないよう、本来のサイズより少し大きめに判定枠を取る
+		// (壁の範囲 + プレイヤー半径) の範囲内にプレイヤー中心がいれば衝突とみなす
+		bool isHitX = (pPos.x >= wPos.x - wRadiusX - pRadiusX) && (pPos.x <= wPos.x + wRadiusX + pRadiusX);
+		bool isHitZ = (pPos.z >= wPos.z - wRadiusZ - pRadiusZ) && (pPos.z <= wPos.z + wRadiusZ + pRadiusZ);
+
+		if (isHitX && isHitZ) {
+			// ■ 2. 衝突した場合、「X方向」と「Z方向」どちらのめり込みが浅いか調べる
+			// 浅い方に押し出すことで、自然な挙動になります。
+
+			float diffX = pPos.x - wPos.x;
+			float diffZ = pPos.z - wPos.z;
+
+			// めり込みの深さ（絶対値が小さいほど、その面に近い）
+			// (半径の合計) - (実際の距離)
+			float overlapX = (wRadiusX + pRadiusX) - std::abs(diffX);
+			float overlapZ = (wRadiusZ + pRadiusZ) - std::abs(diffZ);
+
+			// --- X軸方向の補正 (横壁に当たった) ---
+			if (overlapX < overlapZ) {
+				// プレイヤーが壁より「左」にいるなら、左側の境界へ戻す
+				if (diffX < 0) {
+					player_->mainPosition.transform.translate.x = (wPos.x - wRadiusX - pRadiusX) - 0.001f;
+					// 右方向への速度成分があれば消す（壁に吸われないように）
+					player_->OnWallHit(Vector3(1.0f, 0.0f, 0.0f));
+				}
+				// プレイヤーが壁より「右」にいるなら、右側の境界へ戻す
+				else {
+					player_->mainPosition.transform.translate.x = (wPos.x + wRadiusX + pRadiusX) + 0.001f;
+					// 左方向への速度成分があれば消す
+					player_->OnWallHit(Vector3(-1.0f, 0.0f, 0.0f));
+				}
+			}
+			// --- Z軸方向の補正 (奥・手前の壁に当たった) ---
+			else {
+				// 手前 (Zマイナス)
+				if (diffZ < 0) {
+					player_->mainPosition.transform.translate.z = (wPos.z - wRadiusZ - pRadiusZ) - 0.001f;
+					player_->OnWallHit(Vector3(0.0f, 0.0f, 1.0f));
+				}
+				// 奥 (Zプラス)
+				else {
+					player_->mainPosition.transform.translate.z = (wPos.z + wRadiusZ + pRadiusZ) + 0.001f;
+					player_->OnWallHit(Vector3(0.0f, 0.0f, -1.0f));
+				}
+			}
 		}
+	}
+	// ...上記のループ処理の後、あるいはループ内で「明らかに部屋の外に出た」場合の保険...
+
+	float limitX = 99.0f - pRadiusX; // 壁の位置 - プレイヤーサイズ
+	if (player_->mainPosition.transform.translate.x > limitX) {
+		player_->mainPosition.transform.translate.x = limitX;
+	}
+	if (player_->mainPosition.transform.translate.x < 1) {
+		player_->mainPosition.transform.translate.x = 1;
+	}
+	float limitZ = 99.0f - pRadiusZ; // 壁の位置 - プレイヤーサイズ
+	if (player_->mainPosition.transform.translate.z > limitZ) {
+		player_->mainPosition.transform.translate.z = limitZ;
+	}
+	if (player_->mainPosition.transform.translate.z < 1) {
+		player_->mainPosition.transform.translate.z = 1;
 	}
 
 #pragma region 自機用パーティクル
@@ -812,6 +886,14 @@ void SceneStage01::CheckAttackCollision() {
 
 	// 引数に「attackerScale（攻撃主のスケール）」を追加しました
 	auto CheckArmCollision = [&](Object* targetObj, const AABB& targetAABB, Vector3 armPos, float armScale, float attackerScale) {
+		// ▼▼▼ 追加修正1: 既にダメージを受けている相手は無視する ▼▼▼
+	    // これがないと、触れている間ずっとスローがかかり続けます
+		if (targetObj == player_) {
+			if (player_->IsDamage()) return;
+		} else {
+			Enemy* e = dynamic_cast<Enemy*>(targetObj);
+			if (e && e->IsDamage()) return;
+		}
 
 		// 1. 腕のAABBを作成
 		// 解説: 
@@ -841,13 +923,23 @@ void SceneStage01::CheckAttackCollision() {
 				// 【パンチ挙動】 腕の位置から、体の位置へ向かって吹っ飛ばす
 				Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
 
-				// 威力: 腕の大きさの2乗
-				float power = 8.0f * (armScale * armScale);
-				Vector3 knockbackForce = { pushDir.x * power, 0.0f, pushDir.z * power };
+				// ▼▼▼ 追加修正2: 最小ノックバック量の保証 ▼▼▼
+			    // 計算上の威力
+				float rawPower = 8.0f * (armScale * armScale);
+				// どんなに弱くても「10.0f」の力は保証する（値は調整してください）
+				// これにより、確実に相手と距離が離れます
+				float finalPower = std::max(rawPower, 10.0f);
+
+				Vector3 knockbackForce = { pushDir.x * finalPower, 0.0f, pushDir.z * finalPower };
 
 				// ターゲットに適用（Player/Enemyで分岐）
 				// ※Objectクラスに仮想関数 AddKnockback があれば分岐不要になります
 				if (targetObj == player_) {
+					// ▼▼▼ 演出追加 ▼▼▼
+					// 0.05倍速(ほぼ停止) にして、0.1秒間(実時間) 止める
+					// これにより「ガッ！」という重いヒット感が生まれます
+					StartHitStop(0.05f, 0.15f);
+
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
 					explosion_->SetPos(player_->mainPosition.transform.translate);
@@ -886,7 +978,9 @@ void SceneStage01::CheckAttackCollision() {
 
 			// 3. 衝突判定
 			if (crashDecision(boxA, boxB)) {
-				float basePower = 8.0f; // 基本威力
+				// 定数定義
+				float basePower = 8.0f;
+				float minKnockback = 10.0f; // 最小ノックバック量
 
 				// 引き分けとみなすサイズ差の許容範囲
 				// 例えば 0.8 に設定すれば、サイズ 3.0 vs 3.5 でも引き分けになります。
@@ -924,12 +1018,23 @@ void SceneStage01::CheckAttackCollision() {
 					}
 				}
 
+				bool isCheckInPlayer = false;
+				if (objA == player_ || objB == player_) {
+					isCheckInPlayer = true;
+				}
+
 
 				// --- ノックバック適用 ---a
 				// --- 結果の適用 ---
 
 				if (winA) {
 					// Aが勝った場合（Bを吹き飛ばす）
+
+					// ★追加: Bが既にダメージ中なら処理しない
+					Enemy* eB = dynamic_cast<Enemy*>(objB);
+					if (objB == player_ && player_->IsDamage()) return;
+					if (eB && eB->IsDamage()) return;
+
 					Vector3 diff = {
 						objB->mainPosition.transform.translate.x - posA.x,
 						objB->mainPosition.transform.translate.y - posA.y,
@@ -939,27 +1044,33 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dir = { diff.x / len, diff.y / len, diff.z / len };
 
-						// ここでは単純にAのサイズパワーで計算
-						float power = basePower * (armScaleA * armScaleA);
+						// ★修正: 最小値保証
+						float power = std::max(basePower * (armScaleA * armScaleA), minKnockback);
 
-						Vector3 knockbackForce = { dir.x * power, 0.0f, dir.z * power };
-						Enemy* e = dynamic_cast<Enemy*>(objB);
-						if (e) {
-							e->AddKnockback(knockbackForce);
-							explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
-              e->ResetArm(isRightB);
+						// スロー演出（プレイヤーが関与している場合のみ推奨）
+						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+
+						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
+
+						if (eB) {
+							eB->AddKnockback(force);
+							eB->ResetArm(isRightB);
 						}
-						
 						if (objB == player_) {
-							player_->AddKnockback(knockbackForce);
+							player_->AddKnockback(force);
 							player_->ResetArm(isRightB);
-              explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
 						}
+						// エフェクト
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (winB) {
 					// Bが勝った場合（Aを吹き飛ばす）
+					// ★追加: Aが既にダメージ中なら処理しない
+					Enemy* eA = dynamic_cast<Enemy*>(objA);
+					if (objA == player_ && player_->IsDamage()) return;
+					if (eA && eA->IsDamage()) return;
+
 					Vector3 diff = {
 						objA->mainPosition.transform.translate.x - posB.x,
 						objA->mainPosition.transform.translate.y - posB.y,
@@ -968,23 +1079,23 @@ void SceneStage01::CheckAttackCollision() {
 					float len = std::sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
 					if (len > 0.0f) {
 						Vector3 dir = { diff.x / len, diff.y / len, diff.z / len };
-						float power = basePower * (armScaleB * armScaleB);
-						Vector3 knockbackForce = { dir.x * power, 0.0f, dir.z * power };
+						// ★修正: 最小値保証
+						float power = std::max(basePower * (armScaleB * armScaleB), minKnockback);
 
-						Enemy* e = dynamic_cast<Enemy*>(objA);
-						if (e) {
-							e->AddKnockback(knockbackForce);
-							explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
-              e->ResetArm(isRightA);
+						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+
+						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
+
+						if (eA) {
+							eA->AddKnockback(force);
+							eA->ResetArm(isRightA);
 						}
-						
 						if (objA == player_) {
-							player_->AddKnockback(knockbackForce);
+							player_->AddKnockback(force);
 							player_->ResetArm(isRightA);
-              explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
 						}
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (draw) {
 					// 引き分け（両方吹っ飛ぶ）
@@ -995,39 +1106,52 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dirA = { diffBA.x / len, diffBA.y / len, diffBA.z / len };
 						Vector3 dirB = { -dirA.x, -dirA.y, -dirA.z };
-
-						float powerA = basePower * (armScaleA * armScaleA) * 0.8f;
-						float powerB = basePower * (armScaleB * armScaleB) * 0.8f;
-
-						Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
-						if (objA == player_) 
-						{
-							player_->AddKnockback(forceA);
-							explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
-						}
-						else {
-							Enemy* e = dynamic_cast<Enemy*>(objA);
-							if (e) {
-								e->AddKnockback(forceA);
+						
+						// Aへの適用
+						bool ignoreA = (objA == player_ && player_->IsDamage()) || (dynamic_cast<Enemy*>(objA) && dynamic_cast<Enemy*>(objA)->IsDamage());
+						if (!ignoreA) {
+							float powerA = std::max(basePower * (armScaleA * armScaleA) * 0.8f, minKnockback); // ★最小値
+							// ... AddKnockback(powerA) ...
+							Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
+							if (objA == player_) {
+								player_->AddKnockback(forceA);
 								explosion_->SetIsEmitting(true);
 								explosion_->SetPos((posA + posB) / 2.0f);
+							} else {
+								Enemy* e = dynamic_cast<Enemy*>(objA);
+								if (e) {
+									e->AddKnockback(forceA);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
+								}
 							}
 						}
-						Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
-						if (objB == player_) 
-						{
-							player_->AddKnockback(forceB);
-							explosion_->SetIsEmitting(true);
-							explosion_->SetPos((posA + posB) / 2.0f);
-						}
-						else {
-							Enemy* e = dynamic_cast<Enemy*>(objB);
-							if (e) {
-								e->AddKnockback(forceB);
+
+						// Bへの適用
+						bool ignoreB = (objB == player_ && player_->IsDamage()) || (dynamic_cast<Enemy*>(objB) && dynamic_cast<Enemy*>(objB)->IsDamage());
+						if (!ignoreB) {
+							float powerB = std::max(basePower * (armScaleB * armScaleB) * 0.8f, minKnockback); // ★最小値
+							// ... AddKnockback(powerB) ...
+							Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
+							if (objB == player_) {
+								player_->AddKnockback(forceB);
 								explosion_->SetIsEmitting(true);
 								explosion_->SetPos((posA + posB) / 2.0f);
+							} else {
+								Enemy* e = dynamic_cast<Enemy*>(objB);
+								if (e) {
+									e->AddKnockback(forceB);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
+								}
 							}
+						}
+
+						// エフェクトとスローは「どちらかがヒットした」なら実行
+						if ((!ignoreA || !ignoreB) && isCheckInPlayer) {
+							StartHitStop(0.05f, 0.15f);
+							explosion_->SetIsEmitting(true);
+							explosion_->SetPos((posA + posB) / 2.0f);
 						}
 					}
 				}
@@ -1068,6 +1192,14 @@ void SceneStage01::CheckAttackCollision() {
 					enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
 			}
 		}
+	}
+}
+
+void SceneStage01::StartHitStop(float scale, float duration) {
+	// 既にスロー中なら、より長い時間を優先するか、上書きするかはお好みで。
+	if (hitStopTimer_ <= 0.0f) {
+		system_->SetTimeScale(scale);
+		hitStopTimer_ = duration;
 	}
 }
 

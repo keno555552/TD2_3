@@ -24,7 +24,7 @@ Player::Player(kEngine *system, const Vector3 &position) {
 
 void Player::Update(Camera *camera) {
   // 1. エンジンから値を取得
-  float rawDeltaTime = system_->GetDeltaTime();
+  float rawDeltaTime = system_->GetScaledDeltaTime();
 
   // 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
   // これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます
@@ -393,6 +393,28 @@ void Player::UpdateAppearance() {
     objectParts_[2].transform.scale = { 0, 0, 0 };
     objectParts_[2].transform.translate =
         objectParts_[0].transform.translate + Vector3{ -(kPlayerWidth / 2.0f), 0.0f, 0.0f };
+}
+
+void Player::OnWallHit(const Vector3& normal) {
+    // 壁の押し返し方向成分の速度をゼロにする（あるいは少し跳ね返す）
+    
+    // X方向の壁（左右）に当たった場合
+    if (normal.x != 0.0f) {
+        // 壁に向かって進んでいる場合のみ止める（壁から離れようとしている時は止めない）
+        if ((normal.x > 0 && velocity_.x < 0) || (normal.x < 0 && velocity_.x > 0)) {
+            velocity_.x = 0.0f;
+            // 少しバウンドさせたい場合はこちらを使う
+            // velocity_.x *= -0.5f; 
+        }
+    }
+
+    // Z方向の壁（奥・手前）に当たった場合
+    if (normal.z != 0.0f) {
+        if ((normal.z > 0 && velocity_.z < 0) || (normal.z < 0 && velocity_.z > 0)) {
+            velocity_.z = 0.0f;
+            // velocity_.z *= -0.5f;
+        }
+    }
 }
 
 // 腕のワールド座標を返す（衝突判定用）

@@ -98,7 +98,8 @@ private:
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
 
-
+	// ヒットストップ（スロー）管理用
+	float hitStopTimer_ = 0.0f;
 
 
 
@@ -130,6 +131,11 @@ private:
 	/// ============= 衝突判定関数 ============/// 
 	// 攻撃による当たり判定
 	void CheckAttackCollision();
+
+	// スローを開始する関数
+	// scale: 時間の速度 (0.1f なら 10分の1 の速度)
+	// duration: スローを維持する実時間 (秒)
+	void StartHitStop(float scale, float duration);
 
 	/// ============ ガイド矢印関連 ============///
 	// ガイド矢印の更新

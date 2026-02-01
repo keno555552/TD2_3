@@ -31,7 +31,7 @@ Enemy::Enemy(kEngine *system, const Vector3 &position) {
 
 void Enemy::Update(Camera *camera) {
   // 1. エンジンから値を取得
-  float rawDeltaTime = system_->GetDeltaTime();
+  float rawDeltaTime = system_->GetScaledDeltaTime();
 
   // 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
   // これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます

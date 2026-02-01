@@ -19,7 +19,7 @@ static inline const float kTurnSpeed = 0.01f;
 // 自動直進の基本速度
 static inline const float kBaseSpeed = 3.0f;
 // 離した時の加速力
-static inline const float kBoostPower = 4.0f;
+static inline const float kBoostPower = 6.0f;
 
 /// 移動速度
 static inline const float kAcceleration = 3.0f;
@@ -57,6 +57,9 @@ public:
 	// 腕のサイズをリセットする関数
     // isRight: trueなら右腕、falseなら左腕
 	void ResetArm(bool isRight);
+	// 壁ヒット時に速度を殺すための関数
+	// normal: 壁の法線（跳ね返る方向）。壁が右にあるなら(-1, 0, 0)
+	void OnWallHit(const Vector3& normal);
 
 	// 衝突判定のために腕の情報を公開
 	Vector3 GetArmPositionL() const;
