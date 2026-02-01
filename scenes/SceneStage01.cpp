@@ -64,9 +64,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 		// ★ 別プロジェクト寄せ：最低1パーツ確保
 		Doujous_[i]->CreateDefaultData();
 		Doujous_[i]->CreateModelData(DoujouModels_[i]);
-		Doujous_[i]->mainPosition.transform.translate = Vector3(50.6f, 18.05f, 48.65f);
+		Doujous_[i]->mainPosition.transform.translate = Vector3(49.9f, 18.05f, 48.15f);
 
-		Doujous_[i]->mainPosition.transform.scale = Vector3(0.2f, 0.2f, 0.2f);
+		Doujous_[i]->mainPosition.transform.scale = Vector3(0.205f, 0.2f, 0.2f);
 
 		// ★ モデルごとにテクスチャを明示設定
 		for (auto& part : Doujous_[i]->objectParts_) {
