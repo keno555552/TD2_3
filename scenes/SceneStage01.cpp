@@ -29,7 +29,7 @@ SceneStage01::SceneStage01(kEngine *system) {
    // 門モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
-	　　//掛け軸
+	//掛け軸
 		"resources/game/model/doujou_kakeziku.obj",
 		"resources/game/model/doujou_kakeziku_flame.obj",
 		"resources/game/model/doujou_kakeziku_mozi.obj",
