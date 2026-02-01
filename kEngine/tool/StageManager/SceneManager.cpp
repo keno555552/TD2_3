@@ -99,6 +99,7 @@ static float EaseOutSine(float t) {
 
 SceneManager::SceneManager(kEngine* system) {
 	system_ = system;
+
 	sceneFactory_ = new SceneFactory(system_);
 
 	sceneUsingNameHandle_ = "TITLE";

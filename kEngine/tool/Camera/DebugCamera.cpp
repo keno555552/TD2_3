@@ -20,6 +20,7 @@ void DebugCamera::MouseControlUpdate() {
 
 	///keyboard移動
 	Transform cameraTransform = CreateDefaultTransform();
+
 	if (system_->GetIsPush(DIK_Q) && isQ_) { cameraTransform.translate.z += 0.01f; isMoved = true; }
 	if (system_->GetIsPush(DIK_E) && isE_) { cameraTransform.translate.z -= 0.01f; isMoved = true; }
 	if (system_->GetIsPush(DIK_A) && isA_) { cameraTransform.translate.x -= 0.01f; isMoved = true; }
@@ -31,6 +32,7 @@ void DebugCamera::MouseControlUpdate() {
 
 	///マウスホイール移動
 	float before = cameraTransform.translate.z;
+
 	cameraTransform.translate.z += system_->GetMouseScroll();
 	if (before != cameraTransform.translate.z) {
 		isMoved = true;
@@ -39,9 +41,11 @@ void DebugCamera::MouseControlUpdate() {
 	///マウス操作
 	//中鍵平行移動
 	if (system_->GetMouseIsPush(2) && isMouseM_) {
+
 		cameraTransform.translate.x += (float)system_->GetMousePosXIns() * -0.005f;
 		cameraTransform.translate.y += (float)system_->GetMousePosYIns() * 0.005f;
 		isMoved = true;
+
 	}
 	//右鍵視覚移動
 	if (system_->GetMouseIsPush(1) && isMouseR_) {

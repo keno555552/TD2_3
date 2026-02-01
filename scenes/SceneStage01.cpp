@@ -12,7 +12,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 	debugCamera_ = system_->CreateDebugCamera();
 	camera_ = system_->CreateCamera();
 	camera_->Move(Vector3(0.0f, 0.5f, -10.0f));
-
+	camera_->SetFarClip(20000.0f);
+	debugCamera_->SetFarClip(20000.0f);
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
 	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
@@ -22,6 +23,159 @@ SceneStage01::SceneStage01(kEngine *system) {
 	boxTextureHandle_ = system_->LoadTexture("resources/texture/testBox.png");
 	tryTextureHandle_ = system_->LoadTexture("resources/texture/Tryer.png");
 	uvTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/uvChecker.png");
+
+
+	// =====================
+   // 門モデル一覧（画像の通り）
+   // =====================
+	const char* DoujouModelPaths[kDoujouPartCount] = {
+		"resources/game/model/doujou_kakeziku.obj",
+		"resources/game/model/doujou_kakeziku_flame.obj",
+		"resources/game/model/doujou_kakeziku_mozi.obj",
+		"resources/game/model/doujou_wall.obj",
+		"resources/game/model/doujou_wood.obj",
+		"resources/game/model/tatami.obj",
+		"resources/game/model/tatami_flame.obj",
+		
+
+	};
+
+
+	const char* DoujouTexturePaths[kDoujouPartCount] = {
+		"resources/game/texture/paper.png",
+		"resources/game/texture/ohuda_flame.png",
+		"resources/gate/model/punch.png",
+		"resources/game/texture/paper.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/tatami.png",
+		"resources/game/texture/tatami_flame.png",
+		
+	};
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!DoujouModelPaths[i] || !DoujouTexturePaths[i]) {
+			continue;
+		}
+
+		DoujouModels_[i] = system_->SetModelObj(DoujouModelPaths[i]);
+		DoujouTextures_[i] = system_->LoadTextrue(DoujouTexturePaths[i]);
+
+		Doujous_[i] = new Object;
+		Doujous_[i]->IntObject(system_);
+
+		// ★ 別プロジェクト寄せ：最低1パーツ確保
+		Doujous_[i]->CreateDefaultData();
+		Doujous_[i]->CreateModelData(DoujouModels_[i]);
+		Doujous_[i]->mainPosition.transform.translate = Vector3(49.9f, 18.05f, 48.15f);
+
+		Doujous_[i]->mainPosition.transform.scale = Vector3(0.205f, 0.2f, 0.2f);
+
+		// ★ モデルごとにテクスチャを明示設定
+		for (auto& part : Doujous_[i]->objectParts_) {
+			if (!part.materialConfig) {
+				part.materialConfig = std::make_shared<MaterialConfig>();
+			}
+
+			part.materialConfig->useModelTexture = false;
+			part.materialConfig->textureHandle = DoujouTextures_[i];
+
+			// ★ ライティングは有効化（ライトで色味を作る）
+			part.materialConfig->enableLighting = true;
+
+			// ★ textureColor は触らない（ここ重要）
+		}
+
+		//Doujous_[i]->Update(usingCamera_);
+	
+
+	}
+	Doujous_[3]->mainPosition.transform.translate = Vector3(49.87f, 18.03f, 48.15f);
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!Doujous_[i]) continue;
+
+		DoujouPos_[i] = Doujous_[i]->mainPosition.transform.translate;
+		DoujouRot_[i] = Doujous_[i]->mainPosition.transform.rotate;
+		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
+	}
+
+	constexpr int IDX_TATAMI = 5;
+	constexpr int IDX_TATAMI_FRAME = 6;
+
+	constexpr int TATAMI_X = 4;
+	constexpr int TATAMI_Z = 7;
+
+	const float TATAMI_SCALE = 0.3;
+
+	// tatami.obj の実寸（Blender基準。合ってなければここだけ調整）
+	const Vector3 TATAMI_SIZE = { 97.0f, 0.0f, 48.0f }; // X短辺 / Z長辺
+
+	// =====================
+// 畳タイル配置（畳 + フレーム）
+// =====================
+
+// 基準位置（好きに変えろ）
+	Vector3 origin = { 15.0f, 0.0f, 7.5f };
+
+	// 1枚あたりの間隔（モデル実寸 * スケール）
+	// ※畳の向きが違うなら x/z を入れ替え
+	float stepX = TATAMI_SIZE.x * TATAMI_SCALE;
+	float stepZ = TATAMI_SIZE.z * TATAMI_SCALE;
+
+	// 生成関数（畳とフレームを同じTransformで作る）
+	auto CreateTatamiPair = [&](const Vector3& pos) {
+		// 畳
+		{
+			Object* t = new Object();
+			t->IntObject(system_);
+			t->CreateDefaultData();
+			t->CreateModelData(DoujouModels_[IDX_TATAMI]);
+
+			t->mainPosition.transform.translate = pos;
+			t->mainPosition.transform.scale = { TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
+
+			for (auto& part : t->objectParts_) {
+				if (!part.materialConfig) part.materialConfig = std::make_shared<MaterialConfig>();
+				part.materialConfig->useModelTexture = false;
+				part.materialConfig->textureHandle = DoujouTextures_[IDX_TATAMI];
+				part.materialConfig->enableLighting = true;
+			}
+
+			tatamiTiles_.push_back(t);
+		}
+
+		// フレーム（座標・回転・スケール同じ）
+		{
+			Object* f = new Object();
+			f->IntObject(system_);
+			f->CreateDefaultData();
+			f->CreateModelData(DoujouModels_[IDX_TATAMI_FRAME]);
+
+			f->mainPosition.transform.translate = pos;
+			f->mainPosition.transform.scale = { TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
+
+			for (auto& part : f->objectParts_) {
+				if (!part.materialConfig) part.materialConfig = std::make_shared<MaterialConfig>();
+				part.materialConfig->useModelTexture = false;
+				part.materialConfig->textureHandle = DoujouTextures_[IDX_TATAMI_FRAME];
+				part.materialConfig->enableLighting = true;
+			}
+
+			tatamiFrames_.push_back(f);
+		}
+		};
+
+	// タイル敷き
+	for (int z = 0; z < TATAMI_Z; ++z) {
+		for (int x = 0; x < TATAMI_X; ++x) {
+			Vector3 p = {
+				origin.x + stepX * x,
+				origin.y,
+				origin.z + stepZ * z
+			};
+			CreateTatamiPair(p);
+		}
+	}
 
 	//skydome_->CreateDefaultData();
 	skydome_ = new Object;
@@ -124,6 +278,13 @@ SceneStage01::~SceneStage01() {
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
         }
+
+
+	for (auto* t : tatamiTiles_)  delete t;
+	for (auto* f : tatamiFrames_) delete f;
+	tatamiTiles_.clear();
+	tatamiFrames_.clear();
+
 }
 
 void SceneStage01::Update() {
@@ -243,6 +404,27 @@ void SceneStage01::Update() {
 	/// 王冠の更新
 	UpdateCrown();
 
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!Doujous_[i]) continue;
+
+		Doujous_[i]->mainPosition.transform.translate = DoujouPos_[i];
+		Doujous_[i]->mainPosition.transform.rotate = DoujouRot_[i];
+		Doujous_[i]->mainPosition.transform.scale = DoujouScale_[i];
+	}
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (Doujous_[i]) {
+			Doujous_[i]->Update(usingCamera_);
+		}
+	}
+	for (auto* t : tatamiTiles_)  t->Update(usingCamera_);
+	for (auto* f : tatamiFrames_) f->Update(usingCamera_);
+
+	
+
+
+
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
@@ -251,11 +433,14 @@ void SceneStage01::Update() {
 	if (system_->GetTriggerOn(DIK_SPACE)) {
 		outcome_ = SceneOutcome::NEXT;
 	}
+
+
+
 }
 
 
 void SceneStage01::Draw() {
-
+	
 	/// 実体処理
 	//system_->DrawModel(&skydome_->objectParts[0].transformationMatrix, &(skydome_->objectParts[0].materialConfig.get()), skydomeModelHandle_);
 	skydome_->Draw();
@@ -289,6 +474,16 @@ void SceneStage01::Draw() {
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 	explosion_->Draw();
+
+	for (auto* t : tatamiTiles_)  t->Draw();
+	for (auto* f : tatamiFrames_) f->Draw();
+
+
+	for (int i = 0; i < kDoujouPartCount-2; i++) {
+		if (Doujous_[i]) {
+			Doujous_[i]->Draw();
+		}
+	}
 
 #ifdef USE_IMGUI
 	/// imgui処理
@@ -543,6 +738,28 @@ void SceneStage01::ImguiPart() {
 
 		ImGui::End();
 	}
+
+#ifdef _DEBUG
+	ImGui::Begin("Gate Debug");
+
+	for (int i = 0; i < kDoujouPartCount; i++) {
+		if (!Doujous_[i]) continue;
+
+		ImGui::PushID(i);
+
+		ImGui::Text("Gate %d", i);
+		ImGui::DragFloat3("Position", &DoujouPos_[i].x, 0.05f);
+		ImGui::DragFloat3("Rotation", &DoujouRot_[i].x, 0.01f);
+		ImGui::DragFloat3("Scale", &DoujouScale_[i].x, 0.01f);
+	
+		ImGui::Separator();
+		ImGui::PopID();
+	}
+
+	ImGui::End();
+#endif
+
+
 }
 #endif
 

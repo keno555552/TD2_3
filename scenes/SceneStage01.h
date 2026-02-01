@@ -94,6 +94,30 @@ private:
 	/// =============== フラグ ================///
 	bool useDebugCamera = false;
 
+
+
+
+
+
+
+	// ===== 門パーツ =====
+	static constexpr int kDoujouPartCount = 7;
+
+	Object* Doujous_[kDoujouPartCount] = {};
+	uint32_t  DoujouModels_[kDoujouPartCount] = {};
+	int      DoujouTextures_[kDoujouPartCount] = {};
+
+
+	// ===== Gate Debug =====
+	Vector3 DoujouPos_[kDoujouPartCount];
+	Vector3 DoujouRot_[kDoujouPartCount];
+	Vector3 DoujouScale_[kDoujouPartCount];
+
+	// タイル畳（畳 + フレーム）の実体置き場
+	std::vector<Object*> tatamiTiles_;   // 畳
+	std::vector<Object*> tatamiFrames_;  // フレーム
+
+
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();
