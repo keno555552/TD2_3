@@ -21,14 +21,14 @@ void DebugCamera::MouseControlUpdate() {
 	///keyboard移動
 	Transform cameraTransform = CreateDefaultTransform();
 
-	if (system_->GetIsPush(DIK_Q) && isQ_) { cameraTransform.translate.z += 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_E) && isE_) { cameraTransform.translate.z -= 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_A) && isA_) { cameraTransform.translate.x -= 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_D) && isD_) { cameraTransform.translate.x += 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_W) && isW_) { cameraTransform.translate.y += 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_S) && isS_) { cameraTransform.translate.y -= 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_Z) && isZ_) { cameraTransform.rotate.y += 0.01f; isMoved = true; }
-	if (system_->GetIsPush(DIK_C) && isC_) { cameraTransform.rotate.y -= 0.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_Q) && isQ_) { cameraTransform.translate.z += 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_E) && isE_) { cameraTransform.translate.z -= 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_A) && isA_) { cameraTransform.translate.x -= 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_D) && isD_) { cameraTransform.translate.x += 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_W) && isW_) { cameraTransform.translate.y += 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_S) && isS_) { cameraTransform.translate.y -= 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_Z) && isZ_) { cameraTransform.rotate.y += 2.01f; isMoved = true; }
+	if (system_->GetIsPush(DIK_C) && isC_) { cameraTransform.rotate.y -= 2.01f; isMoved = true; }
 
 	///マウスホイール移動
 	float before = cameraTransform.translate.z;

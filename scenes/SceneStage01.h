@@ -106,7 +106,7 @@ private:
 
 
 	// ===== 門パーツ =====
-	static constexpr int kDoujouPartCount = 7;
+	static constexpr int kDoujouPartCount = 15;
 
 	Object* Doujous_[kDoujouPartCount] = {};
 	uint32_t  DoujouModels_[kDoujouPartCount] = {};
