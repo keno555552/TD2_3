@@ -58,7 +58,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 		}
 
 		DoujouModels_[i] = system_->SetModelObj(DoujouModelPaths[i]);
-		DoujouTextures_[i] = system_->LoadTextrue(DoujouTexturePaths[i]);
+		DoujouTextures_[i] = system_->LoadTexture(DoujouTexturePaths[i]);
 
 		Doujous_[i] = new Object;
 		Doujous_[i]->IntObject(system_);
