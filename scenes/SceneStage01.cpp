@@ -27,11 +27,11 @@ SceneStage01::SceneStage01(kEngine *system) {
    // 門モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
-	/*	"resources/game/model/doujou_kakeziku.obj",
+		"resources/game/model/doujou_kakeziku.obj",
 		"resources/game/model/doujou_kakeziku_flame.obj",
 		"resources/game/model/doujou_kakeziku_mozi.obj",
 		"resources/game/model/doujou_wall.obj",
-		"resources/game/model/doujou_wood.obj",*/
+		"resources/game/model/doujou_wood.obj",
 		"resources/game/model/tatami.obj",
 		"resources/game/model/tatami_flame.obj",
 		
@@ -40,11 +40,11 @@ SceneStage01::SceneStage01(kEngine *system) {
 
 
 	const char* DoujouTexturePaths[kDoujouPartCount] = {
-		/*"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
 		"resources/game/texture/ohuda_flame.png",
 		"resources/gate/model/punch.png",
 		"resources/game/texture/paper.png",
-		"resources/game/texture/wood_tate.png",*/
+		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
 		
@@ -64,9 +64,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 		// ★ 別プロジェクト寄せ：最低1パーツ確保
 		Doujous_[i]->CreateDefaultData();
 		Doujous_[i]->CreateModelData(DoujouModels_[i]);
-		Doujous_[i]->mainPosition.transform.translate = Vector3(168.0f, 0, 289.850f);
+		Doujous_[i]->mainPosition.transform.translate = Vector3(50.6f, 18.05f, 48.65f);
 
-		Doujous_[i]->mainPosition.transform.scale = Vector3(0.4f, 0.4f, 0.4f);
+		Doujous_[i]->mainPosition.transform.scale = Vector3(0.2f, 0.2f, 0.2f);
 
 		// ★ モデルごとにテクスチャを明示設定
 		for (auto& part : Doujous_[i]->objectParts_) {
@@ -95,11 +95,11 @@ SceneStage01::SceneStage01(kEngine *system) {
 		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
 	}
 
-	constexpr int IDX_TATAMI = 0;
-	constexpr int IDX_TATAMI_FRAME = 1;
+	constexpr int IDX_TATAMI = 5;
+	constexpr int IDX_TATAMI_FRAME = 6;
 
-	constexpr int TATAMI_X = 3;
-	constexpr int TATAMI_Z = 4;
+	constexpr int TATAMI_X = 4;
+	constexpr int TATAMI_Z = 7;
 
 	const float TATAMI_SCALE = 0.3;
 
@@ -111,7 +111,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 // =====================
 
 // 基準位置（好きに変えろ）
-	Vector3 origin = { 15.0f, 0.0f, 8.0f };
+	Vector3 origin = { 15.0f, 0.0f, 7.5f };
 
 	// 1枚あたりの間隔（モデル実寸 * スケール）
 	// ※畳の向きが違うなら x/z を入れ替え
