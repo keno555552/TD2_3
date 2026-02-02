@@ -338,6 +338,9 @@ SceneStage01::~SceneStage01() {
 void SceneStage01::Update() {
 	tutorial_->Update(usingCamera_);
 
+	/// カメラ処理
+	CameraPart();
+
 	// チュートリアル中はゲームを止める場合
 	if (tutorial_->IsActive()) {
 		return;
@@ -349,7 +352,8 @@ void SceneStage01::Update() {
 
 	if (startTimer_->IsTimeUp()) {
 		countdownTimer_->Start();
-	} else {
+	} 
+	else {
 		return;
 	}
 
@@ -380,8 +384,6 @@ void SceneStage01::Update() {
 	}
 	// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-	/// カメラ処理
-	CameraPart();
 
 	/// Skydome更新
 	skydome_->Update(usingCamera_);
