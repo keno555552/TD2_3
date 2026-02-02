@@ -431,6 +431,7 @@ void SceneStage01::Update() {
 	}
 
 	countdownTimer_->Update(usingCamera_);
+	countdownTimer_->IsTimeUp();
 
 	// ゲーム開始時やイベント発生時に呼び出し
 	if (system_->GetTriggerOn(DIK_T)) {

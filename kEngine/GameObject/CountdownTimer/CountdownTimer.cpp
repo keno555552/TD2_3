@@ -187,7 +187,9 @@ void CountdownTimer::Reset() {
 }
 
 bool CountdownTimer::IsTimeUp() {
-	if (timer_->parameter_ <= 0.0f)return true;
+	if (timer_->parameter_ <= 0.0f) { 
+		return true; 
+	}
 	return false;
 }
 
