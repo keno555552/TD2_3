@@ -23,6 +23,7 @@ static Vector3 Cross(const Vector3& a, const Vector3& b) {
 		a.x * b.y - a.y * b.x
 	);
 }
+
 float SceneManager::EaseOutSine(float t)
 {
 	if (t < 0.0f) t = 0.0f;
@@ -188,7 +189,16 @@ void SceneManager::SceneChanger() {
 				shojiPhase_ = ShojiPhase::Closing;
 				shojiPlaying_ = true;
 
-			} else {
+				// =========================================================
+				// ★★★ 修正：古い版と同じ挙動
+				// Shoji を開始したフレームでは SceneChanger をここで終了する。
+				// （この後の defaultMenu_ 判定などで isSceneChange が立って
+				//  sceneUsing_ が delete される事故を物理的に潰す）
+				// =========================================================
+				return;
+
+			}
+			else {
 				Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
 			}
 		}
@@ -202,6 +212,7 @@ void SceneManager::SceneChanger() {
 			isSceneChange = true;
 			sceneUsingNameHandle_ = "TITLE";
 			break;
+
 		case SceneOutcome::EXIT:
 			kEngine::EndGame();
 			break;
@@ -217,7 +228,10 @@ void SceneManager::SceneChanger() {
 			isSceneChange = true;
 		}
 
-		if (!isSceneChange)return;
+		// ★★★ 修正：Shoji中は sceneUsing_ を絶対に消さない（保険）
+		if (shojiPlaying_) return;
+
+		if (!isSceneChange) return;
 
 		delete sceneUsing_, sceneUsing_ = nullptr;
 	}
@@ -228,55 +242,6 @@ void SceneManager::SceneChanger() {
 
 }
 
-//void SceneManager::SceneChanger() {
-//
-//	if (sceneUsing_ && !shojiPlaying_) {
-//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
-//
-//			nextAfterShoji_ = sceneUsing_->GetNextStage();
-//			Camera* cam = ResolveCamera(sceneUsing_);
-//			if (!cam) {
-//				sceneUsingHandle_ = nextAfterShoji_;
-//				delete sceneUsing_;
-//				sceneUsing_ = nullptr;
-//				return;
-//			}
-//
-//			shojiCam_ = cam;
-//
-//			// カメラローカルオフセット（保持）
-//			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
-//
-//			Vector3 camPos = shojiCam_->GetPosition();
-//			Vector3 camRot = shojiCam_->GetTransform().rotate;
-//			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
-//
-//			// ここから「元の障子生成ブロック」を関数に移しただけ
-//			Shoji_CreateAll(camRot);
-//
-//			// 初期位置（開いた状態）
-//			Shoji_SetInitialOpenPose(base, camRot);
-//
-//			shojiT_ = 0.0f;
-//			shojiWaitT_ = 0.0f;
-//			shojiPhase_ = ShojiPhase::Closing;
-//			shojiPlaying_ = true;
-//			return;
-//		}
-//	}
-//
-//	if (sceneUsing_) {
-//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
-//			sceneUsingHandle_ = sceneUsing_->GetNextStage();
-//			delete sceneUsing_;
-//			sceneUsing_ = nullptr;
-//		}
-//	}
-//
-//	if (!sceneUsing_) {
-//		SpawnSceneByHandle(sceneUsingHandle_);
-//	}
-//}
 void SceneManager::Update() {
 
 	if (shojiPlaying_) {
@@ -402,27 +367,28 @@ void SceneManager::Shoji_CreateAll(const Vector3& camRot) {
 	shojiL_paper_->mainPosition.transform.rotate = camRot;
 	shojiR_paper_->mainPosition.transform.rotate = camRot;
 }
+
 void SceneManager::Shoji_SetInitialOpenPose(const Vector3& base, const Vector3& camRot) {
 	Vector3 forward = CalcForward(camRot);
 	Vector3 right = CalcRight(forward);
 
 	const float off = 10.2f;
 
-	// 蟾ｦ・域惠譫・・
+	// 左（木枠）
 	Vector3 leftPos = base;
 	leftPos.x -= right.x * off;
 	leftPos.y -= right.y * off;
 	leftPos.z -= right.z * off;
 	shojiL_->mainPosition.transform.translate = leftPos;
 
-	// 蜿ｳ・域惠譫・・
+	// 右（木枠）
 	Vector3 rightPos = base;
 	rightPos.x += right.x * off;
 	rightPos.y += right.y * off;
 	rightPos.z += right.z * off;
 	shojiR_->mainPosition.transform.translate = rightPos;
 
-	// 蟾ｦ・育ｴ呻ｼ・
+	// 左（紙）
 	Vector3 leftPaperPos = base;
 	leftPaperPos.x -= right.x * off;
 	leftPaperPos.y -= right.y * off;
@@ -446,6 +412,7 @@ void SceneManager::Shoji_DestroyAll() {
 	shojiPlaying_ = false;
 	shojiPhase_ = ShojiPhase::None;
 }
+
 void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 
 	if (!shojiCam_) return;
@@ -549,15 +516,34 @@ void SceneManager::Shoji_UpdateWaitNewCamera(float dt)
 {
 	(void)dt;
 
-	// ★ ここでは一切障子を Update しない
-	// ★ 先に「新シーンのカメラ」を確定させるだけ
+	// ★ 旧カメラがまだあるなら、それで「閉じ状態」を更新
+	if (shojiCam_) {
+		Vector3 camPos = shojiCam_->GetPosition();
+		Vector3 camRot = shojiCam_->GetTransform().rotate;
+		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+
+		shojiL_->mainPosition.transform.rotate = camRot;
+		shojiR_->mainPosition.transform.rotate = camRot;
+		shojiL_->mainPosition.transform.translate = base;
+		shojiR_->mainPosition.transform.translate = base;
+
+		shojiL_paper_->mainPosition.transform.rotate = camRot;
+		shojiR_paper_->mainPosition.transform.rotate = camRot;
+		shojiL_paper_->mainPosition.transform.translate = base;
+		shojiR_paper_->mainPosition.transform.translate = base;
+
+		shojiL_->Update(shojiCam_);
+		shojiR_->Update(shojiCam_);
+		shojiL_paper_->Update(shojiCam_);
+		shojiR_paper_->Update(shojiCam_);
+	}
 
 	sceneJustSpawned_ = false;
 
 	Camera* cam = ResolveCamera(sceneUsing_);
 	if (!cam) return;
 
-	// ★ カメラを確定
+	// ★ 新カメラ確定
 	shojiCam_ = cam;
 
 	// ★ Opening 開始
