@@ -222,7 +222,10 @@ void SceneManager::SceneChanger() {
 		delete sceneUsing_, sceneUsing_ = nullptr;
 	}
 
-	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+	if (!sceneUsing_) {
+		sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+	}
+
 }
 
 //void SceneManager::SceneChanger() {
@@ -289,7 +292,7 @@ void SceneManager::Update() {
 		// Closing / Opening
 		if (shojiPhase_ == ShojiPhase::Closing || shojiPhase_ == ShojiPhase::Opening) {
 			Shoji_UpdateClosingOpening(dt);
-			return;
+			
 		}
 
 		// 閉じたまま待つ（旧シーン）
@@ -297,13 +300,13 @@ void SceneManager::Update() {
 			Shoji_UpdateWaitBeforeTransition(dt);
 			// 元コードと同じ return 条件（Wait が足りない時は中で return してる）
 			if (shojiPhase_ == ShojiPhase::WaitNewCamera) return;
-			return;
+		
 		}
 
 		// 遷移先カメラ待ち（新シーン）
 		if (shojiPhase_ == ShojiPhase::WaitNewCamera) {
 			Shoji_UpdateWaitNewCamera(dt);
-			return;
+		
 		}
 	}
 
@@ -313,18 +316,19 @@ void SceneManager::Update() {
 		sceneJustSpawned_ = false;
 	}
 }
-
 void SceneManager::Render() {
 
-	if (sceneUsing_ && !sceneJustSpawned_) {
-		sceneUsing_->Draw();
-	}
-
+	// ★ 障子を先に描画
 	if (shojiL_) shojiL_->Draw();
 	if (shojiR_) shojiR_->Draw();
 	if (shojiL_paper_) shojiL_paper_->Draw();
 	if (shojiR_paper_) shojiR_paper_->Draw();
+
+	if (sceneUsing_ && !sceneJustSpawned_) {
+		sceneUsing_->Draw();
+	}
 }
+
 
 
 
@@ -501,15 +505,14 @@ void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 		shojiPhase_ = ShojiPhase::None;
 	}
 }
-
 void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 
 	if (shojiCam_) {
 		Vector3 camPos = shojiCam_->GetPosition();
 		Vector3 camRot = shojiCam_->GetTransform().rotate;
-
 		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
 
+		// 閉じた状態を維持
 		shojiL_->mainPosition.transform.rotate = camRot;
 		shojiR_->mainPosition.transform.rotate = camRot;
 		shojiL_->mainPosition.transform.translate = base;
@@ -525,29 +528,30 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 		shojiR_paper_->Update(shojiCam_);
 	}
 
-	/// 待機時間計測
+	// 待機時間
 	shojiWaitT_ += dt;
-	/// 待機時間終了まで戻る
 	if (shojiWaitT_ < shojiWaitDuration_) return;
 
-	/// 待機時間終了したらシーン切り替え
-	auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
-	if (targetScene != sceneFlow_.end()) {
+	// ===== ここからが重要 =====
 
-			sceneUsingNameHandle_ = nextAfterShoji_;
-			return;
-	} else {
-		Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
-	}
+	// 次シーン確定
+	sceneUsingNameHandle_ = nextAfterShoji_;
 
-	/// 元コードと同じ delete 順・代入
-	delete sceneUsing_, sceneUsing_ = nullptr;
+	// 旧シーン破棄
+	delete sceneUsing_;
+	sceneUsing_ = nullptr;
+
+	// 新シーン生成
 	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
-	sceneUsing_->Update();
+	sceneUsing_->Update(); // ★ 初期化1フレ保証
 
+	// カメラはいったん切る
 	shojiCam_ = nullptr;
+
+	// 次フェーズへ
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }
+
 void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
 	(void)dt;
 
