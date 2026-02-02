@@ -1730,15 +1730,25 @@ void SceneStage01::UpdateResultShojiAnim() {
 		resultShojiWaitTimer_ += dt;
 		if (resultShojiWaitTimer_ >= 1.0f) {
 
+			// カメラを演出開始位置へ
 			Transform t = camera_->GetTransform();
 			t.translate = Vector3(50.0f, 0.0f, -400.0f);
 			t.rotate = Vector3(0.0f, 0.0f, 0.0f);
 			camera_->SetCamera(t);
 			debugCamera_->SetCamera(t);
 
+			// ★★★ ここが決定打 ★★★
+			Vector3 openRot(0.0f, 0.0f, 0.0f);
+
+			resultShojiL_->mainPosition.transform.rotate = openRot;
+			resultShojiR_->mainPosition.transform.rotate = openRot;
+			resultShojiLPaper_->mainPosition.transform.rotate = openRot;
+			resultShojiRPaper_->mainPosition.transform.rotate = openRot;
+
 			resultShojiPhase_ = ResultShojiPhase::Opening;
 		}
 	}
+	 
 	else if (resultShojiPhase_ == ResultShojiPhase::Opening) {
 
 		resultShojiT_ -= dt;
