@@ -359,8 +359,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 	// ■■■ 操作ガイドの初期化 ■■■
 	// 画像を2種類読み込む (パスは実際のファイルに合わせてください)
-	guideKeyHandle_ = system_->LoadTexture("resources/TemplateResource/texture/uvChecker.png");
-	guideGamepadHandle_ = system_->LoadTexture("resources/texture/Tryer.png");
+	guideKeyHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_keyboad.png");
+	guideGamepadHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_gamepad.png");
 
 	// --- キーボード用スプライト ---
 	guideKey_ = new SimpleSprite();
@@ -372,9 +372,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
 	// 左端なので X=10 くらい
 	float winHeight = config::GetClientHeight();
-	guideKey_->mainPosition.transform.translate = Vector3(20.0f, winHeight - 120.0f, 0.0f);
+	guideKey_->mainPosition.transform.translate = Vector3(30.0f, winHeight - 170.0f, 0.0f);
 
 	// サイズ調整（必要なら）
+	guideKey_->mainPosition.transform.scale = Vector3(0.15f, 0.15f, 1.0f);
 
 	// --- ゲームパッド用スプライト ---
 	guideGamepad_ = new SimpleSprite();
