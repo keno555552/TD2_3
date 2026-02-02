@@ -277,7 +277,6 @@ void SceneManager::SceneChanger() {
 //		SpawnSceneByHandle(sceneUsingHandle_);
 //	}
 //}
-
 void SceneManager::Update() {
 
 	if (shojiPlaying_) {
@@ -286,47 +285,46 @@ void SceneManager::Update() {
 		if (dt > 0.1f) dt = 0.1f;
 		if (dt < 0.0f) dt = 0.0f;
 
-		// ★木枠だけでなく紙も必須
 		if (!shojiL_ || !shojiR_ || !shojiL_paper_ || !shojiR_paper_) return;
 
-		// Closing / Opening
-		if (shojiPhase_ == ShojiPhase::Closing || shojiPhase_ == ShojiPhase::Opening) {
+		if (shojiPhase_ == ShojiPhase::Closing ||
+			shojiPhase_ == ShojiPhase::Opening) {
 			Shoji_UpdateClosingOpening(dt);
-			
+			return;   // ★ Scene に触らない
 		}
 
-		// 閉じたまま待つ（旧シーン）
 		if (shojiPhase_ == ShojiPhase::WaitBeforeTransition) {
 			Shoji_UpdateWaitBeforeTransition(dt);
-			// 元コードと同じ return 条件（Wait が足りない時は中で return してる）
-			if (shojiPhase_ == ShojiPhase::WaitNewCamera) return;
-		
+			return;
 		}
 
-		// 遷移先カメラ待ち（新シーン）
 		if (shojiPhase_ == ShojiPhase::WaitNewCamera) {
 			Shoji_UpdateWaitNewCamera(dt);
-		
+			return;
 		}
+
+		return;
 	}
 
+	// ===== Shoji してない時だけ Scene を触る =====
 	SceneChanger();
+
 	if (sceneUsing_) {
 		sceneUsing_->Update();
 		sceneJustSpawned_ = false;
 	}
 }
-void SceneManager::Render() {
 
-	// ★ 障子を先に描画
-	if (shojiL_) shojiL_->Draw();
-	if (shojiR_) shojiR_->Draw();
-	if (shojiL_paper_) shojiL_paper_->Draw();
-	if (shojiR_paper_) shojiR_paper_->Draw();
+void SceneManager::Render() {
 
 	if (sceneUsing_ && !sceneJustSpawned_) {
 		sceneUsing_->Draw();
 	}
+
+	if (shojiL_) shojiL_->Draw();
+	if (shojiR_) shojiR_->Draw();
+	if (shojiL_paper_) shojiL_paper_->Draw();
+	if (shojiR_paper_) shojiR_paper_->Draw();
 }
 
 
@@ -448,13 +446,8 @@ void SceneManager::Shoji_DestroyAll() {
 	shojiPlaying_ = false;
 	shojiPhase_ = ShojiPhase::None;
 }
-
 void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 
-	// ★★★ 追加：Opening 中でもシーンを更新する ★★★
-	if (shojiPhase_ == ShojiPhase::Opening && sceneUsing_) {
-		sceneUsing_->Update();
-	}
 	if (!shojiCam_) return;
 
 	if (shojiPhase_ == ShojiPhase::Closing) {
@@ -495,8 +488,8 @@ void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 		shojiPhase_ = ShojiPhase::WaitBeforeTransition;
 		shojiWaitT_ = 0.0f;
 	}
+
 	if (shojiPhase_ == ShojiPhase::Opening && shojiT_ <= 0.0f) {
-		// 元コードと同じ delete 順・代入
 		delete shojiL_; shojiL_ = nullptr;
 		delete shojiR_; shojiR_ = nullptr;
 		delete shojiL_paper_; shojiL_paper_ = nullptr;
@@ -505,6 +498,7 @@ void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 		shojiPhase_ = ShojiPhase::None;
 	}
 }
+
 void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 
 	if (shojiCam_) {
@@ -551,20 +545,16 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 	// 次フェーズへ
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }
-
 void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
 	(void)dt;
 
-	if (sceneUsing_) sceneUsing_->Update();
 	sceneJustSpawned_ = false;
 
-	// ★追加：新カメラ待ち中も「閉じた障子」を更新して描画を途切れさせない
 	if (shojiCam_) {
 		Vector3 camPos = shojiCam_->GetPosition();
 		Vector3 camRot = shojiCam_->GetTransform().rotate;
 		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
 
-		// 閉じた位置を維持
 		shojiL_->mainPosition.transform.rotate = camRot;
 		shojiR_->mainPosition.transform.rotate = camRot;
 		shojiL_->mainPosition.transform.translate = base;
@@ -583,8 +573,8 @@ void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
 	Camera* cam = ResolveCamera(sceneUsing_);
 	if (!cam) return;
 
-	// ★カメラ切り替え直後に「閉じた状態」を新カメラで即反映（1フレ消えるの完全防止）
 	shojiCam_ = cam;
+
 	{
 		Vector3 camPos = shojiCam_->GetPosition();
 		Vector3 camRot = shojiCam_->GetTransform().rotate;

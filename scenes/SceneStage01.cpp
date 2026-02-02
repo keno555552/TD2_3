@@ -721,11 +721,11 @@ void SceneStage01::Draw() {
 	//		}
 	//	}
 	//
-	// ===== Result Shoji (演出用) =====
-	if (resultShojiL_)        resultShojiL_->Draw();
-	if (resultShojiR_)        resultShojiR_->Draw();
-	if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
-	if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
+	//// ===== Result Shoji (演出用) =====
+	//if (resultShojiL_)        resultShojiL_->Draw();
+	//if (resultShojiR_)        resultShojiR_->Draw();
+	//if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+	//if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
 
 
 
