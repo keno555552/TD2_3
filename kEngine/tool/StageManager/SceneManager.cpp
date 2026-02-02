@@ -7,26 +7,29 @@ static int gShojiPaperTexHandle = -1;
 
 
 // =====================================================
-// Camera Utility（Cross 一切不使用）
+// Camera Utility（Cross 不使用・安定版）
 // =====================================================
 
 Vector3 SceneManager::CalcForward(Vector3 r)
 {
-	// degree 対策（Yだけ見る）
-	if (fabs(r.y) > 6.283185f) {
-		r.y *= 3.14159265359f / 180.0f;
-	}
+	const float PI = 3.14159265359f;
+	const float TWO_PI = 6.28318530718f;
+
+	// ★ 度変換は絶対にしない
+	// ★ ラジアン前提で正規化のみ
+	while (r.y > PI)  r.y -= TWO_PI;
+	while (r.y < -PI) r.y += TWO_PI;
 
 	float sy = sinf(r.y);
 	float cy = cosf(r.y);
 
-	// XZ 平面のみ
+	// XZ 平面のみ（従来仕様）
 	return Vector3(sy, 0.0f, cy);
 }
 
 Vector3 SceneManager::CalcRight(const Vector3& forward)
 {
-	// Cross禁止：forward を右へ90度回すだけ
+	// Cross禁止：右へ90度回すだけ
 	return Vector3(forward.z, 0.0f, -forward.x);
 }
 
@@ -45,7 +48,7 @@ Vector3 SceneManager::CalcBaseFromCamera(
 	base.x += right.x * localOffset.x;
 	base.z += right.z * localOffset.x;
 
-	// Up
+	// Up（ワールドY）
 	base.y += localOffset.y;
 
 	// Forward
@@ -59,7 +62,7 @@ float SceneManager::EaseOutSine(float t)
 {
 	if (t < 0.0f) t = 0.0f;
 	if (t > 1.0f) t = 1.0f;
-	return sinf(t * 1.57079632679f);
+	return sinf(t * 1.57079632679f); // PI/2
 }
 
 
