@@ -637,8 +637,7 @@ void SceneStage01::Update() {
 		ArrangeByArmSize();
 		StartResultShoji();
 			SpawnResultSets(5, -80.0f);
-			camera_->Move(Vector3(50.0f, 0.5f, -400.0f));
-			debugCamera_->Move(Vector3(50.0f, 0.5f, -400.0f));
+		
 			isResultGenerated_ = true; // ★ここ
 		
 	}
@@ -708,24 +707,24 @@ void SceneStage01::Draw() {
 	for (auto* t : tatamiTiles_)  t->Draw();
 	for (auto* f : tatamiFrames_) f->Draw();
 
-	////背景オブジェクト
-	//for (int i = 0; i < kDoujouPartCount-2; i++) {
-	//	if (Doujous_[i]) {
-	//		Doujous_[i]->Draw();
-	//	}
-	//}
+	//背景オブジェクト
+	for (int i = 0; i < kDoujouPartCount-2; i++) {
+		if (Doujous_[i]) {
+			Doujous_[i]->Draw();
+		}
+	}
 
-	//for (auto& set : resultSets_) {
-	//		for (auto* obj : set.parts) {
-	//			if (obj) obj->Draw();
-	//		}
-	//	}
-	//
-	//// ===== Result Shoji (演出用) =====
-	//if (resultShojiL_)        resultShojiL_->Draw();
-	//if (resultShojiR_)        resultShojiR_->Draw();
-	//if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
-	//if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
+	for (auto& set : resultSets_) {
+			for (auto* obj : set.parts) {
+				if (obj) obj->Draw();
+			}
+		}
+	
+	// ===== Result Shoji (演出用) =====
+	if (resultShojiL_)        resultShojiL_->Draw();
+	if (resultShojiR_)        resultShojiR_->Draw();
+	if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+	if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
 
 
 
@@ -739,6 +738,12 @@ void SceneStage01::Draw() {
 }
 
 void SceneStage01::CameraPart() {
+	if (isResultShojiActive_) {
+		system_->SetCamera(usingCamera_);
+		return;
+	}
+
+	
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1673,7 +1678,7 @@ void SceneStage01::UpdateResultShoji()
 void SceneStage01::StartResultShoji() {
 
 	if (resultShojiPhase_ != ResultShojiPhase::None) return;
-
+	isResultShojiActive_ = true;   // ★追加
 	Camera* cam = usingCamera_;
 	Vector3 camRot = cam->GetTransform().rotate;
 	Vector3 camPos = cam->GetPosition();
@@ -1697,34 +1702,39 @@ void SceneStage01::StartResultShoji() {
 //==============================
 void SceneStage01::UpdateResultShojiAnim() {
 
+	// ★ 実体が無ければ即終了（最重要）
+	if (!resultShojiL_ || !resultShojiR_
+		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
+		return;
+	}
+
 	if (resultShojiPhase_ == ResultShojiPhase::None) return;
 
 	float dt = system_->GetDeltaTime();
 	if (dt > 0.1f) dt = 0.1f;
 
-	Camera* cam = usingCamera_;
-	Vector3 camRot = cam->GetTransform().rotate;
-	Vector3 camPos = cam->GetPosition();
-
-	Vector3 base =
-		SceneManager::CalcBaseFromCamera(
-			camPos,
-			camRot,
-			Vector3(0.0f, 0.0f, 4.0f)
-		);
-
-	Vector3 forward = SceneManager::CalcForward(camRot);
-	Vector3 right = SceneManager::CalcRight(forward);
-
-	// ---- フェーズ制御 ----
+	// =============================
+	// フェーズ制御
+	// =============================
 	if (resultShojiPhase_ == ResultShojiPhase::Closing) {
 
 		resultShojiT_ += dt;
 		if (resultShojiT_ >= 1.0f) {
 			resultShojiT_ = 1.0f;
+			resultShojiWaitTimer_ = 0.0f;
+			resultShojiPhase_ = ResultShojiPhase::Wait;
+		}
+	}
+	else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
 
-			camera_->Move(Vector3(50.0f, 0.0f, -400.0f));
-			debugCamera_->Move(Vector3(50.0f, 0.0f, -400.0f));
+		resultShojiWaitTimer_ += dt;
+		if (resultShojiWaitTimer_ >= 1.0f) {
+
+			Transform t = camera_->GetTransform();
+			t.translate = Vector3(50.0f, 0.0f, -400.0f);
+			t.rotate = Vector3(0.0f, 0.0f, 0.0f);
+			camera_->SetCamera(t);
+			debugCamera_->SetCamera(t);
 
 			resultShojiPhase_ = ResultShojiPhase::Opening;
 		}
@@ -1733,32 +1743,75 @@ void SceneStage01::UpdateResultShojiAnim() {
 
 		resultShojiT_ -= dt;
 		if (resultShojiT_ <= 0.0f) {
+			resultShojiT_ = 0.0f;
+
+			Transform camT = camera_->GetTransform();
+			resultCameraStart_ = camT.translate;
+			resultCameraEnd_ = Vector3(camT.translate.x, camT.translate.y, 27.0f);
+
+			resultCameraT_ = 0.0f;
+			resultShojiPhase_ = ResultShojiPhase::CameraMove;
+		}
+	}
+	else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
+
+		resultCameraT_ += dt /7.0f;   // 1秒
+		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
+		float ease = SceneManager::EaseOutSine(t);
+
+		Vector3 pos;
+		pos.x = resultCameraStart_.x + (resultCameraEnd_.x - resultCameraStart_.x) * ease;
+		pos.y = resultCameraStart_.y + (resultCameraEnd_.y - resultCameraStart_.y) * ease;
+		pos.z = resultCameraStart_.z + (resultCameraEnd_.z - resultCameraStart_.z) * ease;
+
+		Transform camT = camera_->GetTransform();
+		camT.translate = pos;
+		camT.rotate = Vector3(0.0f, 0.0f, 0.0f);
+		camera_->SetCamera(camT);
+		debugCamera_->SetCamera(camT);
+
+		if (t >= 1.0f) {
 			DestroyResultShoji();
 			resultShojiPhase_ = ResultShojiPhase::None;
-			return;
+			return; // ★ Destroyしたフレームで下の共通処理に行かせない
 		}
 	}
 
-	float ease = SceneManager::EaseOutSine(resultShojiT_);
-	float off = (1.0f - ease) * 10.2f;
+	// ★ 念のため：ここに来る直前に消えてても触らない（保険）
+	if (!resultShojiL_ || !resultShojiR_
+		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
+		return;
+	}
 
-	// ---- 位置反映（演算子不使用） ----
-	// 左（木）
+	// =============================
+	// 共通：位置計算
+	// =============================
+	Camera* cam = usingCamera_;
+	Vector3 camRot = cam->GetTransform().rotate;
+	Vector3 camPos = cam->GetPosition();
+
+	Vector3 base = SceneManager::CalcBaseFromCamera(
+		camPos, camRot, Vector3(0.0f, 0.0f, 4.0f)
+	);
+
+	Vector3 forward = SceneManager::CalcForward(camRot);
+	Vector3 right = SceneManager::CalcRight(forward);
+
+	float e = SceneManager::EaseOutSine(resultShojiT_);
+	float off = (1.0f - e) * 10.2f;
+
 	resultShojiL_->mainPosition.transform.translate.x = base.x - right.x * off;
 	resultShojiL_->mainPosition.transform.translate.y = base.y;
 	resultShojiL_->mainPosition.transform.translate.z = base.z - right.z * off;
 
-	// 右（木）
 	resultShojiR_->mainPosition.transform.translate.x = base.x + right.x * off;
 	resultShojiR_->mainPosition.transform.translate.y = base.y;
 	resultShojiR_->mainPosition.transform.translate.z = base.z + right.z * off;
 
-	// 左（紙）
 	resultShojiLPaper_->mainPosition.transform.translate.x = base.x - right.x * off;
 	resultShojiLPaper_->mainPosition.transform.translate.y = base.y;
 	resultShojiLPaper_->mainPosition.transform.translate.z = base.z - right.z * off;
 
-	// 右（紙）
 	resultShojiRPaper_->mainPosition.transform.translate.x = base.x + right.x * off;
 	resultShojiRPaper_->mainPosition.transform.translate.y = base.y;
 	resultShojiRPaper_->mainPosition.transform.translate.z = base.z + right.z * off;
@@ -1768,6 +1821,9 @@ void SceneStage01::UpdateResultShojiAnim() {
 	resultShojiLPaper_->Update(usingCamera_);
 	resultShojiRPaper_->Update(usingCamera_);
 }
+
+
+
 Camera* SceneStage01::GetCamera() {
 	return usingCamera_;   // ★ 絶対に camera_ じゃない
 }
@@ -1870,4 +1926,5 @@ void SceneStage01::DestroyResultShoji() {
 	delete resultShojiR_;        resultShojiR_ = nullptr;
 	delete resultShojiLPaper_;   resultShojiLPaper_ = nullptr;
 	delete resultShojiRPaper_;   resultShojiRPaper_ = nullptr;
+	isResultShojiActive_ = false; // ★追加
 }

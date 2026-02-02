@@ -33,6 +33,8 @@ public:
 		bool shojiOpened = false;
 		float shojiT = 0.0f; // 0 → 1
 	};
+	bool isResultShojiActive_ = false;
+	float resultShojiWaitTimer_ = 0.0f;
 
 	// リザルト一式を塊のまま複製してZ方向に並べる
 	void SpawnResultSets(int copyCount, float spacingZ);
@@ -51,8 +53,13 @@ public:
 	enum class ResultShojiPhase {
 		None,
 		Closing,
-		Opening
+		Wait,      // ★追加
+		Opening,
+		CameraMove   // ★追加
 	};
+	float resultCameraT_ = 0.0f;
+	Vector3 resultCameraStart_;
+	Vector3 resultCameraEnd_;
 
 	ResultShojiPhase resultShojiPhase_ = ResultShojiPhase::None;
 	float resultShojiT_ = 0.0f;

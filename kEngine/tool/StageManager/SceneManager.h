@@ -71,6 +71,7 @@ public:
 		const Vector3& localOffset
 	);
 	static float EaseOutSine(float t);
+	float shojiWaitTimer_ = 0.0f;   // ★追加：遷移待ち時間
 
 private:
 	// ★追加：カメラ取得 & 生成を関数化
