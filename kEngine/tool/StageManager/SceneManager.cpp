@@ -92,442 +92,486 @@ Vector3 SceneManager::CalcBaseFromCamera(
 
 // =====================================================
 
+// =====================================================
+
 SceneManager::SceneManager(kEngine* system) {
-    system_ = system;
+	system_ = system;
 
-    sceneFactory_ = new SceneFactory(system_);
-    sceneUsingNameHandle_ = "TITLE";
+	sceneFactory_ = new SceneFactory(system_);
 
-    helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
-    helperSprite_ = new SimpleSprite;
-    helperSprite_->IntObject(system_);
-    helperSprite_->CreateDefaultData();
-    helperSprite_->mainPosition.transform.scale = { 0.5f,0.5f,1.0f };
-    helperSprite_->mainPosition.transform.translate = { 0.0f,550.0f,0.0f };
-    helperSprite_->objectParts_[0].materialConfig->textureHandle = helperTextureHandle_;
+	sceneUsingNameHandle_ = "TITLE";
 
-    // ★ 障子テクスチャも「ここで1回だけ」ロード（2回目以降の未適用対策）
-    if (gShojiFrameTexHandle < 0) {
-        gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
-    }
-    if (gShojiPaperTexHandle < 0) {
-        gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
-    }
+	helperTextureHandle_ = system_->LoadTexture("resources/texture/helper.png");
+	helperSprite_ = new SimpleSprite;
+	helperSprite_->IntObject(system_);
+	helperSprite_->CreateDefaultData();
+	helperSprite_->mainPosition.transform.scale = { 0.5f,0.5f,1.0f };
+	helperSprite_->mainPosition.transform.translate = { 0.0f,550.0f,0.0f };
+	helperSprite_->objectParts_[0].materialConfig->textureHandle = helperTextureHandle_;
 
-    defaultMenu_ = new DefaultMenu(system_);
+	// ★ 障子テクスチャも「ここで1回だけ」ロード（2回目以降の未適用対策）
+	if (gShojiFrameTexHandle < 0) {
+		gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
+	}
+	if (gShojiPaperTexHandle < 0) {
+		gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
+	}
+
+	defaultMenu_ = new DefaultMenu(system_);
 }
 
 SceneManager::~SceneManager() {
-    if (shojiL_) { delete shojiL_; shojiL_ = nullptr; }
-    if (shojiR_) { delete shojiR_; shojiR_ = nullptr; }
-    if (shojiL_paper_) { delete shojiL_paper_; shojiL_paper_ = nullptr; }
-    if (shojiR_paper_) { delete shojiR_paper_; shojiR_paper_ = nullptr; }
+	if (shojiL_) { delete shojiL_; shojiL_ = nullptr; }
+	if (shojiR_) { delete shojiR_; shojiR_ = nullptr; }
+	if (shojiL_paper_) { delete shojiL_paper_; shojiL_paper_ = nullptr; }
+	if (shojiR_paper_) { delete shojiR_paper_; shojiR_paper_ = nullptr; }
 
-    if (sceneUsing_) { delete sceneUsing_; sceneUsing_ = nullptr; }
-    if (sceneOld_) { delete sceneOld_; sceneOld_ = nullptr; }
-
-    delete defaultMenu_; defaultMenu_ = nullptr;
-    delete helperSprite_; helperSprite_ = nullptr;
-    delete sceneFactory_; sceneFactory_ = nullptr;
+	if (sceneUsing_) { delete sceneUsing_; sceneUsing_ = nullptr; }
+	if (sceneOld_) { delete sceneOld_; sceneOld_ = nullptr; }
 }
 
 Camera* SceneManager::ResolveCamera(BaseScene* s) {
-    if (!s) return nullptr;
-    if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
-    if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
-    if (auto* rt = dynamic_cast<SceneResult*>(s)) return rt->GetCamera();
-    return nullptr;
+	if (!s) return nullptr;
+	if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
+	if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
+	if (auto* rt = dynamic_cast<SceneResult*>(s)) return rt->GetCamera();
+	return nullptr;
 }
 
+//void SceneManager::SpawnSceneByHandle(SceneNum handle) {
+//	switch (handle) {
+//	case SceneNum::S_TITLE:    sceneUsing_ = new SceneTitle(system_); break;
+//	case SceneNum::S_STAGE_01: sceneUsing_ = new SceneStage01(system_); break;
+//	case SceneNum::S_TESTER:   sceneUsing_ = new SceneTester(system_); break;
+//	case SceneNum::S_Result:   sceneUsing_ = new SceneResult(system_); break;
+//	default: sceneUsing_ = nullptr; break;
+//	}
+//	sceneJustSpawned_ = (sceneUsing_ != nullptr);
+//}
 void SceneManager::SceneChanger() {
 
-    // ===== Shoji してない時だけ Outcome/メニュー判定 =====
-    if (sceneUsing_ && !shojiPlaying_) {
+	// Shoji中は絶対にシーン切替ロジックを通さない
+	if (shojiPlaying_) return;
 
-        bool isSceneChange = false;
+	if (sceneUsing_) {
 
-        switch (sceneUsing_->GetOutcome()) {
+		bool isSceneChange = false;
 
-        case SceneOutcome::NEXT:
-        {
-            auto targetScene = sceneFlow_.find(sceneUsingNameHandle_);
-            if (targetScene != sceneFlow_.end()) {
+		switch (sceneUsing_->GetOutcome()) {
 
-                nextAfterShoji_ = targetScene->second;
+		case SceneOutcome::NEXT:
+		{
+			auto it = sceneFlow_.find(sceneUsingNameHandle_);
+			if (it != sceneFlow_.end()) {
 
-                Camera* cam = ResolveCamera(sceneUsing_);
-                if (!cam) {
-                    // カメラ取れないなら即時切替
-                    sceneUsingNameHandle_ = nextAfterShoji_;
-                    isSceneChange = true;
-                    break;
-                }
+				nextAfterShoji_ = it->second;
 
-                // ===== Shoji 開始 =====
-                shojiCam_ = cam;
+				Camera* cam = ResolveCamera(sceneUsing_);
+				if (!cam) {
+					// カメラ取れないなら即時切替
+					sceneUsingNameHandle_ = nextAfterShoji_;
+					isSceneChange = true;
+					break;
+				}
 
-                // カメラローカルオフセット（保持）
-                shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+				// ===== Shoji 開始 =====
+				shojiCam_ = cam;
+				shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
 
-                Vector3 camPos = shojiCam_->GetPosition();
-                Vector3 camRot = shojiCam_->GetTransform().rotate;
-                Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+				Vector3 camPos = shojiCam_->GetPosition();
+				Vector3 camRot = shojiCam_->GetTransform().rotate;
+				Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
 
-                Shoji_CreateAll(camRot);
-                Shoji_SetInitialOpenPose(base, camRot);
+				Shoji_CreateAll(camRot);
+				Shoji_SetInitialOpenPose(base, camRot);
 
-                shojiT_ = 0.0f;
-                shojiWaitT_ = 0.0f;
-                shojiPhase_ = ShojiPhase::Closing;
-                shojiPlaying_ = true;
+				shojiT_ = 0.0f;
+				shojiWaitT_ = 0.0f;
+				shojiPhase_ = ShojiPhase::Closing;
+				shojiPlaying_ = true;
 
-                // ★ 古い版と同じ：開始フレームはここで終了
-                return;
-            }
-            else {
-                Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
-            }
-        }
-        break;
+				// ★ Shoji開始フレームはここで終了
+				return;
+			}
+			else {
+				Logger::Log("[kError] SM :: SceneChanger: Scene not found in sceneFlow_: " + sceneUsingNameHandle_);
+			}
+		}
+		break;
 
-        case SceneOutcome::RETRY:
-            isSceneChange = true;
-            break;
+		case SceneOutcome::RETRY:
+			isSceneChange = true;
+			break;
 
-        case SceneOutcome::RETURN:
-            isSceneChange = true;
-            sceneUsingNameHandle_ = "TITLE";
-            break;
+		case SceneOutcome::RETURN:
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+			break;
 
-        case SceneOutcome::EXIT:
-            kEngine::EndGame();
-            break;
-        }
+		case SceneOutcome::EXIT:
+			kEngine::EndGame();
+			break;
+		}
 
-        // メニュー操作（Shoji無関係の通常切替）
-        if (defaultMenu_->IsBack()) {
-            isSceneChange = true;
-            sceneUsingNameHandle_ = "TITLE";
-        }
-        if (defaultMenu_->IsRetry()) {
-            isSceneChange = true;
-        }
+		if (defaultMenu_->IsBack()) {
+			isSceneChange = true;
+			sceneUsingNameHandle_ = "TITLE";
+		}
+		if (defaultMenu_->IsRetry()) {
+			isSceneChange = true;
+		}
 
-        if (!isSceneChange) return;
+		if (isSceneChange) {
+			delete sceneUsing_;
+			sceneUsing_ = nullptr;
+		}
+	}
 
-        delete sceneUsing_;
-        sceneUsing_ = nullptr;
-    }
-
-    if (!sceneUsing_) {
-        sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
-        sceneJustSpawned_ = (sceneUsing_ != nullptr);
-    }
+	// ★ ここ重要：無い時だけ生成
+	if (!sceneUsing_) {
+		sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+		sceneJustSpawned_ = (sceneUsing_ != nullptr);
+	}
 }
 
+//void SceneManager::SceneChanger() {
+//
+//	if (sceneUsing_ && !shojiPlaying_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//
+//			nextAfterShoji_ = sceneUsing_->GetNextStage();
+//			Camera* cam = ResolveCamera(sceneUsing_);
+//			if (!cam) {
+//				sceneUsingHandle_ = nextAfterShoji_;
+//				delete sceneUsing_;
+//				sceneUsing_ = nullptr;
+//				return;
+//			}
+//
+//			shojiCam_ = cam;
+//
+//			// カメラローカルオフセット（保持）
+//			shojiBasePos_ = Vector3(0.0f, 0.0f, 4.0f);
+//
+//			Vector3 camPos = shojiCam_->GetPosition();
+//			Vector3 camRot = shojiCam_->GetTransform().rotate;
+//			Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+//
+//			// ここから「元の障子生成ブロック」を関数に移しただけ
+//			Shoji_CreateAll(camRot);
+//
+//			// 初期位置（開いた状態）
+//			Shoji_SetInitialOpenPose(base, camRot);
+//
+//			shojiT_ = 0.0f;
+//			shojiWaitT_ = 0.0f;
+//			shojiPhase_ = ShojiPhase::Closing;
+//			shojiPlaying_ = true;
+//			return;
+//		}
+//	}
+//
+//	if (sceneUsing_) {
+//		if (sceneUsing_->GetScenePhase() == ScenePhase::EXIT) {
+//			sceneUsingHandle_ = sceneUsing_->GetNextStage();
+//			delete sceneUsing_;
+//			sceneUsing_ = nullptr;
+//		}
+//	}
+//
+//	if (!sceneUsing_) {
+//		SpawnSceneByHandle(sceneUsingHandle_);
+//	}
+//}
 void SceneManager::Update() {
 
-    float dt = system_->GetDeltaTime();
-    dt = std::clamp(dt, 0.0f, 0.1f);
+	float dt = system_->GetDeltaTime();
+	if (dt > 0.1f) dt = 0.1f;
+	if (dt < 0.0f) dt = 0.0f;
 
-    if (shojiPlaying_) {
+	if (shojiPlaying_) {
 
-        // 必須
-        if (!shojiL_ || !shojiR_ || !shojiL_paper_ || !shojiR_paper_) return;
+		if (!shojiL_ || !shojiR_ || !shojiL_paper_ || !shojiR_paper_) return;
 
-        // ★★★ 古い版準拠：Opening 中は新シーンを Update し続ける ★★★
-        if (shojiPhase_ == ShojiPhase::Opening && sceneUsing_) {
-            sceneUsing_->Update();
-        }
+		if (shojiPhase_ == ShojiPhase::Closing || shojiPhase_ == ShojiPhase::Opening) {
+			Shoji_UpdateClosingOpening(dt);
+			return; // ★ここ超重要：Shoji中はここで終わり
+		}
 
-        // Closing / Opening
-        if (shojiPhase_ == ShojiPhase::Closing ||
-            shojiPhase_ == ShojiPhase::Opening) {
-            Shoji_UpdateClosingOpening(dt);
-            return; // Shoji中は SceneChanger を絶対に通さない
-        }
+		if (shojiPhase_ == ShojiPhase::WaitBeforeTransition) {
+			Shoji_UpdateWaitBeforeTransition(dt);
+			return; // ★
+		}
 
-        // 閉じたまま待つ（旧シーン側のカメラで維持）
-        if (shojiPhase_ == ShojiPhase::WaitBeforeTransition) {
-            Shoji_UpdateWaitBeforeTransition(dt);
-            return;
-        }
+		if (shojiPhase_ == ShojiPhase::WaitNewCamera) {
+			Shoji_UpdateWaitNewCamera(dt);
+			return; // ★
+		}
 
-        // 遷移先カメラ待ち（新シーン）
-        if (shojiPhase_ == ShojiPhase::WaitNewCamera) {
-            Shoji_UpdateWaitNewCamera(dt);
-            return;
-        }
+		return; // ★保険
+	}
 
-        return;
-    }
+	// ===== Shojiしてない時だけ通常更新 =====
+	SceneChanger();
 
-    // ===== Shojiしてない時だけ通常更新 =====
-    SceneChanger();
-
-    if (sceneUsing_) {
-        sceneUsing_->Update();
-        sceneJustSpawned_ = false;
-    }
+	if (sceneUsing_) {
+		sceneUsing_->Update();
+		sceneJustSpawned_ = false;
+	}
 }
 
 void SceneManager::Render() {
 
-    if (sceneUsing_ && !sceneJustSpawned_) {
-        sceneUsing_->Draw();
-    }
+	// ===== シーン描画 =====
+	if (sceneUsing_ && !sceneJustSpawned_) {
+		Camera* sceneCam = ResolveCamera(sceneUsing_);
+		if (sceneCam) {
+			system_->SetCamera(sceneCam);
+			sceneUsing_->Draw();
+		}
+	}
 
-    if (shojiL_) shojiL_->Draw();
-    if (shojiR_) shojiR_->Draw();
-    if (shojiL_paper_) shojiL_paper_->Draw();
-    if (shojiR_paper_) shojiR_paper_->Draw();
+	// ===== 障子描画 =====
+	if (shojiCam_) {
+		system_->SetCamera(shojiCam_);
+
+		if (shojiL_) shojiL_->Draw();
+		if (shojiR_) shojiR_->Draw();
+		if (shojiL_paper_) shojiL_paper_->Draw();
+		if (shojiR_paper_) shojiR_paper_->Draw();
+	}
 }
 
+
+
 // =====================================================
-// ★ 障子：関数化（ロジック・変数名・順序は古い版準拠）
+// ★ 障子：関数化（ロジック・変数名・順序は元のまま）
 // =====================================================
 
 void SceneManager::Shoji_CreateAll(const Vector3& camRot) {
 
-    // =========================
-    // 障子：木枠
-    // =========================
-    shojiL_ = new Object;
-    shojiR_ = new Object;
-    shojiL_->IntObject(system_);
-    shojiR_->IntObject(system_);
+	// =========================
+	// 障子：木枠
+	// =========================
+	shojiL_ = new Object;
+	shojiR_ = new Object;
+	shojiL_->IntObject(system_);
+	shojiR_->IntObject(system_);
 
-    // ★ CreateDefaultData は呼ばない（CreateModelData が objectParts_ を作り直すため）
-    shojiL_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left.obj"));
-    shojiR_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right.obj"));
+	// ★ CreateDefaultData は呼ばない（CreateModelData が objectParts_ を作り直すため）
+	shojiL_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left.obj"));
+	shojiR_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right.obj"));
 
-    // ★ テクスチャ設定（木枠）
-    for (auto& part : shojiL_->objectParts_) {
-        if (!part.materialConfig)
-            part.materialConfig = std::make_shared<MaterialConfig>();
-        part.materialConfig->useModelTexture = false;
-        part.materialConfig->textureHandle = gShojiFrameTexHandle;
-        part.materialConfig->enableLighting = true;
-    }
-    for (auto& part : shojiR_->objectParts_) {
-        if (!part.materialConfig)
-            part.materialConfig = std::make_shared<MaterialConfig>();
-        part.materialConfig->useModelTexture = false;
-        part.materialConfig->textureHandle = gShojiFrameTexHandle;
-        part.materialConfig->enableLighting = true;
-    }
+	// ★ テクスチャ設定（木枠）※CreateModelData の後に「一度だけ」設定
+	for (auto& part : shojiL_->objectParts_) {
+		if (!part.materialConfig)
+			part.materialConfig = std::make_shared<MaterialConfig>();
+		part.materialConfig->useModelTexture = false;
+		part.materialConfig->textureHandle = gShojiFrameTexHandle;
+		part.materialConfig->enableLighting = true;
+	}
+	for (auto& part : shojiR_->objectParts_) {
+		if (!part.materialConfig)
+			part.materialConfig = std::make_shared<MaterialConfig>();
+		part.materialConfig->useModelTexture = false;
+		part.materialConfig->textureHandle = gShojiFrameTexHandle;
+		part.materialConfig->enableLighting = true;
+	}
 
-    shojiL_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
-    shojiR_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
-    shojiL_->mainPosition.transform.rotate = camRot;
-    shojiR_->mainPosition.transform.rotate = camRot;
+	shojiL_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+	shojiR_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+	shojiL_->mainPosition.transform.rotate = camRot;
+	shojiR_->mainPosition.transform.rotate = camRot;
 
-    // =========================
-    // 障子：紙
-    // =========================
-    shojiL_paper_ = new Object;
-    shojiR_paper_ = new Object;
-    shojiL_paper_->IntObject(system_);
-    shojiR_paper_->IntObject(system_);
+	// =========================
+	// 障子：紙
+	// =========================
+	shojiL_paper_ = new Object;
+	shojiR_paper_ = new Object;
+	shojiL_paper_->IntObject(system_);
+	shojiR_paper_->IntObject(system_);
 
-    shojiL_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left_paper.obj"));
-    shojiR_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right_paper.obj"));
+	// ★ CreateDefaultData は呼ばない（CreateModelData が objectParts_ を作り直すため）
+	shojiL_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_left_paper.obj"));
+	shojiR_paper_->CreateModelData(system_->SetModelObj("resources/gate/model/shoji_right_paper.obj"));
 
-    for (auto& part : shojiL_paper_->objectParts_) {
-        if (!part.materialConfig)
-            part.materialConfig = std::make_shared<MaterialConfig>();
-        part.materialConfig->useModelTexture = false;
-        part.materialConfig->textureHandle = gShojiPaperTexHandle;
-        part.materialConfig->enableLighting = false;
-    }
-    for (auto& part : shojiR_paper_->objectParts_) {
-        if (!part.materialConfig)
-            part.materialConfig = std::make_shared<MaterialConfig>();
-        part.materialConfig->useModelTexture = false;
-        part.materialConfig->textureHandle = gShojiPaperTexHandle;
-        part.materialConfig->enableLighting = false;
-    }
+	// ★ テクスチャ設定（和紙）※CreateModelData の後に「一度だけ」設定
+	for (auto& part : shojiL_paper_->objectParts_) {
+		if (!part.materialConfig)
+			part.materialConfig = std::make_shared<MaterialConfig>();
+		part.materialConfig->useModelTexture = false;
+		part.materialConfig->textureHandle = gShojiPaperTexHandle;
+		part.materialConfig->enableLighting = false;
+	}
+	for (auto& part : shojiR_paper_->objectParts_) {
+		if (!part.materialConfig)
+			part.materialConfig = std::make_shared<MaterialConfig>();
+		part.materialConfig->useModelTexture = false;
+		part.materialConfig->textureHandle = gShojiPaperTexHandle;
+		part.materialConfig->enableLighting = false;
+	}
 
-    shojiL_paper_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
-    shojiR_paper_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
-    shojiL_paper_->mainPosition.transform.rotate = camRot;
-    shojiR_paper_->mainPosition.transform.rotate = camRot;
+	shojiL_paper_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+	shojiR_paper_->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+	shojiL_paper_->mainPosition.transform.rotate = camRot;
+	shojiR_paper_->mainPosition.transform.rotate = camRot;
 }
-
 void SceneManager::Shoji_SetInitialOpenPose(const Vector3& base, const Vector3& camRot) {
-    Vector3 forward = CalcForward(camRot);
-    Vector3 right = CalcRight(forward);
+	Vector3 forward = CalcForward(camRot);
+	Vector3 right = CalcRight(forward);
 
-    const float off = 10.2f;
+	const float off = 10.2f;
 
-    Vector3 leftPos = base;
-    leftPos.x -= right.x * off;
-    leftPos.y -= right.y * off;
-    leftPos.z -= right.z * off;
+	// 蟾ｦ・域惠譫・・
+	Vector3 leftPos = base;
+	leftPos.x -= right.x * off;
+	leftPos.y -= right.y * off;
+	leftPos.z -= right.z * off;
+	shojiL_->mainPosition.transform.translate = leftPos;
 
-    Vector3 rightPos = base;
-    rightPos.x += right.x * off;
-    rightPos.y += right.y * off;
-    rightPos.z += right.z * off;
+	// 蜿ｳ・域惠譫・・
+	Vector3 rightPos = base;
+	rightPos.x += right.x * off;
+	rightPos.y += right.y * off;
+	rightPos.z += right.z * off;
+	shojiR_->mainPosition.transform.translate = rightPos;
 
+	// 蟾ｦ・育ｴ呻ｼ・
+	Vector3 leftPaperPos = base;
+	leftPaperPos.x -= right.x * off;
+	leftPaperPos.y -= right.y * off;
+	leftPaperPos.z -= right.z * off;
+	shojiL_paper_->mainPosition.transform.translate = leftPaperPos;
 
-    shojiL_->mainPosition.transform.translate = leftPos;
-    shojiR_->mainPosition.transform.translate = rightPos;
-
-    shojiL_paper_->mainPosition.transform.translate = leftPos;
-    shojiR_paper_->mainPosition.transform.translate = rightPos;
+	// 右（紙）
+	Vector3 rightPaperPos = base;
+	rightPaperPos.x += right.x * off;
+	rightPaperPos.y += right.y * off;
+	rightPaperPos.z += right.z * off;
+	shojiR_paper_->mainPosition.transform.translate = rightPaperPos;
 }
+
 
 void SceneManager::Shoji_DestroyAll() {
-    if (shojiL_) { delete shojiL_; shojiL_ = nullptr; }
-    if (shojiR_) { delete shojiR_; shojiR_ = nullptr; }
-    if (shojiL_paper_) { delete shojiL_paper_; shojiL_paper_ = nullptr; }
-    if (shojiR_paper_) { delete shojiR_paper_; shojiR_paper_ = nullptr; }
-
-    shojiPlaying_ = false;
-    shojiPhase_ = ShojiPhase::None;
-    shojiCam_ = nullptr;
+	delete shojiL_; shojiL_ = nullptr;
+	delete shojiR_; shojiR_ = nullptr;
+	delete shojiL_paper_; shojiL_paper_ = nullptr;
+	delete shojiR_paper_; shojiR_paper_ = nullptr;
+	shojiPlaying_ = false;
+	shojiPhase_ = ShojiPhase::None;
 }
 
 void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 
-    if (!shojiCam_) return;
+	// ★★★ 追加：Opening 中でもシーンを更新する ★★★
+	if (shojiPhase_ == ShojiPhase::Opening && sceneUsing_) {
+		sceneUsing_->Update();
+	}
+	if (!shojiCam_) return;
 
-    if (shojiPhase_ == ShojiPhase::Closing) {
-        shojiT_ += dt / 1.0f;
-        if (shojiT_ > 1.0f) shojiT_ = 1.0f;
-    }
-    else {
-        shojiT_ -= dt / 1.0f;
-        if (shojiT_ < 0.0f) shojiT_ = 0.0f;
-    }
+	if (shojiPhase_ == ShojiPhase::Closing) {
+		shojiT_ += dt / 1.0f;
+		if (shojiT_ > 1.0f) shojiT_ = 1.0f;
+	}
+	else {
+		shojiT_ -= dt / 1.0f;
+		if (shojiT_ < 0.0f) shojiT_ = 0.0f;
+	}
 
-    Vector3 camPos = shojiCam_->GetPosition();
-    Vector3 camRot = shojiCam_->GetTransform().rotate;
+	Vector3 camPos = shojiCam_->GetPosition();
+	Vector3 camRot = shojiCam_->GetTransform().rotate;
 
-    Vector3 forward = CalcForward(camRot);
-    Vector3 right = CalcRight(forward);
+	Vector3 forward = CalcForward(camRot);
+	Vector3 right = CalcRight(forward);
 
-    Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+	Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
 
-    float easedT = EaseOutSine(shojiT_);
-    float off = (1.0f - easedT) * 10.2f;
+	float easedT = EaseOutSine(shojiT_);
+	float off = (1.0f - easedT) * 10.2f;
 
-    shojiL_->mainPosition.transform.rotate = camRot;
-    shojiR_->mainPosition.transform.rotate = camRot;
-    shojiL_->mainPosition.transform.translate = base - right * off;
-    shojiR_->mainPosition.transform.translate = base + right * off;
-    shojiL_->Update(shojiCam_);
-    shojiR_->Update(shojiCam_);
+	shojiL_->mainPosition.transform.rotate = camRot;
+	shojiR_->mainPosition.transform.rotate = camRot;
+	shojiL_->mainPosition.transform.translate = base - right * off;
+	shojiR_->mainPosition.transform.translate = base + right * off;
+	shojiL_->Update(shojiCam_);
+	shojiR_->Update(shojiCam_);
 
-    shojiL_paper_->mainPosition.transform.rotate = camRot;
-    shojiR_paper_->mainPosition.transform.rotate = camRot;
-    shojiL_paper_->mainPosition.transform.translate = base - right * off;
-    shojiR_paper_->mainPosition.transform.translate = base + right * off;
-    shojiL_paper_->Update(shojiCam_);
-    shojiR_paper_->Update(shojiCam_);
+	shojiL_paper_->mainPosition.transform.rotate = camRot;
+	shojiR_paper_->mainPosition.transform.rotate = camRot;
+	shojiL_paper_->mainPosition.transform.translate = base - right * off;
+	shojiR_paper_->mainPosition.transform.translate = base + right * off;
+	shojiL_paper_->Update(shojiCam_);
+	shojiR_paper_->Update(shojiCam_);
 
-    if (shojiPhase_ == ShojiPhase::Closing && shojiT_ >= 1.0f) {
-        shojiPhase_ = ShojiPhase::WaitBeforeTransition;
-        shojiWaitT_ = 0.0f;
-    }
-
-    if (shojiPhase_ == ShojiPhase::Opening && shojiT_ <= 0.0f) {
-        // 古い版と同じ delete 順
-        delete shojiL_; shojiL_ = nullptr;
-        delete shojiR_; shojiR_ = nullptr;
-        delete shojiL_paper_; shojiL_paper_ = nullptr;
-        delete shojiR_paper_; shojiR_paper_ = nullptr;
-
-        shojiPlaying_ = false;
-        shojiPhase_ = ShojiPhase::None;
-    }
+	if (shojiPhase_ == ShojiPhase::Closing && shojiT_ >= 1.0f) {
+		shojiPhase_ = ShojiPhase::WaitBeforeTransition;
+		shojiWaitT_ = 0.0f;
+	}
+	if (shojiPhase_ == ShojiPhase::Opening && shojiT_ <= 0.0f) {
+		// 元コードと同じ delete 順・代入
+		delete shojiL_; shojiL_ = nullptr;
+		delete shojiR_; shojiR_ = nullptr;
+		delete shojiL_paper_; shojiL_paper_ = nullptr;
+		delete shojiR_paper_; shojiR_paper_ = nullptr;
+		shojiPlaying_ = false;
+		shojiPhase_ = ShojiPhase::None;
+	}
 }
-
 void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 
-    if (shojiCam_) {
-        Vector3 camPos = shojiCam_->GetPosition();
-        Vector3 camRot = shojiCam_->GetTransform().rotate;
-        Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+	if (shojiCam_) {
+		Vector3 camPos = shojiCam_->GetPosition();
+		Vector3 camRot = shojiCam_->GetTransform().rotate;
+		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
 
-        // 閉じた状態を維持
-        shojiL_->mainPosition.transform.rotate = camRot;
-        shojiR_->mainPosition.transform.rotate = camRot;
-        shojiL_->mainPosition.transform.translate = base;
-        shojiR_->mainPosition.transform.translate = base;
-        shojiL_->Update(shojiCam_);
-        shojiR_->Update(shojiCam_);
+		shojiL_->mainPosition.transform.rotate = camRot;
+		shojiR_->mainPosition.transform.rotate = camRot;
+		shojiL_->mainPosition.transform.translate = base;
+		shojiR_->mainPosition.transform.translate = base;
+		shojiL_->Update(shojiCam_);
+		shojiR_->Update(shojiCam_);
 
-        shojiL_paper_->mainPosition.transform.rotate = camRot;
-        shojiR_paper_->mainPosition.transform.rotate = camRot;
-        shojiL_paper_->mainPosition.transform.translate = base;
-        shojiR_paper_->mainPosition.transform.translate = base;
-        shojiL_paper_->Update(shojiCam_);
-        shojiR_paper_->Update(shojiCam_);
-    }
+		shojiL_paper_->mainPosition.transform.rotate = camRot;
+		shojiR_paper_->mainPosition.transform.rotate = camRot;
+		shojiL_paper_->mainPosition.transform.translate = base;
+		shojiR_paper_->mainPosition.transform.translate = base;
+		shojiL_paper_->Update(shojiCam_);
+		shojiR_paper_->Update(shojiCam_);
+	}
 
-    shojiWaitT_ += dt;
-    if (shojiWaitT_ < shojiWaitDuration_) return;
+	shojiWaitT_ += dt;
+	if (shojiWaitT_ < shojiWaitDuration_) return;
 
-    // ===== ここからが重要（古い版と同じ） =====
+	// ===== ここからシーン確定して生成までやる（returnで逃げない） =====
 
-    // 次シーン確定
-    sceneUsingNameHandle_ = nextAfterShoji_;
+	sceneUsingNameHandle_ = nextAfterShoji_;
 
-    // 旧シーン破棄
-    delete sceneUsing_;
-    sceneUsing_ = nullptr;
+	delete sceneUsing_;
+	sceneUsing_ = nullptr;
 
-    // 新シーン生成
-    sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
-    if (sceneUsing_) sceneUsing_->Update(); // ★ 初期化1フレ保証（古い版）
+	sceneUsing_ = sceneFactory_->CreateScene(sceneUsingNameHandle_);
+	if (sceneUsing_) {
+		sceneUsing_->Update(); // 初期化1フレ保証
+	}
 
-    // カメラはいったん切る（古い版）
-    shojiCam_ = nullptr;
+	// ★古いカメラを切る（WaitNewCameraで新カメラ待ち）
+	shojiCam_ = nullptr;
 
-    // 次フェーズへ
-    shojiPhase_ = ShojiPhase::WaitNewCamera;
+	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }
 
-void SceneManager::Shoji_UpdateWaitNewCamera(float dt)
-{
-    (void)dt;
+void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
+	(void)dt;
 
-    // ★ 古い版互換：旧カメラがまだあるなら閉じ状態を更新
-    if (shojiCam_) {
-        Vector3 camPos = shojiCam_->GetPosition();
-        Vector3 camRot = shojiCam_->GetTransform().rotate;
-        Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+	if (sceneUsing_) sceneUsing_->Update();
 
-        shojiL_->mainPosition.transform.rotate = camRot;
-        shojiR_->mainPosition.transform.rotate = camRot;
-        shojiL_->mainPosition.transform.translate = base;
-        shojiR_->mainPosition.transform.translate = base;
+	sceneJustSpawned_ = false;
 
-        shojiL_paper_->mainPosition.transform.rotate = camRot;
-        shojiR_paper_->mainPosition.transform.rotate = camRot;
-        shojiL_paper_->mainPosition.transform.translate = base;
-        shojiR_paper_->mainPosition.transform.translate = base;
+	Camera* cam = ResolveCamera(sceneUsing_);
+	if (!cam) return;
 
-        shojiL_->Update(shojiCam_);
-        shojiR_->Update(shojiCam_);
-        shojiL_paper_->Update(shojiCam_);
-        shojiR_paper_->Update(shojiCam_);
-    }
-
-    // ★ 古い版準拠：新シーンは更新し続ける（カメラ生成待ち）
-    if (sceneUsing_) sceneUsing_->Update();
-
-    sceneJustSpawned_ = false;
-
-    Camera* cam = ResolveCamera(sceneUsing_);
-    if (!cam) return;
-
-    // ★ 新カメラ確定
-    shojiCam_ = cam;
-
-    // ★ Opening 開始
-    shojiPhase_ = ShojiPhase::Opening;
-    shojiT_ = 1.0f;
+	shojiCam_ = cam;
+	shojiPhase_ = ShojiPhase::Opening;
+	shojiT_ = 1.0f;
 }
+
