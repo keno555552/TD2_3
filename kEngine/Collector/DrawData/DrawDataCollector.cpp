@@ -188,7 +188,7 @@ TransformationMatrix DrawDataCollector::SpriteWVPAdjustment(SpriteData& sprite, 
 		part.transform.translate
 	);
 
-	Matrix4x4 worldMatrix =  followWorldMatrix * localMatrix;
+	Matrix4x4 worldMatrix =  localMatrix * followWorldMatrix;
 
 	float spriteTransform = part.transform.translate.z;
 	worldMatrix.m[3][2] = SpriteLayerManagement(spriteTransform);

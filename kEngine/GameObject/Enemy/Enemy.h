@@ -24,6 +24,9 @@ public:
     // isRight: trueなら右腕、falseなら左腕
     void ResetArm(bool isRight);
 
+    // 壁ヒット時に速度を殺すための関数
+    void OnWallHit(const Vector3& normal);
+
     // 衝突判定のために腕の情報を公開
     Vector3 GetArmPositionL() const;
     Vector3 GetArmPositionR() const;
@@ -51,9 +54,11 @@ public:
     // シーン側から「今攻撃中？」と聞くための関数
     bool IsAttackingR() const { return isAttackingR_; }
     bool IsAttackingL() const { return isAttackingL_; }
+    bool GetIsCharging() const { return isCharging_; }
 
     // セッター
     void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
+    void SetTargetCharge(bool on) { isTargetCharging_ = on; }
 
 private: // メンバ関数
     void Move(); // 将来AIを入れる場所
@@ -98,6 +103,9 @@ private:
     // 攻撃中フラグ
     bool isAttackingR_ = false;
     bool isAttackingL_ = false;
+
+    bool isCharging_ = false;
+    bool isTargetCharging_ = false;
 
 private:
     // 計算用

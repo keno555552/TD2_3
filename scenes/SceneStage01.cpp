@@ -6,7 +6,7 @@
 #include <numbers>
 #include "SceneManager.h"
 
-SceneStage01::SceneStage01(kEngine *system) {
+SceneStage01::SceneStage01(kEngine* system) {
 	/// =========== システム初期化 ============///
 	system_ = system;
 
@@ -30,27 +30,27 @@ SceneStage01::SceneStage01(kEngine *system) {
    // 背景モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
-	//掛け軸
-		"resources/game/model/doujou_kakeziku.obj",
-		"resources/game/model/doujou_kakeziku_flame.obj",
-		"resources/game/model/doujou_kakeziku_mozi.obj",
-	
-		//白い壁
-		"resources/game/model/doujou_wall_roof.obj",
-		"resources/game/model/doujou_wall_back.obj",
-		"resources/game/model/doujou_wall_front.obj",
-		"resources/game/model/doujou_wall_right.obj",
-		"resources/game/model/doujou_wall_left.obj",
-		//木の部分
-		"resources/game/model/doujou_roof.obj",
-		"resources/game/model/doujou_wood_back.obj",
-		"resources/game/model/doujou_wood_front.obj",
-		"resources/game/model/doujou_wood_right.obj",
-		"resources/game/model/doujou_wood_left.obj",
-		//畳（床）
-		"resources/game/model/tatami.obj",
-		"resources/game/model/tatami_flame.obj",
-		
+		//掛け軸
+			"resources/game/model/doujou_kakeziku.obj",
+			"resources/game/model/doujou_kakeziku_flame.obj",
+			"resources/game/model/doujou_kakeziku_mozi.obj",
+
+			//白い壁
+			"resources/game/model/doujou_wall_roof.obj",
+			"resources/game/model/doujou_wall_back.obj",
+			"resources/game/model/doujou_wall_front.obj",
+			"resources/game/model/doujou_wall_right.obj",
+			"resources/game/model/doujou_wall_left.obj",
+			//木の部分
+			"resources/game/model/doujou_roof.obj",
+			"resources/game/model/doujou_wood_back.obj",
+			"resources/game/model/doujou_wood_front.obj",
+			"resources/game/model/doujou_wood_right.obj",
+			"resources/game/model/doujou_wood_left.obj",
+			//畳（床）
+			"resources/game/model/tatami.obj",
+			"resources/game/model/tatami_flame.obj",
+
 
 	};
 
@@ -74,7 +74,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 		//畳（床）
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
-		
+
 	};
 
 	for (int i = 0; i < kDoujouPartCount; i++) {
@@ -113,7 +113,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	
 
 	}
-	
+
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!Doujous_[i]) continue;
 
@@ -133,7 +133,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	};
 
 	const char* ResultTexturePaths[kResultPartCount] = {
-		
+
 		"resources/game/texture/paper.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
@@ -370,6 +370,41 @@ SceneStage01::SceneStage01(kEngine *system) {
 
 	explosion_ = new Explosion(system_);
 
+	/// --- タイマー関連 ---
+	countdownTimer_ = new CountdownTimer(system_);
+	startTimer_ = new StartTimer(system_);
+	startUpTimer = new Timer();
+	startUpTimer->InitM(1.0f, system->GetTimeManager());
+
+	// ■■■ 操作ガイドの初期化 ■■■
+	// 画像を2種類読み込む (パスは実際のファイルに合わせてください)
+	guideKeyHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_keyboad.png");
+	guideGamepadHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_gamepad.png");
+
+	// --- キーボード用スプライト ---
+	guideKey_ = new SimpleSprite();
+	guideKey_->IntObject(system_);
+	guideKey_->CreateDefaultData();
+	guideKey_->objectParts_[0].materialConfig->textureHandle = guideKeyHandle_;
+	// 座標設定 (左下)
+	// 画面左下に配置 (座標は画面サイズに合わせて調整してください)
+	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
+	// 左端なので X=10 くらい
+	float winHeight = config::GetClientHeight();
+	guideKey_->mainPosition.transform.translate = Vector3(30.0f, winHeight - 170.0f, 0.0f);
+
+	// サイズ調整（必要なら）
+	guideKey_->mainPosition.transform.scale = Vector3(0.15f, 0.15f, 1.0f);
+
+	// --- ゲームパッド用スプライト ---
+	guideGamepad_ = new SimpleSprite();
+	guideGamepad_->IntObject(system_);
+	guideGamepad_->CreateDefaultData();
+	guideGamepad_->objectParts_[0].materialConfig->textureHandle = guideGamepadHandle_;
+	// 座標設定 (キーボード用と全く同じ位置に重ねる)
+	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate;
+
+	// サイズ調整（必要なら）
 
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);
@@ -389,6 +424,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 		tutorial_->AddPage(path);
 	}
 	/// -------------------------------------------
+
 }
 
 SceneStage01::~SceneStage01() {
@@ -412,7 +448,7 @@ SceneStage01::~SceneStage01() {
 	}
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
-        }
+	}
 
 
 	for (auto* t : tatamiTiles_)  delete t;
@@ -420,17 +456,42 @@ SceneStage01::~SceneStage01() {
 	tatamiTiles_.clear();
 	tatamiFrames_.clear();
 
-
+	if (guideKey_) delete guideKey_;
+	if (guideGamepad_)  delete guideGamepad_;
 	delete tutorial_;
 }
 
 void SceneStage01::Update() {
 	tutorial_->Update(usingCamera_);
 
+	// 操作説明切り替え用
+	UpdateOperationGuide();
+
+	/// カメラ処理
+	CameraPart();
+
 	// チュートリアル中はゲームを止める場合
 	if (tutorial_->IsActive()) {
 		return;
 	}
+
+	startUpTimer->ToZero();
+
+	if (startUpTimer->parameter_ == 0) {
+		startTimer_->Start();
+	}
+
+	startTimer_->Update(usingCamera_);
+
+	if (startTimer_->IsTimeUp()) {
+
+		countdownTimer_->Start();
+	} else {
+		return;
+	}
+
+	countdownTimer_->Update(usingCamera_);
+	countdownTimer_->IsTimeUp();
 
 	// ゲーム開始時やイベント発生時に呼び出し
 	if (system_->GetTriggerOn(DIK_T)) {
@@ -457,8 +518,6 @@ void SceneStage01::Update() {
 	}
 	// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-	/// カメラ処理
-	CameraPart();
 
 	/// Skydome更新
 	skydome_->Update(usingCamera_);
@@ -471,11 +530,12 @@ void SceneStage01::Update() {
 
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
-
+		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
+		isTargetCharging = player_->GetIsCharging();
 		for (auto* other : enemies_) {
 			if (other == enemy) continue; // 自身は除外
 
@@ -487,110 +547,122 @@ void SceneStage01::Update() {
 			if (distance < nearDistance) {
 				nearDistance = distance; // 一番近い距離の変更
 				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+				isTargetCharging = other->GetIsCharging();
 			}
 		}
 
-
 		enemy->SetTargetPos(nearPos);
-
+		enemy->SetTargetCharge(isTargetCharging);
 		enemy->Update(usingCamera_);
 	}
-
 
 	/// 衝突判定処理
 
 	// 攻撃当たり判定処理
 	CheckAttackCollision();
-	// ■■■ 壁と自機の当たり判定（範囲制限版） ■■■
-    // プレイヤーの半径（半幅）
-	float pRadiusX = player_->mainPosition.transform.scale.x / 2.0f;
-	float pRadiusZ = player_->mainPosition.transform.scale.z / 2.0f;
+	// ■■■ 壁との当たり判定（共通関数化） ■■■
 
-	for (int i = 0; i < 4; i++) {
-		// 壁情報の更新と取得
-		wall_[i]->Update(usingCamera_);
-		Vector3 wPos = wall_[i]->mainPosition.transform.translate;
-		Vector3 wScale = wall_[i]->mainPosition.transform.scale;
-		float wRadiusX = wScale.x / 2.0f;
-		float wRadiusZ = wScale.z / 2.0f;
+	// 引数: 対象のオブジェクト (Player または Enemy)
+	auto CheckWallCollision = [&](Object* targetObj) {
 
-		// 現在のプレイヤー位置
-		Vector3 pPos = player_->mainPosition.transform.translate;
+		// 対象の半径（半幅）
+		float radiusX = targetObj->mainPosition.transform.scale.x / 2.0f;
+		float radiusZ = targetObj->mainPosition.transform.scale.z / 2.0f;
+		Vector3 targetPos = targetObj->mainPosition.transform.translate;
 
-		// ■ 1. まずは大まかな衝突判定 (AABB)
-		// 高速移動ですり抜けないよう、本来のサイズより少し大きめに判定枠を取る
-		// (壁の範囲 + プレイヤー半径) の範囲内にプレイヤー中心がいれば衝突とみなす
-		bool isHitX = (pPos.x >= wPos.x - wRadiusX - pRadiusX) && (pPos.x <= wPos.x + wRadiusX + pRadiusX);
-		bool isHitZ = (pPos.z >= wPos.z - wRadiusZ - pRadiusZ) && (pPos.z <= wPos.z + wRadiusZ + pRadiusZ);
+		// 1. 壁との衝突判定ループ
+		for (int i = 0; i < 4; i++) {
+			wall_[i]->Update(usingCamera_);
+			Vector3 wPos = wall_[i]->mainPosition.transform.translate;
+			Vector3 wScale = wall_[i]->mainPosition.transform.scale;
+			float wRadiusX = wScale.x / 2.0f;
+			float wRadiusZ = wScale.z / 2.0f;
 
-		if (isHitX && isHitZ) {
-			// ■ 2. 衝突した場合、「X方向」と「Z方向」どちらのめり込みが浅いか調べる
-			// 浅い方に押し出すことで、自然な挙動になります。
+			// AABB判定
+			bool isHitX = (targetPos.x >= wPos.x - wRadiusX - radiusX) && (targetPos.x <= wPos.x + wRadiusX + radiusX);
+			bool isHitZ = (targetPos.z >= wPos.z - wRadiusZ - radiusZ) && (targetPos.z <= wPos.z + wRadiusZ + radiusZ);
 
-			float diffX = pPos.x - wPos.x;
-			float diffZ = pPos.z - wPos.z;
+			if (isHitX && isHitZ) {
+				float diffX = targetPos.x - wPos.x;
+				float diffZ = targetPos.z - wPos.z;
+				float overlapX = (wRadiusX + radiusX) - std::abs(diffX);
+				float overlapZ = (wRadiusZ + radiusZ) - std::abs(diffZ);
 
-			// めり込みの深さ（絶対値が小さいほど、その面に近い）
-			// (半径の合計) - (実際の距離)
-			float overlapX = (wRadiusX + pRadiusX) - std::abs(diffX);
-			float overlapZ = (wRadiusZ + pRadiusZ) - std::abs(diffZ);
+				// 速度リセット用のベクトル
+				Vector3 hitNormal = { 0,0,0 };
 
-			// --- X軸方向の補正 (横壁に当たった) ---
-			if (overlapX < overlapZ) {
-				// プレイヤーが壁より「左」にいるなら、左側の境界へ戻す
-				if (diffX < 0) {
-					player_->mainPosition.transform.translate.x = (wPos.x - wRadiusX - pRadiusX) - 0.001f;
-					// 右方向への速度成分があれば消す（壁に吸われないように）
-					player_->OnWallHit(Vector3(1.0f, 0.0f, 0.0f));
+				// 座標補正
+				if (overlapX < overlapZ) {
+					if (diffX < 0) {
+						targetObj->mainPosition.transform.translate.x = (wPos.x - wRadiusX - radiusX) - 0.001f;
+						hitNormal = { 1.0f, 0.0f, 0.0f };
+					} else {
+						targetObj->mainPosition.transform.translate.x = (wPos.x + wRadiusX + radiusX) + 0.001f;
+						hitNormal = { -1.0f, 0.0f, 0.0f };
+					}
+				} else {
+					if (diffZ < 0) {
+						targetObj->mainPosition.transform.translate.z = (wPos.z - wRadiusZ - radiusZ) - 0.001f;
+						hitNormal = { 0.0f, 0.0f, 1.0f };
+					} else {
+						targetObj->mainPosition.transform.translate.z = (wPos.z + wRadiusZ + radiusZ) + 0.001f;
+						hitNormal = { 0.0f, 0.0f, -1.0f };
+					}
 				}
-				// プレイヤーが壁より「右」にいるなら、右側の境界へ戻す
-				else {
-					player_->mainPosition.transform.translate.x = (wPos.x + wRadiusX + pRadiusX) + 0.001f;
-					// 左方向への速度成分があれば消す
-					player_->OnWallHit(Vector3(-1.0f, 0.0f, 0.0f));
+
+				// OnWallHitの呼び出し（PlayerかEnemyか判定して呼ぶ）
+				if (targetObj == player_) {
+					player_->OnWallHit(hitNormal);
+				} else {
+					Enemy* e = dynamic_cast<Enemy*>(targetObj);
+					if (e) e->OnWallHit(hitNormal);
 				}
-			}
-			// --- Z軸方向の補正 (奥・手前の壁に当たった) ---
-			else {
-				// 手前 (Zマイナス)
-				if (diffZ < 0) {
-					player_->mainPosition.transform.translate.z = (wPos.z - wRadiusZ - pRadiusZ) - 0.001f;
-					player_->OnWallHit(Vector3(0.0f, 0.0f, 1.0f));
-				}
-				// 奥 (Zプラス)
-				else {
-					player_->mainPosition.transform.translate.z = (wPos.z + wRadiusZ + pRadiusZ) + 0.001f;
-					player_->OnWallHit(Vector3(0.0f, 0.0f, -1.0f));
-				}
+
+				// 座標更新されたのでローカル変数も更新
+				targetPos = targetObj->mainPosition.transform.translate;
 			}
 		}
-	}
-	// ...上記のループ処理の後、あるいはループ内で「明らかに部屋の外に出た」場合の保険...
 
-	float limitX = 99.0f - pRadiusX; // 壁の位置 - プレイヤーサイズ
-	if (player_->mainPosition.transform.translate.x > limitX) {
-		player_->mainPosition.transform.translate.x = limitX;
-	}
-	if (player_->mainPosition.transform.translate.x < 1) {
-		player_->mainPosition.transform.translate.x = 1;
-	}
-	float limitZ = 99.0f - pRadiusZ; // 壁の位置 - プレイヤーサイズ
-	if (player_->mainPosition.transform.translate.z > limitZ) {
-		player_->mainPosition.transform.translate.z = limitZ;
-	}
-	if (player_->mainPosition.transform.translate.z < 1) {
-		player_->mainPosition.transform.translate.z = 1;
+		// 2. 部屋の外に出た場合の保険（Clamp処理）
+		// ※壁の位置が変わらないなら定数でOKですが、壁の厚みなどを考慮した汎用的な値にするとベターです
+		float limitX = 99.0f - radiusX;
+		float limitZ = 99.0f - radiusZ;
+		float minLimit = 1.0f; // 下限
+
+		if (targetObj->mainPosition.transform.translate.x > limitX) {
+			targetObj->mainPosition.transform.translate.x = limitX;
+		}
+		if (targetObj->mainPosition.transform.translate.x < minLimit) {
+			targetObj->mainPosition.transform.translate.x = minLimit;
+		}
+		if (targetObj->mainPosition.transform.translate.z > limitZ) {
+			targetObj->mainPosition.transform.translate.z = limitZ;
+		}
+
+		if (targetObj->mainPosition.transform.translate.z < minLimit) {
+			targetObj->mainPosition.transform.translate.z = minLimit;
+		}
+		};
+
+	// ■■■ 実行部分 ■■■
+
+	// 1. プレイヤーの判定
+	CheckWallCollision(player_);
+
+	// 2. 全エネミーの判定
+	for (auto* enemy : enemies_) {
+		CheckWallCollision(enemy);
 	}
 
 #pragma region 自機用パーティクル
 	Vector3 forward = player_->GetForward();
 
-	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL()-0.5f,0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
 	dashWindEffect_->SetEmitting(false);
-	
+
 	if (player_->IsAttackingL()) {
 		dashWindEffect_->SetEmitting(true);
 	}
@@ -653,11 +725,12 @@ void SceneStage01::Update() {
 
 	if (system_->GetTriggerOn(DIK_P)) {
 		ArrangeByArmSize();
+
 		StartResultShoji();
 			SpawnResultSets(10, -80.0f);
 		
 			isResultGenerated_ = true; // ★ここ
-		
+
 	}
 	UpdateResultShojiAnim();
 	for (auto& set : resultSets_) {
@@ -680,14 +753,14 @@ void SceneStage01::Update() {
 		outcome_ = SceneOutcome::NEXT;
 	}
 
-	
+
 
 
 }
 
 
 void SceneStage01::Draw() {
-	
+
 	/// 実体処理
 	//system_->DrawModel(&skydome_->objectParts[0].transformationMatrix, &(skydome_->objectParts[0].materialConfig.get()), skydomeModelHandle_);
 	skydome_->Draw();
@@ -728,6 +801,7 @@ void SceneStage01::Draw() {
 	constexpr float TATAMI_DRAW_DIST = 150.0f;
 	constexpr float TATAMI_DRAW_DIST_SQ =
 		TATAMI_DRAW_DIST * TATAMI_DRAW_DIST;
+
 
 	Vector3 camPos = usingCamera_->GetPosition();
 
@@ -814,8 +888,27 @@ void SceneStage01::Draw() {
 
 
 
+	// 操作説明
+	// ■■■ ガイド描画切り替え ■■■
+	if (isGamepadMode_) {
+		// パッドモードならパッド用画像だけ描画
+		if (guideGamepad_) guideGamepad_->Draw();
+	} else {
+		// それ以外ならキーボード用画像だけ描画
+		if (guideKey_) guideKey_->Draw();
+	}
+
 	// チュートリアルお試し
 	tutorial_->Draw(); // 最前面に描画
+
+	if (tutorial_->IsActive()) {
+		return;
+	} else {
+		startTimer_->Draw();
+	}
+
+	if (startTimer_->IsTimeUp()) countdownTimer_->Draw();
+
 
 #ifdef USE_IMGUI
 	/// imgui処理
@@ -839,7 +932,7 @@ void SceneStage01::CameraPart() {
 		// 位置・回転を一切更新しない
 		system_->SetCamera(usingCamera_);
 		return;
-		
+
 
 	}
 
@@ -928,11 +1021,11 @@ void SceneStage01::ImguiPart() {
 	ImGui::End();
 
 	{
-        Transform camTransform = usingCamera_->GetTransform();
+		Transform camTransform = usingCamera_->GetTransform();
 		// ウィンドウの初期位置を左上に設定
-        ImGui::SetNextWindowPos(ImVec2(10, 0), ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2(10, 0), ImGuiCond_Once);
 		ImGui::Begin("GameCamera");
-        ImGui::Text("Transform");
+		ImGui::Text("Transform");
 		ImGui::SliderFloat3("Pos", &camTransform.translate.x, -1.0f, 1.0f);
 		ImGui::SliderFloat3("Rotate", &camTransform.rotate.x, -1.0f, 1.0f);
 		ImGui::Separator();
@@ -1063,7 +1156,7 @@ void SceneStage01::ImguiPart() {
 
 	{
 		// ウィンドウの初期位置を右下に設定
-        ImGui::SetNextWindowPos(ImVec2(950, 600), ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2(950, 600), ImGuiCond_Once);
 		ImGui::Begin("GuideArrow");
 		ImGui::SliderFloat3("Pos", &guideArrow_->mainPosition.transform.translate.x, -50.0f, 50.0f);
 		ImGui::SliderFloat3("Rotate", &guideArrow_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
@@ -1102,7 +1195,7 @@ void SceneStage01::ImguiPart() {
 		ImGui::DragFloat3("Position", &DoujouPos_[i].x, 0.05f);
 		ImGui::DragFloat3("Rotation", &DoujouRot_[i].x, 0.01f);
 		ImGui::DragFloat3("Scale", &DoujouScale_[i].x, 0.01f);
-	
+
 		ImGui::Separator();
 		ImGui::PopID();
 	}
@@ -1120,7 +1213,7 @@ void SceneStage01::CheckAttackCollision() {
 	// 引数に「attackerScale（攻撃主のスケール）」を追加しました
 	auto CheckArmCollision = [&](Object* targetObj, const AABB& targetAABB, Vector3 armPos, float armScale, float attackerScale) {
 		// ▼▼▼ 追加修正1: 既にダメージを受けている相手は無視する ▼▼▼
-	    // これがないと、触れている間ずっとスローがかかり続けます
+		// これがないと、触れている間ずっとスローがかかり続けます
 		if (targetObj == player_) {
 			if (player_->IsDamage()) return;
 		} else {
@@ -1141,6 +1234,7 @@ void SceneStage01::CheckAttackCollision() {
 
 		// 2. 衝突判定 (AABB vs AABB)
 		if (crashDecision(armAABB, targetAABB)) {
+			float duration = 0.3f;
 
 			// 3. 衝突ベクトル計算
 			Vector3 targetPos = targetObj->mainPosition.transform.translate;
@@ -1157,7 +1251,7 @@ void SceneStage01::CheckAttackCollision() {
 				Vector3 pushDir = { diff.x / len, diff.y / len, diff.z / len };
 
 				// ▼▼▼ 追加修正2: 最小ノックバック量の保証 ▼▼▼
-			    // 計算上の威力
+				// 計算上の威力
 				float rawPower = 8.0f * (armScale * armScale);
 				// どんなに弱くても「10.0f」の力は保証する（値は調整してください）
 				// これにより、確実に相手と距離が離れます
@@ -1171,7 +1265,7 @@ void SceneStage01::CheckAttackCollision() {
 					// ▼▼▼ 演出追加 ▼▼▼
 					// 0.05倍速(ほぼ停止) にして、0.1秒間(実時間) 止める
 					// これにより「ガッ！」という重いヒット感が生まれます
-					StartHitStop(0.05f, 0.15f);
+					StartHitStop(0.05f, duration);
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
@@ -1214,6 +1308,8 @@ void SceneStage01::CheckAttackCollision() {
 				// 定数定義
 				float basePower = 8.0f;
 				float minKnockback = 10.0f; // 最小ノックバック量
+
+				float duration = 0.3f;
 
 				// 引き分けとみなすサイズ差の許容範囲
 				// 例えば 0.8 に設定すれば、サイズ 3.0 vs 3.5 でも引き分けになります。
@@ -1281,7 +1377,7 @@ void SceneStage01::CheckAttackCollision() {
 						float power = std::max(basePower * (armScaleA * armScaleA), minKnockback);
 
 						// スロー演出（プレイヤーが関与している場合のみ推奨）
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1315,7 +1411,7 @@ void SceneStage01::CheckAttackCollision() {
 						// ★修正: 最小値保証
 						float power = std::max(basePower * (armScaleB * armScaleB), minKnockback);
 
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1339,7 +1435,7 @@ void SceneStage01::CheckAttackCollision() {
 					if (len > 0.0f) {
 						Vector3 dirA = { diffBA.x / len, diffBA.y / len, diffBA.z / len };
 						Vector3 dirB = { -dirA.x, -dirA.y, -dirA.z };
-						
+
 						// Aへの適用
 						bool ignoreA = (objA == player_ && player_->IsDamage()) || (dynamic_cast<Enemy*>(objA) && dynamic_cast<Enemy*>(objA)->IsDamage());
 						if (!ignoreA) {
@@ -1382,7 +1478,7 @@ void SceneStage01::CheckAttackCollision() {
 
 						// エフェクトとスローは「どちらかがヒットした」なら実行
 						if ((!ignoreA || !ignoreB) && isCheckInPlayer) {
-							StartHitStop(0.05f, 0.15f);
+							StartHitStop(0.05f, duration);
 							explosion_->SetIsEmitting(true);
 							explosion_->SetPos((posA + posB) / 2.0f);
 						}
@@ -1397,8 +1493,8 @@ void SceneStage01::CheckAttackCollision() {
 	AABB pBodyAABB = player_->GetAABB(player_);
 	float pBodyScale = player_->mainPosition.transform.scale.x;
 	ArmInfo pArms[2] = {
-	    { false, player_->GetArmPositionL(), player_->GetArmScaleL(), player_->IsAttackingL() }, // 左
-	    { true,  player_->GetArmPositionR(), player_->GetArmScaleR(), player_->IsAttackingR() }  // 右
+		{ false, player_->GetArmPositionL(), player_->GetArmScaleL(), player_->IsAttackingL() }, // 左
+		{ true,  player_->GetArmPositionR(), player_->GetArmScaleR(), player_->IsAttackingR() }  // 右
 	};
 
 	// 全エネミーに対してループ処理
@@ -1421,8 +1517,69 @@ void SceneStage01::CheckAttackCollision() {
 			for (int j = 0; j < 2; j++) {
 				// 3. 腕同士の衝突
 				CheckArmToArm(
-					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk, 
+					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk,
 					enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
+			}
+		}
+	}
+
+	// ▼▼▼▼▼▼▼▼▼ 【追加】敵同士の総当たり判定 ▼▼▼▼▼▼▼▼▼
+
+	size_t enemyCount = enemies_.size();
+	for (size_t i = 0; i < enemyCount; ++i) {
+		// j は i + 1 から始めることで、(A, B) を判定したら (B, A) は判定しないようにする（重複防止）
+		for (size_t j = i + 1; j < enemyCount; ++j) {
+
+			Enemy* enemyA = enemies_[i];
+			Enemy* enemyB = enemies_[j];
+
+			// --- Aの情報取得 ---
+			AABB bodyAABB_A = enemyA->GetAABB(enemyA);
+			float bodyScaleA = enemyA->mainPosition.transform.scale.x;
+			ArmInfo armsA[2] = {
+				{ false, enemyA->GetArmPositionL(), enemyA->GetArmScaleL(), enemyA->IsAttackingL() },
+				{ true,  enemyA->GetArmPositionR(), enemyA->GetArmScaleR(), enemyA->IsAttackingR() }
+			};
+
+			// --- Bの情報取得 ---
+			AABB bodyAABB_B = enemyB->GetAABB(enemyB);
+			float bodyScaleB = enemyB->mainPosition.transform.scale.x;
+			ArmInfo armsB[2] = {
+				{ false, enemyB->GetArmPositionL(), enemyB->GetArmScaleL(), enemyB->IsAttackingL() },
+				{ true,  enemyB->GetArmPositionR(), enemyB->GetArmScaleR(), enemyB->IsAttackingR() }
+			};
+
+			// --- 判定実行 ---
+
+			// 左右の腕についてループ
+			for (int aIdx = 0; aIdx < 2; aIdx++) {
+
+				// 1. Aの攻撃 vs Bの体 (AがBを殴った)
+				if (armsA[aIdx].isAtk) {
+					CheckArmCollision(enemyB, bodyAABB_B, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA);
+				}
+
+				// 2. Bの攻撃 vs Aの体 (BがAを殴った)
+				// ※ループの構造上、ここで逆方向もチェックする必要があります
+				// (armsBのループを別途回すより、ここでまとめてチェックした方が効率的です)
+				// ただし、腕インデックスを合わせる必要はないので、このループ内でBの左右両方を確認します。
+			}
+
+			// B側の攻撃チェック（Aの体に対して）
+			for (int bIdx = 0; bIdx < 2; bIdx++) {
+				if (armsB[bIdx].isAtk) {
+					CheckArmCollision(enemyA, bodyAABB_A, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB);
+				}
+			}
+
+			// 3. 腕同士の衝突 (Aの左右 × Bの左右)
+			for (int aIdx = 0; aIdx < 2; aIdx++) {
+				for (int bIdx = 0; bIdx < 2; bIdx++) {
+					CheckArmToArm(
+						enemyA, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA, armsA[aIdx].isRight, armsA[aIdx].isAtk,
+						enemyB, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB, armsB[bIdx].isRight, armsB[bIdx].isAtk
+					);
+				}
 			}
 		}
 	}
@@ -1455,7 +1612,7 @@ void SceneStage01::UpdateGuideArrow() {
 		if (currentEnemyMax > pMaxArm && currentEnemyMax > maxEnemyArm) {
 			maxEnemyArm = currentEnemyMax;
 			targetEnemy = enemy;
-		} 
+		}
 	}
 
 	// 3. 表示・非表示と座標計算
@@ -1594,8 +1751,7 @@ void SceneStage01::UpdateCrown() {
 		crown_->Update(camera_);
 	}
 }
-void SceneStage01::ArrangeByArmSize()
-{
+void SceneStage01::ArrangeByArmSize() {
 	struct Entry {
 		Object* obj;
 		float armSize;
@@ -1651,8 +1807,7 @@ void SceneStage01::ArrangeByArmSize()
 	// ★ 並べた瞬間、カメラ追従を切る
 	isCameraLocked_ = true;
 }
-void SceneStage01::SpawnResultSets(int copyCount, float spacingZ)
-{
+void SceneStage01::SpawnResultSets(int copyCount, float spacingZ) {
 	if (resultSets_.empty()) return;
 
 	const ResultSet base = resultSets_[0];
@@ -1687,8 +1842,7 @@ void SceneStage01::SpawnResultSets(int copyCount, float spacingZ)
 		resultSets_.push_back(set);
 	}
 }
-void SceneStage01::OpenShoji(ResultSet& set)
-{
+void SceneStage01::OpenShoji(ResultSet& set) {
 	Object* left = set.parts[IDX_SYOUJI_L];
 	Object* right = set.parts[IDX_SYOUJI_R];
 
@@ -1696,8 +1850,7 @@ void SceneStage01::OpenShoji(ResultSet& set)
 	left->mainPosition.transform.translate.x -= 30.0f;
 	right->mainPosition.transform.translate.x += 30.0f;
 }
-void SceneStage01::UpdateResultShoji()
-{
+void SceneStage01::UpdateResultShoji() {
 	Vector3 camPos = usingCamera_->GetPosition();
 
 	constexpr float OPEN_DIST = 100.0f; // 前と同じ距離
@@ -2025,4 +2178,48 @@ void SceneStage01::DestroyResultShoji() {
 	delete resultShojiLPaper_;   resultShojiLPaper_ = nullptr;
 	delete resultShojiRPaper_;   resultShojiRPaper_ = nullptr;
 	isResultShojiActive_ = false; // ★追加
+}
+
+void SceneStage01::UpdateOperationGuide() {
+	// --- 1. キーボード・マウスの入力を検知 ---
+	// 主要なキーやマウスボタンが押されたら「キーボードモード」にする
+	// (全キー判定関数がない場合、よく使うキーを羅列するのが一般的です)
+	if (system_->GetIsPush(DIK_W) || system_->GetIsPush(DIK_A) ||
+		system_->GetIsPush(DIK_S) || system_->GetIsPush(DIK_D) ||
+		system_->GetIsPush(DIK_T) ||
+		system_->GetIsPush(DIK_SPACE) || system_->GetIsPush(DIK_RETURN) ||
+		system_->GetMouseIsPush(0) || system_->GetMouseIsPush(1)) { // 左/右クリック
+
+		isGamepadMode_ = false;
+	}
+
+	// --- 2. ゲームパッドの入力を検知 ---
+	// スティックの傾きやボタン入力を検知したら「パッドモード」にする
+	// ※スティックは微小な値が入ることがあるので閾値(デッドゾーン)を設ける
+	const int kStickDeadZone = 3000; // 例: 最大32767に対して少し余裕を持つ
+
+	bool isPadInput = false;
+
+	// 左スティック入力判定
+	if (abs(system_->GetGamepadLStickX()) > kStickDeadZone ||
+		abs(system_->GetGamepadLStickY()) > kStickDeadZone) {
+		isPadInput = true;
+	}
+	// ボタン入力判定 (0番～15番くらいまでチェック)
+	// ※Engine側でAnyButtonがあればそれが楽ですが、なければループで確認
+	for (int i = 0; i < 16; i++) {
+		if (system_->GetGamepadIsPush(i)) {
+			isPadInput = true;
+			break;
+		}
+	}
+
+	if (isPadInput) {
+		isGamepadMode_ = true;
+	}
+
+	// ★重要: ここでテクスチャ差し替えは行わない！
+	// 念のため両方のUpdateを呼んでおく（アニメーション等がある場合に備えて）
+	guideKey_->Update(usingCamera_);
+	guideGamepad_->Update(usingCamera_);
 }
