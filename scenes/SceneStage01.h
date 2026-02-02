@@ -23,8 +23,7 @@ public:
 	void Update() override;
 	void Draw() override;
 
-
-	Camera* GetCamera() override { return camera_; }
+	Camera* GetCamera() override;
 	// ★ これを追加
 	void ArrangeByArmSize();
 
@@ -36,6 +35,8 @@ public:
 		bool shojiOpened = false;
 		float shojiT = 0.0f; // 0 → 1
 	};
+	bool isResultShojiActive_ = false;
+	float resultShojiWaitTimer_ = 0.0f;
 
 	// リザルト一式を塊のまま複製してZ方向に並べる
 	void SpawnResultSets(int copyCount, float spacingZ);
@@ -50,7 +51,33 @@ public:
 		IDX_PAPER_L = 4,
 		IDX_PAPER_R = 5,
 	};
+	// ===== Result Shoji =====
+	enum class ResultShojiPhase {
+		None,
+		Closing,
+		Wait,      // ★追加
+		Opening,
+		CameraMove   // ★追加
+	};
+	float resultCameraT_ = 0.0f;
+	Vector3 resultCameraStart_;
+	Vector3 resultCameraEnd_;
 
+	ResultShojiPhase resultShojiPhase_ = ResultShojiPhase::None;
+	float resultShojiT_ = 0.0f;
+
+	// 障子オブジェクト
+	Object* resultShojiL_ = nullptr;
+	Object* resultShojiR_ = nullptr;
+	Object* resultShojiLPaper_ = nullptr;
+	Object* resultShojiRPaper_ = nullptr;
+
+	// API
+	void StartResultShoji();
+	void UpdateResultShojiAnim();
+	void CreateResultShoji(const Vector3& camRot);
+	void SetResultShojiOpenPose(const Vector3& base, const Vector3& camRot);
+	void DestroyResultShoji();
 
 private:
 	kEngine *system_ = nullptr;				// 借り
