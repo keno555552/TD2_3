@@ -122,6 +122,79 @@ SceneStage01::SceneStage01(kEngine *system) {
 		DoujouScale_[i] = Doujous_[i]->mainPosition.transform.scale;
 	}
 
+
+	const char* ResultModelPaths[kResultPartCount] = {
+	"resources/game/model/result_wall.obj",
+	"resources/game/model/result_wood.obj",
+	"resources/game/model/result_syouji_left.obj",
+	"resources/game/model/result_syouji_right.obj",
+	"resources/game/model/result_paper_left.obj",
+	"resources/game/model/result_paper_right.obj",
+	};
+
+	const char* ResultTexturePaths[kResultPartCount] = {
+		
+		"resources/game/texture/paper.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/wood_tate.png",
+		"resources/game/texture/paper.png",
+		"resources/game/texture/paper.png",
+	};
+
+
+
+	for (int i = 0; i < kResultPartCount; i++) {
+		ResultModels_[i] = system_->SetModelObj(ResultModelPaths[i]);
+		ResultTextures_[i] = system_->LoadTexture(ResultTexturePaths[i]);
+
+		Results_[i] = new Object;
+		Results_[i]->IntObject(system_);
+		Results_[i]->CreateDefaultData();
+		Results_[i]->CreateModelData(ResultModels_[i]);
+
+		for (auto& part : Results_[i]->objectParts_) {
+			if (!part.materialConfig) {
+				part.materialConfig = std::make_shared<MaterialConfig>();
+			}
+			part.materialConfig->useModelTexture = false;
+			part.materialConfig->textureHandle = ResultTextures_[i];
+			part.materialConfig->enableLighting = true;
+		}
+
+		// 先に設定
+		Results_[i]->mainPosition.transform.translate = Vector3(49.9f, 18.05f, 48.15f);
+		Results_[i]->mainPosition.transform.scale = Vector3(0.205f, 0.2f, 0.2f);
+
+		// そのあと保存
+		ResultPos_[i] = Results_[i]->mainPosition.transform.translate;
+		ResultRot_[i] = Results_[i]->mainPosition.transform.rotate;
+		ResultScale_[i] = Results_[i]->mainPosition.transform.scale;
+
+	}
+
+	constexpr int IDX_SYOUJI_L = 2;
+	constexpr int IDX_SYOUJI_R = 3;
+
+	ResultSet base;
+
+	for (int i = 0; i < kResultPartCount; i++) {
+		base.parts.push_back(Results_[i]);
+		base.basePos.push_back(ResultPos_[i]);
+	}
+	ResultSet set;
+	set.shojiOpened = false;
+	set.shojiOpening = false;
+	set.shojiT = 0.0f;
+
+	// ★ メンバ変数に入れる
+	resultSets_.push_back(base);
+
+
+
+
+
+
 	constexpr int IDX_TATAMI = 13;
 	constexpr int IDX_TATAMI_FRAME = 14;
 
@@ -571,9 +644,22 @@ void SceneStage01::Update() {
 	for (auto* t : tatamiTiles_)  t->Update(usingCamera_);
 	for (auto* f : tatamiFrames_) f->Update(usingCamera_);
 
-	
+	if (system_->GetTriggerOn(DIK_P)) {
+		ArrangeByArmSize();
+			SpawnResultSets(5, -80.0f);
+			isResultGenerated_ = true; // ★ここ
+		
+	}
+	for (auto& set : resultSets_) {
+		for (auto* obj : set.parts) {
+			if (obj) obj->Update(usingCamera_);
+		}
+	}
 
+	if (isResultGenerated_) {
 
+		UpdateResultShoji();
+	}
 
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
@@ -584,6 +670,7 @@ void SceneStage01::Update() {
 		outcome_ = SceneOutcome::NEXT;
 	}
 
+	
 
 
 }
@@ -628,12 +715,20 @@ void SceneStage01::Draw() {
 	for (auto* t : tatamiTiles_)  t->Draw();
 	for (auto* f : tatamiFrames_) f->Draw();
 
-	//背景オブジェクト
-	for (int i = 0; i < kDoujouPartCount-2; i++) {
-		if (Doujous_[i]) {
-			Doujous_[i]->Draw();
+	////背景オブジェクト
+	//for (int i = 0; i < kDoujouPartCount-2; i++) {
+	//	if (Doujous_[i]) {
+	//		Doujous_[i]->Draw();
+	//	}
+	//}
+
+	for (auto& set : resultSets_) {
+			for (auto* obj : set.parts) {
+				if (obj) obj->Draw();
+			}
 		}
-	}
+	
+
 
 
 	// チュートリアルお試し
@@ -646,6 +741,19 @@ void SceneStage01::Draw() {
 }
 
 void SceneStage01::CameraPart() {
+	// ★ カメラ追従停止中
+	if (isCameraLocked_) {
+		if (useDebugCamera) {
+			usingCamera_ = debugCamera_;
+			debugCamera_->MouseControlUpdate();
+		}
+		// 位置・回転を一切更新しない
+		system_->SetCamera(usingCamera_);
+		return;
+		
+
+	}
+
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
 		debugCamera_->MouseControlUpdate();
@@ -1456,5 +1564,166 @@ void SceneStage01::UpdateCrown() {
 	if (crown_) {
 		crown_->SetTarget(topChar, topArmScale);
 		crown_->Update(camera_);
+	}
+}
+void SceneStage01::ArrangeByArmSize()
+{
+	struct Entry {
+		Object* obj;
+		float armSize;
+	};
+
+	std::vector<Entry> list;
+
+	// --- プレイヤー ---
+	{
+		float pMaxArm = std::max(
+			player_->GetArmScaleL(),
+			player_->GetArmScaleR()
+		);
+		list.push_back({ player_, pMaxArm });
+	}
+
+	// --- エネミー ---
+	for (auto* enemy : enemies_) {
+		float eMaxArm = std::max(
+			enemy->GetArmScaleL(),
+			enemy->GetArmScaleR()
+		);
+		list.push_back({ enemy, eMaxArm });
+	}
+
+	if (list.empty()) return;
+
+	// --- 腕サイズで降順ソート ---
+	std::sort(list.begin(), list.end(),
+		[](const Entry& a, const Entry& b) {
+			return a.armSize > b.armSize;
+		});
+
+	// ★ 並べ始める「固定の場所」
+	Vector3 basePos = arrangeOrigin_;
+
+	// 間隔
+	const float spacing = 2.5f;
+
+	// --- 配置 ---
+	for (int i = 0; i < static_cast<int>(list.size()); ++i) {
+		Object* obj = list[i].obj;
+
+		obj->mainPosition.transform.translate = {
+			basePos.x,
+			basePos.y,
+			basePos.z - spacing * i
+		};
+
+		// 全員 -Z を向く
+		obj->mainPosition.transform.rotate.y = std::numbers::pi_v<float>;
+	}
+	// ★ 並べた瞬間、カメラ追従を切る
+	isCameraLocked_ = true;
+}
+void SceneStage01::SpawnResultSets(int copyCount, float spacingZ)
+{
+	if (resultSets_.empty()) return;
+
+	const ResultSet base = resultSets_[0];
+	resultSets_.clear();   // ← 毎回作り直す（重要）
+
+	for (int c = 0; c < copyCount; ++c) { // ★ 0 から
+		ResultSet set;
+
+		for (size_t i = 0; i < base.parts.size(); ++i) {
+			Object* src = base.parts[i];
+
+			Object* obj = new Object;
+			obj->IntObject(system_);
+			obj->CreateDefaultData();
+			obj->CreateModelData(src->modelHandle_);
+
+			obj->objectParts_ = src->objectParts_; // マテリアル共有
+
+			Vector3 pos = base.basePos[i];
+			pos.z += spacingZ * c;   // ★ base もずらす
+
+			obj->mainPosition.transform.translate = pos;
+			obj->mainPosition.transform.rotate = src->mainPosition.transform.rotate;
+			obj->mainPosition.transform.scale = src->mainPosition.transform.scale;
+
+			obj->Update(usingCamera_);
+
+			set.parts.push_back(obj);
+			set.basePos.push_back(pos);
+		}
+
+		resultSets_.push_back(set);
+	}
+}
+void SceneStage01::OpenShoji(ResultSet& set)
+{
+	Object* left = set.parts[IDX_SYOUJI_L];
+	Object* right = set.parts[IDX_SYOUJI_R];
+
+	// 横にずらすだけ（即時）
+	left->mainPosition.transform.translate.x -= 30.0f;
+	right->mainPosition.transform.translate.x += 30.0f;
+}
+void SceneStage01::UpdateResultShoji()
+{
+	Vector3 camPos = usingCamera_->GetPosition();
+
+	constexpr float OPEN_DIST = 10.0f; // 前と同じ距離
+	constexpr float OPEN_TIME = 0.6f;  // 開く時間
+	constexpr float OPEN_OFFSET = 30.0f;
+
+	for (auto& set : resultSets_) {
+
+		// 代表位置（以前と同じ）
+		Vector3 base = set.basePos[0];
+
+		float dist =
+			std::sqrt(
+				(camPos.x - base.x) * (camPos.x - base.x) +
+				(camPos.y - base.y) * (camPos.y - base.y) +
+				(camPos.z - base.z) * (camPos.z - base.z)
+			);
+
+		// 開始判定（変更なし）
+		if (!set.shojiOpening && !set.shojiOpened) {
+			if (dist < OPEN_DIST) {
+				set.shojiOpening = true;
+				set.shojiT = 0.0f;
+			}
+		}
+
+		// 開閉中
+		if (set.shojiOpening) {
+			set.shojiT += system_->GetDeltaTime() / OPEN_TIME;
+			float t = std::clamp(set.shojiT, 0.0f, 1.0f);
+
+			// EaseOut
+			float ease = 1.0f - (1.0f - t) * (1.0f - t);
+
+			Object* shojiL = set.parts[IDX_SYOUJI_L];
+			Object* shojiR = set.parts[IDX_SYOUJI_R];
+			Object* paperL = set.parts[IDX_PAPER_L];
+			Object* paperR = set.parts[IDX_PAPER_R];
+
+			// 左側
+			float leftX = set.basePos[IDX_SYOUJI_L].x - OPEN_OFFSET * ease;
+			// 右側
+			float rightX = set.basePos[IDX_SYOUJI_R].x + OPEN_OFFSET * ease;
+
+			shojiL->mainPosition.transform.translate.x = leftX;
+			paperL->mainPosition.transform.translate.x = leftX;
+
+			shojiR->mainPosition.transform.translate.x = rightX;
+			paperR->mainPosition.transform.translate.x = rightX;
+
+			if (t >= 1.0f) {
+				set.shojiOpening = false;
+				set.shojiOpened = true;
+			}
+		}
 	}
 }

@@ -344,6 +344,53 @@ SceneTitle::SceneTitle(kEngine* system) {
     selects_[10]->mainPosition.transform.translate =
         selectBasePos_ + Vector3(selectSpacing_ * selectIndex_, 0.0f, 0.0f);
 
+
+    // ===== タイトルで「読むだけ」 =====
+   // 戻り値は受けない。Objectも作らない。
+
+    system_->LoadTexture("resources/game/texture/paper.png");
+    system_->LoadTexture("resources/game/texture/ohuda_flame.png");
+    system_->LoadTexture("resources/game/texture/wood_tate.png");
+    system_->LoadTexture("resources/game/texture/tatami.png");
+    system_->LoadTexture("resources/game/texture/tatami_flame.png");
+
+    system_->SetModelObj("resources/game/model/doujou_kakeziku.obj");
+    system_->SetModelObj("resources/game/model/doujou_kakeziku_flame.obj");
+    system_->SetModelObj("resources/game/model/doujou_kakeziku_mozi.obj");
+
+    system_->SetModelObj("resources/game/model/doujou_wall_roof.obj");
+    system_->SetModelObj("resources/game/model/doujou_wall_back.obj");
+    system_->SetModelObj("resources/game/model/doujou_wall_front.obj");
+    system_->SetModelObj("resources/game/model/doujou_wall_right.obj");
+    system_->SetModelObj("resources/game/model/doujou_wall_left.obj");
+
+    system_->SetModelObj("resources/game/model/doujou_roof.obj");
+    system_->SetModelObj("resources/game/model/doujou_wood_back.obj");
+    system_->SetModelObj("resources/game/model/doujou_wood_front.obj");
+    system_->SetModelObj("resources/game/model/doujou_wood_right.obj");
+    system_->SetModelObj("resources/game/model/doujou_wood_left.obj");
+
+    system_->SetModelObj("resources/game/model/tatami.obj");
+    system_->SetModelObj("resources/game/model/tatami_flame.obj");
+
+  
+// =====================
+// Result 用：読み込みだけ
+// =====================
+
+// モデル
+    system_->SetModelObj("resources/game/model/result_wall.obj");
+    system_->SetModelObj("resources/game/model/result_wood.obj");
+    system_->SetModelObj("resources/game/model/result_syouji_left.obj");
+    system_->SetModelObj("resources/game/model/result_syouji_right.obj");
+    system_->SetModelObj("resources/game/model/result_paper_left.obj");
+    system_->SetModelObj("resources/game/model/result_paper_right.obj");
+
+    // テクスチャ
+    system_->LoadTexture("resources/game/texture/paper.png");
+    system_->LoadTexture("resources/game/texture/wood_tate.png");
+
+
 }
 
 SceneTitle::~SceneTitle() {
