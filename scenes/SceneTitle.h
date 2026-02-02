@@ -13,7 +13,9 @@ public:
 
 	void Update() override;
 	void Draw() override;
-
+	// タイトル側専用。Stageと共有しない
+	// タイトル側専用。Stageと共有しない
+	static constexpr int kPreloadDoujouCount = 15;
 public:
 	/// ============== カメラ関連 ==============///
 	/// ステージカメラ(mainカメラ)

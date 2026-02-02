@@ -13,12 +13,13 @@ public:
 
 	void Start();
 	void Stop();
+	void Reset();
 	bool IsTimeUp();
 
 	Timer& GetTime();
 	int GetCount() const { return numberCount_; }
+	bool isRunning() const { return isStart_; }
 
-	void Reset();
 
 private:
 

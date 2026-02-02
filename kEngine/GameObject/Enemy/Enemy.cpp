@@ -29,9 +29,9 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 #pragma endregion
 }
 
-void Enemy::Update(Camera* camera) {
-	// 1. エンジンから値を取得
-	float rawDeltaTime = system_->GetDeltaTime();
+void Enemy::Update(Camera *camera) {
+  // 1. エンジンから値を取得
+  float rawDeltaTime = system_->GetScaledDeltaTime();
 
 	// 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
 	// これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます
@@ -308,6 +308,21 @@ Vector3 Enemy::GetArmPositionL() const {
 	float worldY = centerPos.y;
 
 	return Vector3{ worldX, worldY, worldZ };
+}
+
+void Enemy::OnWallHit(const Vector3& normal) {
+    // X方向の壁（左右）
+    if (normal.x != 0.0f) {
+        if ((normal.x > 0 && velocity_.x < 0) || (normal.x < 0 && velocity_.x > 0)) {
+            velocity_.x = 0.0f;
+        }
+    }
+    // Z方向の壁（奥・手前）
+    if (normal.z != 0.0f) {
+        if ((normal.z > 0 && velocity_.z < 0) || (normal.z < 0 && velocity_.z > 0)) {
+            velocity_.z = 0.0f;
+        }
+    }
 }
 
 Vector3 Enemy::GetArmPositionR() const {
