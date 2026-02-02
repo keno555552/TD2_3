@@ -1127,6 +1127,7 @@ void SceneStage01::CheckAttackCollision() {
 
 		// 2. 衝突判定 (AABB vs AABB)
 		if (crashDecision(armAABB, targetAABB)) {
+			float duration = 0.3f;
 
 			// 3. 衝突ベクトル計算
 			Vector3 targetPos = targetObj->mainPosition.transform.translate;
@@ -1157,7 +1158,7 @@ void SceneStage01::CheckAttackCollision() {
 					// ▼▼▼ 演出追加 ▼▼▼
 					// 0.05倍速(ほぼ停止) にして、0.1秒間(実時間) 止める
 					// これにより「ガッ！」という重いヒット感が生まれます
-					StartHitStop(0.05f, 0.15f);
+					StartHitStop(0.05f, duration);
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
@@ -1200,6 +1201,8 @@ void SceneStage01::CheckAttackCollision() {
 				// 定数定義
 				float basePower = 8.0f;
 				float minKnockback = 10.0f; // 最小ノックバック量
+
+				float duration = 0.3f;
 
 				// 引き分けとみなすサイズ差の許容範囲
 				// 例えば 0.8 に設定すれば、サイズ 3.0 vs 3.5 でも引き分けになります。
@@ -1267,7 +1270,7 @@ void SceneStage01::CheckAttackCollision() {
 						float power = std::max(basePower * (armScaleA * armScaleA), minKnockback);
 
 						// スロー演出（プレイヤーが関与している場合のみ推奨）
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1301,7 +1304,7 @@ void SceneStage01::CheckAttackCollision() {
 						// ★修正: 最小値保証
 						float power = std::max(basePower * (armScaleB * armScaleB), minKnockback);
 
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1368,7 +1371,7 @@ void SceneStage01::CheckAttackCollision() {
 
 						// エフェクトとスローは「どちらかがヒットした」なら実行
 						if ((!ignoreA || !ignoreB) && isCheckInPlayer) {
-							StartHitStop(0.05f, 0.15f);
+							StartHitStop(0.05f, duration);
 							explosion_->SetIsEmitting(true);
 							explosion_->SetPos((posA + posB) / 2.0f);
 						}
