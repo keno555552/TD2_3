@@ -635,6 +635,8 @@ void SceneStage01::Update() {
 	if (system_->GetTriggerOn(DIK_P)) {
 		ArrangeByArmSize();
 			SpawnResultSets(5, -80.0f);
+			camera_->Move(Vector3(50.0f, 0.5f, -400.0f));
+			debugCamera_->Move(Vector3(50.0f, 0.5f, -400.0f));
 			isResultGenerated_ = true; // ★ここ
 		
 	}
@@ -1599,29 +1601,27 @@ void SceneStage01::UpdateResultShoji()
 {
 	Vector3 camPos = usingCamera_->GetPosition();
 
-	constexpr float OPEN_DIST = 10.0f; // 前と同じ距離
+	constexpr float OPEN_DIST = 100.0f; // 前と同じ距離
 	constexpr float OPEN_TIME = 0.6f;  // 開く時間
 	constexpr float OPEN_OFFSET = 30.0f;
 
 	for (auto& set : resultSets_) {
 
 		// 代表位置（以前と同じ）
+		// 代表位置
 		Vector3 base = set.basePos[0];
 
-		float dist =
-			std::sqrt(
-				(camPos.x - base.x) * (camPos.x - base.x) +
-				(camPos.y - base.y) * (camPos.y - base.y) +
-				(camPos.z - base.z) * (camPos.z - base.z)
-			);
+		// ★ Zだけの距離
+		float dist = std::abs(camPos.z - base.z);
 
-		// 開始判定（変更なし）
+		// 開始判定
 		if (!set.shojiOpening && !set.shojiOpened) {
 			if (dist < OPEN_DIST) {
 				set.shojiOpening = true;
 				set.shojiT = 0.0f;
 			}
 		}
+
 
 		// 開閉中
 		if (set.shojiOpening) {
