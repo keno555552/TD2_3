@@ -23,8 +23,7 @@ public:
 	void Update() override;
 	void Draw() override;
 
-
-	Camera* GetCamera() override { return camera_; }
+	Camera* GetCamera() override;
 	// ★ これを追加
 	void ArrangeByArmSize();
 
@@ -36,6 +35,8 @@ public:
 		bool shojiOpened = false;
 		float shojiT = 0.0f; // 0 → 1
 	};
+	bool isResultShojiActive_ = false;
+	float resultShojiWaitTimer_ = 0.0f;
 
 	// リザルト一式を塊のまま複製してZ方向に並べる
 	void SpawnResultSets(int copyCount, float spacingZ);
@@ -50,7 +51,33 @@ public:
 		IDX_PAPER_L = 4,
 		IDX_PAPER_R = 5,
 	};
+	// ===== Result Shoji =====
+	enum class ResultShojiPhase {
+		None,
+		Closing,
+		Wait,      // ★追加
+		Opening,
+		CameraMove   // ★追加
+	};
+	float resultCameraT_ = 0.0f;
+	Vector3 resultCameraStart_;
+	Vector3 resultCameraEnd_;
 
+	ResultShojiPhase resultShojiPhase_ = ResultShojiPhase::None;
+	float resultShojiT_ = 0.0f;
+
+	// 障子オブジェクト
+	Object* resultShojiL_ = nullptr;
+	Object* resultShojiR_ = nullptr;
+	Object* resultShojiLPaper_ = nullptr;
+	Object* resultShojiRPaper_ = nullptr;
+
+	// API
+	void StartResultShoji();
+	void UpdateResultShojiAnim();
+	void CreateResultShoji(const Vector3& camRot);
+	void SetResultShojiOpenPose(const Vector3& base, const Vector3& camRot);
+	void DestroyResultShoji();
 
 private:
 	kEngine *system_ = nullptr;				// 借り
@@ -89,6 +116,8 @@ private:
 	int boxTextureHandle_ = 0;
 	int tryTextureHandle_ = 0;
 	int uvTextureHandle_ = 0;
+	int guideKeyHandle_ = 0; // キーボード用の画像
+	int guideGamepadHandle_ = 0;  // ゲームパッド用の画像
 
 	/// =========== ゲームオブジェクト ==========///
 	// 左右の情報をまとめる
@@ -102,6 +131,11 @@ private:
 	Player *player_ = nullptr;
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
+
+	// 操作ガイド用スプライト
+	// スプライトを2つ用意する
+	SimpleSprite* guideKey_ = nullptr; // キーボード用
+	SimpleSprite* guideGamepad_ = nullptr; // パッド用
 
 	std::vector<Enemy*> enemies_{}; // enemyのリスト
 
@@ -135,7 +169,8 @@ private:
 	// ヒットストップ（スロー）管理用
 	float hitStopTimer_ = 0.0f;
 
-
+	// 現在ゲームパッドモードかどうか
+	bool isGamepadMode_ = true;
 
 
 
@@ -201,5 +236,9 @@ private:
 	/// ============ 王冠関連 ============///
 	// 王冠の更新
 	void UpdateCrown();
+
+	/// ============ 操作説明関連 ============///
+	// 操作ガイドの表示切り替え更新用関数
+	void UpdateOperationGuide();
 };
 

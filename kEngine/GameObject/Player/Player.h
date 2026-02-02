@@ -86,6 +86,8 @@ public:
 	bool IsAttackingR() const { return isAttackingR_; }
 	bool IsAttackingL() const { return isAttackingL_; }
 
+	bool GetIsCharging()const { return isCharging_; }
+
 private:
 
 	enum class LRDirection { kRight, kLeft, None };
@@ -187,5 +189,7 @@ private:
 	// 攻撃中フラグ
 	bool isAttackingR_ = false;
 	bool isAttackingL_ = false;
+
+	bool isCharging_ = false;
 };
 

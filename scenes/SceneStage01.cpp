@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <numbers>
+#include "SceneManager.h"
 
 SceneStage01::SceneStage01(kEngine* system) {
 	/// =========== システム初期化 ============///
@@ -12,8 +13,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 	debugCamera_ = system_->CreateDebugCamera();
 	camera_ = system_->CreateCamera();
 	camera_->Move(Vector3(0.0f, 0.5f, -10.0f));
-	camera_->SetFarClip(20000.0f);
-	debugCamera_->SetFarClip(20000.0f);
+	camera_->SetFarClip(200000.0f);
+	debugCamera_->SetFarClip(200000.0f);
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
 	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
@@ -109,8 +110,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			// ★ textureColor は触らない（ここ重要）
 		}
 
-		//Doujous_[i]->Update(usingCamera_);
-
+	
 
 	}
 
@@ -191,87 +191,106 @@ SceneStage01::SceneStage01(kEngine* system) {
 	resultSets_.push_back(base);
 
 
-
-
-
-
 	constexpr int IDX_TATAMI = 13;
 	constexpr int IDX_TATAMI_FRAME = 14;
 
 	constexpr int TATAMI_X = 4;
 	constexpr int TATAMI_Z = 7;
 
-	const float TATAMI_SCALE = 0.3;
+	constexpr float TATAMI_SCALE = 0.3f;
 
-	// tatami.obj の実寸（Blender基準。合ってなければここだけ調整）
-	const Vector3 TATAMI_SIZE = { 97.0f, 0.0f, 48.0f }; // X短辺 / Z長辺
+	// tatami.obj の実寸
+	const Vector3 TATAMI_SIZE = { 97.0f, 0.0f, 48.0f };
 
 	// =====================
-// 畳タイル配置（畳 + フレーム）
-// =====================
+	// 畳タイル配置（畳 + フレーム）
+	// =====================
 
-// 基準位置（好きに変えろ）
-	Vector3 origin = { 15.0f, 0.0f, 7.5f };
+	// 基準位置（1セット目）
+	Vector3 origin = { 15.0f, 0.1f, 7.5f };
 
-	// 1枚あたりの間隔（モデル実寸 * スケール）
-	// ※畳の向きが違うなら x/z を入れ替え
+	// 1枚あたりの間隔
 	float stepX = TATAMI_SIZE.x * TATAMI_SCALE;
 	float stepZ = TATAMI_SIZE.z * TATAMI_SCALE;
 
-	// 生成関数（畳とフレームを同じTransformで作る）
-	auto CreateTatamiPair = [&](const Vector3& pos) {
-		// 畳
-		{
-			Object* t = new Object();
-			t->IntObject(system_);
-			t->CreateDefaultData();
-			t->CreateModelData(DoujouModels_[IDX_TATAMI]);
+	// ★ セット全体のサイズ
+	float setSizeX = stepX * TATAMI_X;
+	float setSizeZ = stepZ * TATAMI_Z;
 
-			t->mainPosition.transform.translate = pos;
-			t->mainPosition.transform.scale = { TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
+	// ★ 何セット並べるか（ここだけ変えれば張り替え）
+	constexpr int TATAMI_SET_COUNT = 10;
 
-			for (auto& part : t->objectParts_) {
-				if (!part.materialConfig) part.materialConfig = std::make_shared<MaterialConfig>();
-				part.materialConfig->useModelTexture = false;
-				part.materialConfig->textureHandle = DoujouTextures_[IDX_TATAMI];
-				part.materialConfig->enableLighting = true;
-			}
-
-			tatamiTiles_.push_back(t);
-		}
-
-		// フレーム（座標・回転・スケール同じ）
-		{
-			Object* f = new Object();
-			f->IntObject(system_);
-			f->CreateDefaultData();
-			f->CreateModelData(DoujouModels_[IDX_TATAMI_FRAME]);
-
-			f->mainPosition.transform.translate = pos;
-			f->mainPosition.transform.scale = { TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
-
-			for (auto& part : f->objectParts_) {
-				if (!part.materialConfig) part.materialConfig = std::make_shared<MaterialConfig>();
-				part.materialConfig->useModelTexture = false;
-				part.materialConfig->textureHandle = DoujouTextures_[IDX_TATAMI_FRAME];
-				part.materialConfig->enableLighting = true;
-			}
-
-			tatamiFrames_.push_back(f);
-		}
+	// =====================
+	// セット複製ループ
+	// =====================
+	for (int set = 0; set < TATAMI_SET_COUNT; ++set)
+	{
+		// ★ このセットの基準位置
+		Vector3 setOrigin = {
+			origin.x,
+			origin.y,
+			origin.z - setSizeZ * set   // ← Z方向に複製
 		};
 
-	// タイル敷き
-	for (int z = 0; z < TATAMI_Z; ++z) {
-		for (int x = 0; x < TATAMI_X; ++x) {
-			Vector3 p = {
-				origin.x + stepX * x,
-				origin.y,
-				origin.z + stepZ * z
-			};
-			CreateTatamiPair(p);
+		// タイル敷き（中身は元コードそのまま）
+		for (int z = 0; z < TATAMI_Z; ++z) {
+			for (int x = 0; x < TATAMI_X; ++x) {
+
+				Vector3 p = {
+					setOrigin.x + stepX * x,
+					setOrigin.y,
+					setOrigin.z + stepZ * z
+				};
+
+				// 畳
+				{
+					Object* t = new Object();
+					t->IntObject(system_);
+					t->CreateDefaultData();
+					t->CreateModelData(DoujouModels_[IDX_TATAMI]);
+
+					t->mainPosition.transform.translate = p;
+					t->mainPosition.transform.scale =
+					{ TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
+
+					for (auto& part : t->objectParts_) {
+						if (!part.materialConfig)
+							part.materialConfig = std::make_shared<MaterialConfig>();
+						part.materialConfig->useModelTexture = false;
+						part.materialConfig->textureHandle =
+							DoujouTextures_[IDX_TATAMI];
+						part.materialConfig->enableLighting = true;
+					}
+
+					tatamiTiles_.push_back(t);
+				}
+
+				// フレーム
+				{
+					Object* f = new Object();
+					f->IntObject(system_);
+					f->CreateDefaultData();
+					f->CreateModelData(DoujouModels_[IDX_TATAMI_FRAME]);
+
+					f->mainPosition.transform.translate = p;
+					f->mainPosition.transform.scale =
+					{ TATAMI_SCALE, TATAMI_SCALE, TATAMI_SCALE };
+
+					for (auto& part : f->objectParts_) {
+						if (!part.materialConfig)
+							part.materialConfig = std::make_shared<MaterialConfig>();
+						part.materialConfig->useModelTexture = false;
+						part.materialConfig->textureHandle =
+							DoujouTextures_[IDX_TATAMI_FRAME];
+						part.materialConfig->enableLighting = true;
+					}
+
+					tatamiFrames_.push_back(f);
+				}
+			}
 		}
 	}
+
 
 	//skydome_->CreateDefaultData();
 	skydome_ = new Object;
@@ -357,6 +376,36 @@ SceneStage01::SceneStage01(kEngine* system) {
 	startUpTimer = new Timer();
 	startUpTimer->InitM(1.0f, system->GetTimeManager());
 
+	// ■■■ 操作ガイドの初期化 ■■■
+	// 画像を2種類読み込む (パスは実際のファイルに合わせてください)
+	guideKeyHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_keyboad.png");
+	guideGamepadHandle_ = system_->LoadTexture("resources/texture/Tutorial/instruction_gamepad.png");
+
+	// --- キーボード用スプライト ---
+	guideKey_ = new SimpleSprite();
+	guideKey_->IntObject(system_);
+	guideKey_->CreateDefaultData();
+	guideKey_->objectParts_[0].materialConfig->textureHandle = guideKeyHandle_;
+	// 座標設定 (左下)
+	// 画面左下に配置 (座標は画面サイズに合わせて調整してください)
+	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
+	// 左端なので X=10 くらい
+	float winHeight = config::GetClientHeight();
+	guideKey_->mainPosition.transform.translate = Vector3(30.0f, winHeight - 170.0f, 0.0f);
+
+	// サイズ調整（必要なら）
+	guideKey_->mainPosition.transform.scale = Vector3(0.15f, 0.15f, 1.0f);
+
+	// --- ゲームパッド用スプライト ---
+	guideGamepad_ = new SimpleSprite();
+	guideGamepad_->IntObject(system_);
+	guideGamepad_->CreateDefaultData();
+	guideGamepad_->objectParts_[0].materialConfig->textureHandle = guideGamepadHandle_;
+	// 座標設定 (キーボード用と全く同じ位置に重ねる)
+	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate;
+
+	// サイズ調整（必要なら）
+
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);
 
@@ -407,12 +456,16 @@ SceneStage01::~SceneStage01() {
 	tatamiTiles_.clear();
 	tatamiFrames_.clear();
 
-
+	if (guideKey_) delete guideKey_;
+	if (guideGamepad_)  delete guideGamepad_;
 	delete tutorial_;
 }
 
 void SceneStage01::Update() {
 	tutorial_->Update(usingCamera_);
+
+	// 操作説明切り替え用
+	UpdateOperationGuide();
 
 	/// カメラ処理
 	CameraPart();
@@ -477,11 +530,12 @@ void SceneStage01::Update() {
 
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
-
+		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
+		isTargetCharging = player_->GetIsCharging();
 		for (auto* other : enemies_) {
 			if (other == enemy) continue; // 自身は除外
 
@@ -493,15 +547,14 @@ void SceneStage01::Update() {
 			if (distance < nearDistance) {
 				nearDistance = distance; // 一番近い距離の変更
 				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+				isTargetCharging = other->GetIsCharging();
 			}
 		}
 
-
 		enemy->SetTargetPos(nearPos);
-
+		enemy->SetTargetCharge(isTargetCharging);
 		enemy->Update(usingCamera_);
 	}
-
 
 	/// 衝突判定処理
 
@@ -585,6 +638,7 @@ void SceneStage01::Update() {
 		if (targetObj->mainPosition.transform.translate.z > limitZ) {
 			targetObj->mainPosition.transform.translate.z = limitZ;
 		}
+
 		if (targetObj->mainPosition.transform.translate.z < minLimit) {
 			targetObj->mainPosition.transform.translate.z = minLimit;
 		}
@@ -671,10 +725,14 @@ void SceneStage01::Update() {
 
 	if (system_->GetTriggerOn(DIK_P)) {
 		ArrangeByArmSize();
-		SpawnResultSets(5, -80.0f);
-		isResultGenerated_ = true; // ★ここ
+
+		StartResultShoji();
+			SpawnResultSets(10, -80.0f);
+		
+			isResultGenerated_ = true; // ★ここ
 
 	}
+	UpdateResultShojiAnim();
 	for (auto& set : resultSets_) {
 		for (auto* obj : set.parts) {
 			if (obj) obj->Update(usingCamera_);
@@ -737,24 +795,108 @@ void SceneStage01::Draw() {
 
 	explosion_->Draw();
 	//畳（床）
-	for (auto* t : tatamiTiles_)  t->Draw();
-	for (auto* f : tatamiFrames_) f->Draw();
+	// =====================
+// 畳（床）距離カリング描画
+// =====================
+	constexpr float TATAMI_DRAW_DIST = 150.0f;
+	constexpr float TATAMI_DRAW_DIST_SQ =
+		TATAMI_DRAW_DIST * TATAMI_DRAW_DIST;
 
-	////背景オブジェクト
-	//for (int i = 0; i < kDoujouPartCount-2; i++) {
-	//	if (Doujous_[i]) {
-	//		Doujous_[i]->Draw();
-	//	}
-	//}
 
-	for (auto& set : resultSets_) {
-		for (auto* obj : set.parts) {
+	Vector3 camPos = usingCamera_->GetPosition();
+
+	// 畳
+	for (auto* t : tatamiTiles_)
+	{
+		if (!t) continue;
+
+		Vector3 pos = t->mainPosition.transform.translate;
+
+		Vector3 d = pos - camPos;
+		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+
+		if (distSq > TATAMI_DRAW_DIST_SQ)
+			continue;   // ★ 遠いので描画しない
+
+		t->Draw();
+	}
+
+	// フレーム
+	for (auto* f : tatamiFrames_)
+	{
+		if (!f) continue;
+
+		Vector3 pos = f->mainPosition.transform.translate;
+
+		Vector3 d = pos - camPos;
+		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+
+		if (distSq > TATAMI_DRAW_DIST_SQ)
+			continue;
+
+		f->Draw();
+	}
+
+
+	//背景オブジェクト
+// 背景オブジェクト
+	for (int i = 0; i < kDoujouPartCount - 2; i++)
+	{
+		if (!Doujous_[i]) continue;
+
+		// 4 と 9 以外を描画
+		if (i != 4 && i != 9)
+		{
+			Doujous_[i]->Draw();
+		}
+	}
+
+	// カメラロック解除時のみ 4 と 9 を描画
+	if (!isCameraLocked_)
+	{
+		Doujous_[4]->Draw();
+		Doujous_[9]->Draw();
+	}
+	constexpr float RESULT_DRAW_DIST = 300.0f;
+	constexpr float RESULT_DRAW_DIST_SQ =
+		RESULT_DRAW_DIST * RESULT_DRAW_DIST;
+
+	Vector3 resultSets_camPos = usingCamera_->GetPosition();
+	for (auto& set : resultSets_)
+	{
+		// ★ セット代表位置で距離判定
+		Vector3 base = set.basePos[0];
+		Vector3 d = base - resultSets_camPos+ Vector3(0,0,-200);
+		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+
+		if (distSq > RESULT_DRAW_DIST_SQ)
+			continue;   // ★ このセット丸ごと描画しない
+
+		// 近いセットだけ描画
+		for (auto* obj : set.parts)
+		{
 			if (obj) obj->Draw();
 		}
 	}
 
+	
+	// ===== Result Shoji (演出用) =====
+	if (resultShojiL_)        resultShojiL_->Draw();
+	if (resultShojiR_)        resultShojiR_->Draw();
+	if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+	if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
 
 
+
+	// 操作説明
+	// ■■■ ガイド描画切り替え ■■■
+	if (isGamepadMode_) {
+		// パッドモードならパッド用画像だけ描画
+		if (guideGamepad_) guideGamepad_->Draw();
+	} else {
+		// それ以外ならキーボード用画像だけ描画
+		if (guideKey_) guideKey_->Draw();
+	}
 
 	// チュートリアルお試し
 	tutorial_->Draw(); // 最前面に描画
@@ -775,6 +917,12 @@ void SceneStage01::Draw() {
 }
 
 void SceneStage01::CameraPart() {
+	if (isResultShojiActive_) {
+		system_->SetCamera(usingCamera_);
+		return;
+	}
+
+	
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1086,6 +1234,7 @@ void SceneStage01::CheckAttackCollision() {
 
 		// 2. 衝突判定 (AABB vs AABB)
 		if (crashDecision(armAABB, targetAABB)) {
+			float duration = 0.3f;
 
 			// 3. 衝突ベクトル計算
 			Vector3 targetPos = targetObj->mainPosition.transform.translate;
@@ -1116,7 +1265,7 @@ void SceneStage01::CheckAttackCollision() {
 					// ▼▼▼ 演出追加 ▼▼▼
 					// 0.05倍速(ほぼ停止) にして、0.1秒間(実時間) 止める
 					// これにより「ガッ！」という重いヒット感が生まれます
-					StartHitStop(0.05f, 0.15f);
+					StartHitStop(0.05f, duration);
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
@@ -1159,6 +1308,8 @@ void SceneStage01::CheckAttackCollision() {
 				// 定数定義
 				float basePower = 8.0f;
 				float minKnockback = 10.0f; // 最小ノックバック量
+
+				float duration = 0.3f;
 
 				// 引き分けとみなすサイズ差の許容範囲
 				// 例えば 0.8 に設定すれば、サイズ 3.0 vs 3.5 でも引き分けになります。
@@ -1226,7 +1377,7 @@ void SceneStage01::CheckAttackCollision() {
 						float power = std::max(basePower * (armScaleA * armScaleA), minKnockback);
 
 						// スロー演出（プレイヤーが関与している場合のみ推奨）
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1260,7 +1411,7 @@ void SceneStage01::CheckAttackCollision() {
 						// ★修正: 最小値保証
 						float power = std::max(basePower * (armScaleB * armScaleB), minKnockback);
 
-						if (isCheckInPlayer) StartHitStop(0.05f, 0.15f);
+						if (isCheckInPlayer) StartHitStop(0.05f, duration);
 
 						Vector3 force = { dir.x * power, 0.0f, dir.z * power };
 
@@ -1327,7 +1478,7 @@ void SceneStage01::CheckAttackCollision() {
 
 						// エフェクトとスローは「どちらかがヒットした」なら実行
 						if ((!ignoreA || !ignoreB) && isCheckInPlayer) {
-							StartHitStop(0.05f, 0.15f);
+							StartHitStop(0.05f, duration);
 							explosion_->SetIsEmitting(true);
 							explosion_->SetPos((posA + posB) / 2.0f);
 						}
@@ -1702,58 +1853,373 @@ void SceneStage01::OpenShoji(ResultSet& set) {
 void SceneStage01::UpdateResultShoji() {
 	Vector3 camPos = usingCamera_->GetPosition();
 
-	constexpr float OPEN_DIST = 10.0f; // 前と同じ距離
+	constexpr float OPEN_DIST = 100.0f; // 前と同じ距離
 	constexpr float OPEN_TIME = 0.6f;  // 開く時間
 	constexpr float OPEN_OFFSET = 30.0f;
+	if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
 
-	for (auto& set : resultSets_) {
+		for (auto& set : resultSets_) {
 
-		// 代表位置（以前と同じ）
-		Vector3 base = set.basePos[0];
+			// 代表位置（以前と同じ）
+			// 代表位置
+			Vector3 base = set.basePos[0];
 
-		float dist =
-			std::sqrt(
-				(camPos.x - base.x) * (camPos.x - base.x) +
-				(camPos.y - base.y) * (camPos.y - base.y) +
-				(camPos.z - base.z) * (camPos.z - base.z)
-			);
+			// ★ Zだけの距離
+			float dist = std::abs(camPos.z - base.z);
 
-		// 開始判定（変更なし）
-		if (!set.shojiOpening && !set.shojiOpened) {
-			if (dist < OPEN_DIST) {
-				set.shojiOpening = true;
-				set.shojiT = 0.0f;
+			// 開始判定
+			if (!set.shojiOpening && !set.shojiOpened) {
+				if (dist < OPEN_DIST) {
+					set.shojiOpening = true;
+					set.shojiT = 0.0f;
+				}
 			}
-		}
 
-		// 開閉中
-		if (set.shojiOpening) {
-			set.shojiT += system_->GetDeltaTime() / OPEN_TIME;
-			float t = std::clamp(set.shojiT, 0.0f, 1.0f);
 
-			// EaseOut
-			float ease = 1.0f - (1.0f - t) * (1.0f - t);
+			// 開閉中
+			if (set.shojiOpening) {
+				set.shojiT += system_->GetDeltaTime() / OPEN_TIME;
+				float t = std::clamp(set.shojiT, 0.0f, 1.0f);
 
-			Object* shojiL = set.parts[IDX_SYOUJI_L];
-			Object* shojiR = set.parts[IDX_SYOUJI_R];
-			Object* paperL = set.parts[IDX_PAPER_L];
-			Object* paperR = set.parts[IDX_PAPER_R];
+				// EaseOut
+				float ease = 1.0f - (1.0f - t) * (1.0f - t);
 
-			// 左側
-			float leftX = set.basePos[IDX_SYOUJI_L].x - OPEN_OFFSET * ease;
-			// 右側
-			float rightX = set.basePos[IDX_SYOUJI_R].x + OPEN_OFFSET * ease;
+				Object* shojiL = set.parts[IDX_SYOUJI_L];
+				Object* shojiR = set.parts[IDX_SYOUJI_R];
+				Object* paperL = set.parts[IDX_PAPER_L];
+				Object* paperR = set.parts[IDX_PAPER_R];
 
-			shojiL->mainPosition.transform.translate.x = leftX;
-			paperL->mainPosition.transform.translate.x = leftX;
+				// 左側
+				float leftX = set.basePos[IDX_SYOUJI_L].x - OPEN_OFFSET * ease;
+				// 右側
+				float rightX = set.basePos[IDX_SYOUJI_R].x + OPEN_OFFSET * ease;
 
-			shojiR->mainPosition.transform.translate.x = rightX;
-			paperR->mainPosition.transform.translate.x = rightX;
+				shojiL->mainPosition.transform.translate.x = leftX;
+				paperL->mainPosition.transform.translate.x = leftX;
 
-			if (t >= 1.0f) {
-				set.shojiOpening = false;
-				set.shojiOpened = true;
+				shojiR->mainPosition.transform.translate.x = rightX;
+				paperR->mainPosition.transform.translate.x = rightX;
+
+				if (t >= 1.0f) {
+					set.shojiOpening = false;
+					set.shojiOpened = true;
+				}
 			}
 		}
 	}
+}
+
+
+//==============================
+// 起動（1回だけ呼ぶ）
+//==============================
+//==============================
+// 起動（1回だけ呼ぶ）
+//==============================
+void SceneStage01::StartResultShoji() {
+
+	if (resultShojiPhase_ != ResultShojiPhase::None) return;
+	isResultShojiActive_ = true;   // ★追加
+	Camera* cam = usingCamera_;
+	Vector3 camRot = cam->GetTransform().rotate;
+	Vector3 camPos = cam->GetPosition();
+
+	Vector3 base =
+		SceneManager::CalcBaseFromCamera(
+			camPos,
+			camRot,
+			Vector3(0.0f, 0.0f, 4.0f)
+		);
+
+	CreateResultShoji(camRot);
+	SetResultShojiOpenPose(base, camRot);
+
+	resultShojiT_ = 0.0f;
+	resultShojiPhase_ = ResultShojiPhase::Closing;
+}
+
+//==============================
+// 毎フレーム更新
+//==============================
+void SceneStage01::UpdateResultShojiAnim() {
+
+	// ★ 実体が無ければ即終了（最重要）
+	if (!resultShojiL_ || !resultShojiR_
+		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
+		return;
+	}
+
+	if (resultShojiPhase_ == ResultShojiPhase::None) return;
+
+	float dt = system_->GetDeltaTime();
+	if (dt > 0.1f) dt = 0.1f;
+
+	// =============================
+	// フェーズ制御
+	// =============================
+	if (resultShojiPhase_ == ResultShojiPhase::Closing) {
+
+		resultShojiT_ += dt;
+		if (resultShojiT_ >= 1.0f) {
+			resultShojiT_ = 1.0f;
+			resultShojiWaitTimer_ = 0.0f;
+			resultShojiPhase_ = ResultShojiPhase::Wait;
+		}
+	}
+	else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
+
+		resultShojiWaitTimer_ += dt;
+		if (resultShojiWaitTimer_ >= 1.0f) {
+
+			// カメラを演出開始位置へ
+			Transform t = camera_->GetTransform();
+			t.translate = Vector3(49.5f, 5.0f, -800.0f);
+			t.rotate = Vector3(0.0f, 0.0f, 0.0f);
+			camera_->SetCamera(t);
+			debugCamera_->SetCamera(t);
+
+			// ★★★ ここが決定打 ★★★
+			Vector3 openRot(0.0f, 0.0f, 0.0f);
+
+			resultShojiL_->mainPosition.transform.rotate = openRot;
+			resultShojiR_->mainPosition.transform.rotate = openRot;
+			resultShojiLPaper_->mainPosition.transform.rotate = openRot;
+			resultShojiRPaper_->mainPosition.transform.rotate = openRot;
+
+			resultShojiPhase_ = ResultShojiPhase::Opening;
+		}
+	}
+	 
+	else if (resultShojiPhase_ == ResultShojiPhase::Opening) {
+
+		resultShojiT_ -= dt;
+		if (resultShojiT_ <= 0.0f) {
+			resultShojiT_ = 0.0f;
+
+			Transform camT = camera_->GetTransform();
+			resultCameraStart_ = camT.translate;
+			resultCameraEnd_ = Vector3(camT.translate.x, camT.translate.y, 27.0f);
+
+			resultCameraT_ = 0.0f;
+			resultShojiPhase_ = ResultShojiPhase::CameraMove;
+		}
+	}
+	else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
+
+		resultCameraT_ += dt /15.0f;   // 1秒
+		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
+		float ease = SceneManager::EaseOutSine(t);
+
+		Vector3 pos;
+		pos.x = resultCameraStart_.x + (resultCameraEnd_.x - resultCameraStart_.x) * ease;
+		pos.y = resultCameraStart_.y + (resultCameraEnd_.y - resultCameraStart_.y) * ease;
+		pos.z = resultCameraStart_.z + (resultCameraEnd_.z - resultCameraStart_.z) * ease;
+
+		Transform camT = camera_->GetTransform();
+		camT.translate = pos;
+		camT.rotate = Vector3(0.0f, 0.0f, 0.0f);
+		camera_->SetCamera(camT);
+		debugCamera_->SetCamera(camT);
+
+		if (t >= 1.0f) {
+			DestroyResultShoji();
+			resultShojiPhase_ = ResultShojiPhase::None;
+			return; // ★ Destroyしたフレームで下の共通処理に行かせない
+		}
+	}
+
+	// ★ 念のため：ここに来る直前に消えてても触らない（保険）
+	if (!resultShojiL_ || !resultShojiR_
+		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
+		return;
+	}
+
+	// =============================
+	// 共通：位置計算
+	// =============================
+	Camera* cam = usingCamera_;
+	Vector3 camRot = cam->GetTransform().rotate;
+	Vector3 camPos = cam->GetPosition();
+
+	Vector3 base = SceneManager::CalcBaseFromCamera(
+		camPos, camRot, Vector3(0.0f, 0.0f, 4.0f)
+	);
+
+	Vector3 forward = SceneManager::CalcForward(camRot);
+	Vector3 right = SceneManager::CalcRight(forward);
+
+	float e = SceneManager::EaseOutSine(resultShojiT_);
+	float off = (1.0f - e) * 10.2f;
+
+	resultShojiL_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiL_->mainPosition.transform.translate.y = base.y;
+	resultShojiL_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	resultShojiR_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiR_->mainPosition.transform.translate.y = base.y;
+	resultShojiR_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	resultShojiLPaper_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiLPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiLPaper_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	resultShojiRPaper_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiRPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiRPaper_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	resultShojiL_->Update(usingCamera_);
+	resultShojiR_->Update(usingCamera_);
+	resultShojiLPaper_->Update(usingCamera_);
+	resultShojiRPaper_->Update(usingCamera_);
+}
+
+
+
+Camera* SceneStage01::GetCamera() {
+	return usingCamera_;   // ★ 絶対に camera_ じゃない
+}
+
+//==============================
+// 初期配置（開いた状態）
+//==============================
+void SceneStage01::SetResultShojiOpenPose(
+	const Vector3& base,
+	const Vector3& camRot
+) {
+	Vector3 right =
+		SceneManager::CalcRight(
+			SceneManager::CalcForward(camRot)
+		);
+
+	float off = 10.2f;
+
+	// 左（木）
+	resultShojiL_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiL_->mainPosition.transform.translate.y = base.y;
+	resultShojiL_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（木）
+	resultShojiR_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiR_->mainPosition.transform.translate.y = base.y;
+	resultShojiR_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	// 左（紙）
+	resultShojiLPaper_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiLPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiLPaper_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（紙）
+	resultShojiRPaper_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiRPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiRPaper_->mainPosition.transform.translate.z = base.z + right.z * off;
+}
+//==============================
+// リザルト障子生成
+//==============================
+void SceneStage01::CreateResultShoji(const Vector3& camRot)
+{
+	resultShojiL_ = new Object;
+	resultShojiR_ = new Object;
+	resultShojiLPaper_ = new Object;
+	resultShojiRPaper_ = new Object;
+
+	resultShojiL_->IntObject(system_);
+	resultShojiR_->IntObject(system_);
+	resultShojiLPaper_->IntObject(system_);
+	resultShojiRPaper_->IntObject(system_);
+
+	resultShojiL_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_left.obj"));
+	resultShojiR_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_right.obj"));
+	resultShojiLPaper_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_left_paper.obj"));
+	resultShojiRPaper_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_right_paper.obj"));
+
+	// 木枠
+	for (Object* o : { resultShojiL_, resultShojiR_ }) {
+		for (auto& p : o->objectParts_) {
+			if (!p.materialConfig) {
+				p.materialConfig = std::make_shared<MaterialConfig>();
+			}
+			p.materialConfig->useModelTexture = false;
+			p.materialConfig->textureHandle =
+				system_->LoadTexture("resources/gate/model/wood_tate.png");
+			p.materialConfig->enableLighting = true;
+		}
+		o->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+		o->mainPosition.transform.rotate = camRot;
+	}
+
+	// 紙
+	for (Object* o : { resultShojiLPaper_, resultShojiRPaper_ }) {
+		for (auto& p : o->objectParts_) {
+			if (!p.materialConfig) {
+				p.materialConfig = std::make_shared<MaterialConfig>();
+			}
+			p.materialConfig->useModelTexture = false;
+			p.materialConfig->textureHandle =
+				system_->LoadTexture("resources/gate/model/paper.png");
+			p.materialConfig->enableLighting = false;
+		}
+		o->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+		o->mainPosition.transform.rotate = camRot;
+	}
+}
+
+//==============================
+// 破棄
+//==============================
+void SceneStage01::DestroyResultShoji() {
+
+	delete resultShojiL_;        resultShojiL_ = nullptr;
+	delete resultShojiR_;        resultShojiR_ = nullptr;
+	delete resultShojiLPaper_;   resultShojiLPaper_ = nullptr;
+	delete resultShojiRPaper_;   resultShojiRPaper_ = nullptr;
+	isResultShojiActive_ = false; // ★追加
+}
+
+void SceneStage01::UpdateOperationGuide() {
+	// --- 1. キーボード・マウスの入力を検知 ---
+	// 主要なキーやマウスボタンが押されたら「キーボードモード」にする
+	// (全キー判定関数がない場合、よく使うキーを羅列するのが一般的です)
+	if (system_->GetIsPush(DIK_W) || system_->GetIsPush(DIK_A) ||
+		system_->GetIsPush(DIK_S) || system_->GetIsPush(DIK_D) ||
+		system_->GetIsPush(DIK_T) ||
+		system_->GetIsPush(DIK_SPACE) || system_->GetIsPush(DIK_RETURN) ||
+		system_->GetMouseIsPush(0) || system_->GetMouseIsPush(1)) { // 左/右クリック
+
+		isGamepadMode_ = false;
+	}
+
+	// --- 2. ゲームパッドの入力を検知 ---
+	// スティックの傾きやボタン入力を検知したら「パッドモード」にする
+	// ※スティックは微小な値が入ることがあるので閾値(デッドゾーン)を設ける
+	const int kStickDeadZone = 3000; // 例: 最大32767に対して少し余裕を持つ
+
+	bool isPadInput = false;
+
+	// 左スティック入力判定
+	if (abs(system_->GetGamepadLStickX()) > kStickDeadZone ||
+		abs(system_->GetGamepadLStickY()) > kStickDeadZone) {
+		isPadInput = true;
+	}
+	// ボタン入力判定 (0番～15番くらいまでチェック)
+	// ※Engine側でAnyButtonがあればそれが楽ですが、なければループで確認
+	for (int i = 0; i < 16; i++) {
+		if (system_->GetGamepadIsPush(i)) {
+			isPadInput = true;
+			break;
+		}
+	}
+
+	if (isPadInput) {
+		isGamepadMode_ = true;
+	}
+
+	// ★重要: ここでテクスチャ差し替えは行わない！
+	// 念のため両方のUpdateを呼んでおく（アニメーション等がある場合に備えて）
+	guideKey_->Update(usingCamera_);
+	guideGamepad_->Update(usingCamera_);
 }
