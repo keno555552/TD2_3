@@ -21,8 +21,7 @@ public:
 	void Update() override;
 	void Draw() override;
 
-
-	Camera* GetCamera() override { return camera_; }
+	Camera* GetCamera() override;
 	// ★ これを追加
 	void ArrangeByArmSize();
 

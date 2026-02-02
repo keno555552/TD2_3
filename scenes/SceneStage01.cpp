@@ -1768,6 +1768,9 @@ void SceneStage01::UpdateResultShojiAnim() {
 	resultShojiLPaper_->Update(usingCamera_);
 	resultShojiRPaper_->Update(usingCamera_);
 }
+Camera* SceneStage01::GetCamera() {
+	return usingCamera_;   // ★ 絶対に camera_ じゃない
+}
 
 //==============================
 // 初期配置（開いた状態）
