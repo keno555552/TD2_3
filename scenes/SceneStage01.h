@@ -48,7 +48,28 @@ public:
 		IDX_PAPER_L = 4,
 		IDX_PAPER_R = 5,
 	};
+	// ===== Result Shoji =====
+	enum class ResultShojiPhase {
+		None,
+		Closing,
+		Opening
+	};
 
+	ResultShojiPhase resultShojiPhase_ = ResultShojiPhase::None;
+	float resultShojiT_ = 0.0f;
+
+	// 障子オブジェクト
+	Object* resultShojiL_ = nullptr;
+	Object* resultShojiR_ = nullptr;
+	Object* resultShojiLPaper_ = nullptr;
+	Object* resultShojiRPaper_ = nullptr;
+
+	// API
+	void StartResultShoji();
+	void UpdateResultShojiAnim();
+	void CreateResultShoji(const Vector3& camRot);
+	void SetResultShojiOpenPose(const Vector3& base, const Vector3& camRot);
+	void DestroyResultShoji();
 
 private:
 	kEngine *system_ = nullptr;				// 借り

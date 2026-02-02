@@ -61,6 +61,16 @@ public:
 		Opening
 	};
 
+	// ===== Camera Utility =====
+// ===== Camera Utility =====
+	static Vector3 CalcForward(Vector3 r);
+	static Vector3 CalcRight(const Vector3& forward);
+	static Vector3 CalcBaseFromCamera(
+		const Vector3& camPos,
+		const Vector3& camRot,
+		const Vector3& localOffset
+	);
+	static float EaseOutSine(float t);
 
 private:
 	// ★追加：カメラ取得 & 生成を関数化

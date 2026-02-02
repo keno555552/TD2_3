@@ -1,97 +1,65 @@
 #include "SceneManager.h"
 #include <cmath>
 
-// ★ テクスチャは「一度だけロードして使い回す」(2回目以降の未適用対策)
+// ★ テクスチャは「一度だけロードして使い回す」
 static int gShojiFrameTexHandle = -1;
 static int gShojiPaperTexHandle = -1;
 
-// ===== 手動方向計算 =====
-static Vector3 NormalizeSafe(const Vector3& v) {
-	float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-	if (len < 1e-6f) return Vector3(0.0f, 0.0f, 1.0f);
-	return Vector3(v.x / len, v.y / len, v.z / len);
-}
 
-static Vector3 Cross(const Vector3& a, const Vector3& b) {
-	return Vector3(
-		a.y * b.z - a.z * b.y,
-		a.z * b.x - a.x * b.z,
-		a.x * b.y - a.y * b.x
-	);
-}
+// =====================================================
+// Camera Utility（Cross 一切不使用）
+// =====================================================
 
-static Vector3 CalcForward(Vector3 r) {
-	const float PI = 3.14159265359f;
-	const float TWO_PI = 6.28318530718f;
-
-	// 笘・菫ｮ豁｣・壼ｺｦ謨ｰ竊偵Λ繧ｸ繧｢繝ｳ螟画鋤縺ｮ隱､辷・ｒ髦ｲ縺・
-	// 縲・.28繧医ｊ螟ｧ縺阪＞・晏ｺｦ縲阪→豎ｺ繧∵遠縺｡縺吶ｋ縺ｨ縲√Λ繧ｸ繧｢繝ｳ闢・ｩ阪〒蠢・★螢翫ｌ繧九・
-	// 蠎ｦ謨ｰ縺ｯ譎ｮ騾・0・・60・医○縺・●縺・ｱ360・峨↑縺ｮ縺ｧ縲√◎縺ｮ遽・峇縺縺大ｺｦ縺ｨ縺励※謇ｱ縺・・
-	if ((std::fabs(r.x) > TWO_PI && std::fabs(r.x) <= 360.0f) ||
-		(std::fabs(r.y) > TWO_PI && std::fabs(r.y) <= 360.0f) ||
-		(std::fabs(r.z) > TWO_PI && std::fabs(r.z) <= 360.0f)) {
-		const float DEG2RAD = PI / 180.0f;
-		r.x *= DEG2RAD;
-		r.y *= DEG2RAD;
-		r.z *= DEG2RAD;
+Vector3 SceneManager::CalcForward(Vector3 r)
+{
+	// degree 対策（Yだけ見る）
+	if (fabs(r.y) > 6.283185f) {
+		r.y *= 3.14159265359f / 180.0f;
 	}
 
-	// ★ 角度は正規化して安定化（A旋回で負方向に積んでも破綻しない）
-	while (r.y > PI) r.y -= TWO_PI;
-	while (r.y < -PI) r.y += TWO_PI;
+	float sy = sinf(r.y);
+	float cy = cosf(r.y);
 
-	while (r.x > PI) r.x -= TWO_PI;
-	while (r.x < -PI) r.x += TWO_PI;
-
-	float cx = std::cos(r.x);
-	float sx = std::sin(r.x);
-	float cy = std::cos(r.y);
-	float sy = std::sin(r.y);
-
-	return NormalizeSafe(Vector3(
-		sy * cx,
-		-sx,
-		cy * cx
-	));
+	// XZ 平面のみ
+	return Vector3(sy, 0.0f, cy);
 }
 
-static Vector3 CalcRight(const Vector3& forward) {
-	Vector3 up(0.0f, 1.0f, 0.0f);
-	return NormalizeSafe(Cross(up, forward));
+Vector3 SceneManager::CalcRight(const Vector3& forward)
+{
+	// Cross禁止：forward を右へ90度回すだけ
+	return Vector3(forward.z, 0.0f, -forward.x);
 }
 
-// offset.x = Right, offset.y = Up, offset.z = Forward
-static Vector3 CalcBaseFromCamera(
+Vector3 SceneManager::CalcBaseFromCamera(
 	const Vector3& camPos,
 	const Vector3& camRot,
 	const Vector3& localOffset
-) {
+)
+{
 	Vector3 forward = CalcForward(camRot);
 	Vector3 right = CalcRight(forward);
-	Vector3 up(0.0f, 1.0f, 0.0f);
 
 	Vector3 base = camPos;
 
+	// Right
 	base.x += right.x * localOffset.x;
-	base.y += right.y * localOffset.x;
 	base.z += right.z * localOffset.x;
 
-	base.x += up.x * localOffset.y;
-	base.y += up.y * localOffset.y;
-	base.z += up.z * localOffset.y;
+	// Up
+	base.y += localOffset.y;
 
+	// Forward
 	base.x += forward.x * localOffset.z;
-	base.y += forward.y * localOffset.z;
 	base.z += forward.z * localOffset.z;
 
 	return base;
 }
 
-// ===== Easing：だんだん遅くなる =====
-static float EaseOutSine(float t) {
+float SceneManager::EaseOutSine(float t)
+{
 	if (t < 0.0f) t = 0.0f;
 	if (t > 1.0f) t = 1.0f;
-	return std::sin(t * 1.57079632679f); // PI/2
+	return sinf(t * 1.57079632679f);
 }
 
 

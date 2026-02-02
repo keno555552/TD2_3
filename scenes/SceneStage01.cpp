@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <numbers>
+#include "SceneManager.h"
 
 SceneStage01::SceneStage01(kEngine *system) {
 	/// =========== システム初期化 ============///
@@ -634,12 +635,14 @@ void SceneStage01::Update() {
 
 	if (system_->GetTriggerOn(DIK_P)) {
 		ArrangeByArmSize();
+		StartResultShoji();
 			SpawnResultSets(5, -80.0f);
 			camera_->Move(Vector3(50.0f, 0.5f, -400.0f));
 			debugCamera_->Move(Vector3(50.0f, 0.5f, -400.0f));
 			isResultGenerated_ = true; // ★ここ
 		
 	}
+	UpdateResultShojiAnim();
 	for (auto& set : resultSets_) {
 		for (auto* obj : set.parts) {
 			if (obj) obj->Update(usingCamera_);
@@ -712,12 +715,17 @@ void SceneStage01::Draw() {
 	//	}
 	//}
 
-	for (auto& set : resultSets_) {
-			for (auto* obj : set.parts) {
-				if (obj) obj->Draw();
-			}
-		}
-	
+	//for (auto& set : resultSets_) {
+	//		for (auto* obj : set.parts) {
+	//			if (obj) obj->Draw();
+	//		}
+	//	}
+	//
+	// ===== Result Shoji (演出用) =====
+	if (resultShojiL_)        resultShojiL_->Draw();
+	if (resultShojiR_)        resultShojiR_->Draw();
+	if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+	if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
 
 
 
@@ -1653,4 +1661,210 @@ void SceneStage01::UpdateResultShoji()
 			}
 		}
 	}
+}
+
+
+//==============================
+// 起動（1回だけ呼ぶ）
+//==============================
+//==============================
+// 起動（1回だけ呼ぶ）
+//==============================
+void SceneStage01::StartResultShoji() {
+
+	if (resultShojiPhase_ != ResultShojiPhase::None) return;
+
+	Camera* cam = usingCamera_;
+	Vector3 camRot = cam->GetTransform().rotate;
+	Vector3 camPos = cam->GetPosition();
+
+	Vector3 base =
+		SceneManager::CalcBaseFromCamera(
+			camPos,
+			camRot,
+			Vector3(0.0f, 0.0f, 4.0f)
+		);
+
+	CreateResultShoji(camRot);
+	SetResultShojiOpenPose(base, camRot);
+
+	resultShojiT_ = 0.0f;
+	resultShojiPhase_ = ResultShojiPhase::Closing;
+}
+
+//==============================
+// 毎フレーム更新
+//==============================
+void SceneStage01::UpdateResultShojiAnim() {
+
+	if (resultShojiPhase_ == ResultShojiPhase::None) return;
+
+	float dt = system_->GetDeltaTime();
+	if (dt > 0.1f) dt = 0.1f;
+
+	Camera* cam = usingCamera_;
+	Vector3 camRot = cam->GetTransform().rotate;
+	Vector3 camPos = cam->GetPosition();
+
+	Vector3 base =
+		SceneManager::CalcBaseFromCamera(
+			camPos,
+			camRot,
+			Vector3(0.0f, 0.0f, 4.0f)
+		);
+
+	Vector3 forward = SceneManager::CalcForward(camRot);
+	Vector3 right = SceneManager::CalcRight(forward);
+
+	// ---- フェーズ制御 ----
+	if (resultShojiPhase_ == ResultShojiPhase::Closing) {
+
+		resultShojiT_ += dt;
+		if (resultShojiT_ >= 1.0f) {
+			resultShojiT_ = 1.0f;
+
+			camera_->Move(Vector3(50.0f, 0.0f, -400.0f));
+			debugCamera_->Move(Vector3(50.0f, 0.0f, -400.0f));
+
+			resultShojiPhase_ = ResultShojiPhase::Opening;
+		}
+	}
+	else if (resultShojiPhase_ == ResultShojiPhase::Opening) {
+
+		resultShojiT_ -= dt;
+		if (resultShojiT_ <= 0.0f) {
+			DestroyResultShoji();
+			resultShojiPhase_ = ResultShojiPhase::None;
+			return;
+		}
+	}
+
+	float ease = SceneManager::EaseOutSine(resultShojiT_);
+	float off = (1.0f - ease) * 10.2f;
+
+	// ---- 位置反映（演算子不使用） ----
+	// 左（木）
+	resultShojiL_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiL_->mainPosition.transform.translate.y = base.y;
+	resultShojiL_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（木）
+	resultShojiR_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiR_->mainPosition.transform.translate.y = base.y;
+	resultShojiR_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	// 左（紙）
+	resultShojiLPaper_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiLPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiLPaper_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（紙）
+	resultShojiRPaper_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiRPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiRPaper_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	resultShojiL_->Update(usingCamera_);
+	resultShojiR_->Update(usingCamera_);
+	resultShojiLPaper_->Update(usingCamera_);
+	resultShojiRPaper_->Update(usingCamera_);
+}
+
+//==============================
+// 初期配置（開いた状態）
+//==============================
+void SceneStage01::SetResultShojiOpenPose(
+	const Vector3& base,
+	const Vector3& camRot
+) {
+	Vector3 right =
+		SceneManager::CalcRight(
+			SceneManager::CalcForward(camRot)
+		);
+
+	float off = 10.2f;
+
+	// 左（木）
+	resultShojiL_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiL_->mainPosition.transform.translate.y = base.y;
+	resultShojiL_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（木）
+	resultShojiR_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiR_->mainPosition.transform.translate.y = base.y;
+	resultShojiR_->mainPosition.transform.translate.z = base.z + right.z * off;
+
+	// 左（紙）
+	resultShojiLPaper_->mainPosition.transform.translate.x = base.x - right.x * off;
+	resultShojiLPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiLPaper_->mainPosition.transform.translate.z = base.z - right.z * off;
+
+	// 右（紙）
+	resultShojiRPaper_->mainPosition.transform.translate.x = base.x + right.x * off;
+	resultShojiRPaper_->mainPosition.transform.translate.y = base.y;
+	resultShojiRPaper_->mainPosition.transform.translate.z = base.z + right.z * off;
+}
+//==============================
+// リザルト障子生成
+//==============================
+void SceneStage01::CreateResultShoji(const Vector3& camRot)
+{
+	resultShojiL_ = new Object;
+	resultShojiR_ = new Object;
+	resultShojiLPaper_ = new Object;
+	resultShojiRPaper_ = new Object;
+
+	resultShojiL_->IntObject(system_);
+	resultShojiR_->IntObject(system_);
+	resultShojiLPaper_->IntObject(system_);
+	resultShojiRPaper_->IntObject(system_);
+
+	resultShojiL_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_left.obj"));
+	resultShojiR_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_right.obj"));
+	resultShojiLPaper_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_left_paper.obj"));
+	resultShojiRPaper_->CreateModelData(
+		system_->SetModelObj("resources/gate/model/shoji_right_paper.obj"));
+
+	// 木枠
+	for (Object* o : { resultShojiL_, resultShojiR_ }) {
+		for (auto& p : o->objectParts_) {
+			if (!p.materialConfig) {
+				p.materialConfig = std::make_shared<MaterialConfig>();
+			}
+			p.materialConfig->useModelTexture = false;
+			p.materialConfig->textureHandle =
+				system_->LoadTexture("resources/gate/model/wood_tate.png");
+			p.materialConfig->enableLighting = true;
+		}
+		o->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+		o->mainPosition.transform.rotate = camRot;
+	}
+
+	// 紙
+	for (Object* o : { resultShojiLPaper_, resultShojiRPaper_ }) {
+		for (auto& p : o->objectParts_) {
+			if (!p.materialConfig) {
+				p.materialConfig = std::make_shared<MaterialConfig>();
+			}
+			p.materialConfig->useModelTexture = false;
+			p.materialConfig->textureHandle =
+				system_->LoadTexture("resources/gate/model/paper.png");
+			p.materialConfig->enableLighting = false;
+		}
+		o->mainPosition.transform.scale = { 0.025f,0.025f,0.025f };
+		o->mainPosition.transform.rotate = camRot;
+	}
+}
+
+//==============================
+// 破棄
+//==============================
+void SceneStage01::DestroyResultShoji() {
+
+	delete resultShojiL_;        resultShojiL_ = nullptr;
+	delete resultShojiR_;        resultShojiR_ = nullptr;
+	delete resultShojiLPaper_;   resultShojiLPaper_ = nullptr;
+	delete resultShojiRPaper_;   resultShojiRPaper_ = nullptr;
 }
