@@ -18,6 +18,7 @@ public:
 
 	Timer& GetTime();
 	int GetCount() const { return numberCount_; }
+	bool isRunning() const { return isStart_; }
 
 
 private:

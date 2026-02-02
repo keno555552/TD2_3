@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <numbers>
 
-SceneStage01::SceneStage01(kEngine *system) {
+SceneStage01::SceneStage01(kEngine* system) {
 	/// =========== システム初期化 ============///
 	system_ = system;
 
@@ -29,27 +29,27 @@ SceneStage01::SceneStage01(kEngine *system) {
    // 背景モデル一覧（画像の通り）
    // =====================
 	const char* DoujouModelPaths[kDoujouPartCount] = {
-	//掛け軸
-		"resources/game/model/doujou_kakeziku.obj",
-		"resources/game/model/doujou_kakeziku_flame.obj",
-		"resources/game/model/doujou_kakeziku_mozi.obj",
-	
-		//白い壁
-		"resources/game/model/doujou_wall_roof.obj",
-		"resources/game/model/doujou_wall_back.obj",
-		"resources/game/model/doujou_wall_front.obj",
-		"resources/game/model/doujou_wall_right.obj",
-		"resources/game/model/doujou_wall_left.obj",
-		//木の部分
-		"resources/game/model/doujou_roof.obj",
-		"resources/game/model/doujou_wood_back.obj",
-		"resources/game/model/doujou_wood_front.obj",
-		"resources/game/model/doujou_wood_right.obj",
-		"resources/game/model/doujou_wood_left.obj",
-		//畳（床）
-		"resources/game/model/tatami.obj",
-		"resources/game/model/tatami_flame.obj",
-		
+		//掛け軸
+			"resources/game/model/doujou_kakeziku.obj",
+			"resources/game/model/doujou_kakeziku_flame.obj",
+			"resources/game/model/doujou_kakeziku_mozi.obj",
+
+			//白い壁
+			"resources/game/model/doujou_wall_roof.obj",
+			"resources/game/model/doujou_wall_back.obj",
+			"resources/game/model/doujou_wall_front.obj",
+			"resources/game/model/doujou_wall_right.obj",
+			"resources/game/model/doujou_wall_left.obj",
+			//木の部分
+			"resources/game/model/doujou_roof.obj",
+			"resources/game/model/doujou_wood_back.obj",
+			"resources/game/model/doujou_wood_front.obj",
+			"resources/game/model/doujou_wood_right.obj",
+			"resources/game/model/doujou_wood_left.obj",
+			//畳（床）
+			"resources/game/model/tatami.obj",
+			"resources/game/model/tatami_flame.obj",
+
 
 	};
 
@@ -73,7 +73,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 		//畳（床）
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
-		
+
 	};
 
 	for (int i = 0; i < kDoujouPartCount; i++) {
@@ -110,10 +110,10 @@ SceneStage01::SceneStage01(kEngine *system) {
 		}
 
 		//Doujous_[i]->Update(usingCamera_);
-	
+
 
 	}
-	
+
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!Doujous_[i]) continue;
 
@@ -133,7 +133,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 	};
 
 	const char* ResultTexturePaths[kResultPartCount] = {
-		
+
 		"resources/game/texture/paper.png",
 		"resources/game/texture/wood_tate.png",
 		"resources/game/texture/wood_tate.png",
@@ -354,6 +354,8 @@ SceneStage01::SceneStage01(kEngine *system) {
 	/// --- タイマー関連 ---
 	countdownTimer_ = new CountdownTimer(system_);
 	startTimer_ = new StartTimer(system_);
+	startUpTimer = new Timer();
+	startUpTimer->InitM(1.0f, system->GetTimeManager());
 
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);
@@ -373,6 +375,7 @@ SceneStage01::SceneStage01(kEngine *system) {
 		tutorial_->AddPage(path);
 	}
 	/// -------------------------------------------
+
 }
 
 SceneStage01::~SceneStage01() {
@@ -396,7 +399,7 @@ SceneStage01::~SceneStage01() {
 	}
 	for (int i = 0; i < 4; i++) {
 		delete wall_[i];
-        }
+	}
 
 
 	for (auto* t : tatamiTiles_)  delete t;
@@ -417,16 +420,20 @@ void SceneStage01::Update() {
 	// チュートリアル中はゲームを止める場合
 	if (tutorial_->IsActive()) {
 		return;
-	} else {
+	}
+
+	startUpTimer->ToZero();
+
+	if (startUpTimer->parameter_ == 0) {
 		startTimer_->Start();
 	}
 
 	startTimer_->Update(usingCamera_);
 
 	if (startTimer_->IsTimeUp()) {
+
 		countdownTimer_->Start();
-	} 
-	else {
+	} else {
 		return;
 	}
 
@@ -502,7 +509,7 @@ void SceneStage01::Update() {
 	CheckAttackCollision();
 	// ■■■ 壁との当たり判定（共通関数化） ■■■
 
-    // 引数: 対象のオブジェクト (Player または Enemy)
+	// 引数: 対象のオブジェクト (Player または Enemy)
 	auto CheckWallCollision = [&](Object* targetObj) {
 
 		// 対象の半径（半幅）
@@ -596,12 +603,12 @@ void SceneStage01::Update() {
 #pragma region 自機用パーティクル
 	Vector3 forward = player_->GetForward();
 
-	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL()-0.5f,0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
 	dashWindEffect_->SetEmitting(false);
-	
+
 	if (player_->IsAttackingL()) {
 		dashWindEffect_->SetEmitting(true);
 	}
@@ -664,9 +671,9 @@ void SceneStage01::Update() {
 
 	if (system_->GetTriggerOn(DIK_P)) {
 		ArrangeByArmSize();
-			SpawnResultSets(5, -80.0f);
-			isResultGenerated_ = true; // ★ここ
-		
+		SpawnResultSets(5, -80.0f);
+		isResultGenerated_ = true; // ★ここ
+
 	}
 	for (auto& set : resultSets_) {
 		for (auto* obj : set.parts) {
@@ -688,14 +695,14 @@ void SceneStage01::Update() {
 		outcome_ = SceneOutcome::NEXT;
 	}
 
-	
+
 
 
 }
 
 
 void SceneStage01::Draw() {
-	
+
 	/// 実体処理
 	//system_->DrawModel(&skydome_->objectParts[0].transformationMatrix, &(skydome_->objectParts[0].materialConfig.get()), skydomeModelHandle_);
 	skydome_->Draw();
@@ -741,11 +748,11 @@ void SceneStage01::Draw() {
 	//}
 
 	for (auto& set : resultSets_) {
-			for (auto* obj : set.parts) {
-				if (obj) obj->Draw();
-			}
+		for (auto* obj : set.parts) {
+			if (obj) obj->Draw();
 		}
-	
+	}
+
 
 
 
@@ -777,7 +784,7 @@ void SceneStage01::CameraPart() {
 		// 位置・回転を一切更新しない
 		system_->SetCamera(usingCamera_);
 		return;
-		
+
 
 	}
 
@@ -866,11 +873,11 @@ void SceneStage01::ImguiPart() {
 	ImGui::End();
 
 	{
-        Transform camTransform = usingCamera_->GetTransform();
+		Transform camTransform = usingCamera_->GetTransform();
 		// ウィンドウの初期位置を左上に設定
-        ImGui::SetNextWindowPos(ImVec2(10, 0), ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2(10, 0), ImGuiCond_Once);
 		ImGui::Begin("GameCamera");
-        ImGui::Text("Transform");
+		ImGui::Text("Transform");
 		ImGui::SliderFloat3("Pos", &camTransform.translate.x, -1.0f, 1.0f);
 		ImGui::SliderFloat3("Rotate", &camTransform.rotate.x, -1.0f, 1.0f);
 		ImGui::Separator();
@@ -1001,7 +1008,7 @@ void SceneStage01::ImguiPart() {
 
 	{
 		// ウィンドウの初期位置を右下に設定
-        ImGui::SetNextWindowPos(ImVec2(950, 600), ImGuiCond_Once);
+		ImGui::SetNextWindowPos(ImVec2(950, 600), ImGuiCond_Once);
 		ImGui::Begin("GuideArrow");
 		ImGui::SliderFloat3("Pos", &guideArrow_->mainPosition.transform.translate.x, -50.0f, 50.0f);
 		ImGui::SliderFloat3("Rotate", &guideArrow_->mainPosition.transform.rotate.x, -6.5f, 6.5f);
@@ -1040,7 +1047,7 @@ void SceneStage01::ImguiPart() {
 		ImGui::DragFloat3("Position", &DoujouPos_[i].x, 0.05f);
 		ImGui::DragFloat3("Rotation", &DoujouRot_[i].x, 0.01f);
 		ImGui::DragFloat3("Scale", &DoujouScale_[i].x, 0.01f);
-	
+
 		ImGui::Separator();
 		ImGui::PopID();
 	}
@@ -1454,7 +1461,7 @@ void SceneStage01::UpdateGuideArrow() {
 		if (currentEnemyMax > pMaxArm && currentEnemyMax > maxEnemyArm) {
 			maxEnemyArm = currentEnemyMax;
 			targetEnemy = enemy;
-		} 
+		}
 	}
 
 	// 3. 表示・非表示と座標計算
@@ -1593,8 +1600,7 @@ void SceneStage01::UpdateCrown() {
 		crown_->Update(camera_);
 	}
 }
-void SceneStage01::ArrangeByArmSize()
-{
+void SceneStage01::ArrangeByArmSize() {
 	struct Entry {
 		Object* obj;
 		float armSize;
@@ -1650,8 +1656,7 @@ void SceneStage01::ArrangeByArmSize()
 	// ★ 並べた瞬間、カメラ追従を切る
 	isCameraLocked_ = true;
 }
-void SceneStage01::SpawnResultSets(int copyCount, float spacingZ)
-{
+void SceneStage01::SpawnResultSets(int copyCount, float spacingZ) {
 	if (resultSets_.empty()) return;
 
 	const ResultSet base = resultSets_[0];
@@ -1686,8 +1691,7 @@ void SceneStage01::SpawnResultSets(int copyCount, float spacingZ)
 		resultSets_.push_back(set);
 	}
 }
-void SceneStage01::OpenShoji(ResultSet& set)
-{
+void SceneStage01::OpenShoji(ResultSet& set) {
 	Object* left = set.parts[IDX_SYOUJI_L];
 	Object* right = set.parts[IDX_SYOUJI_R];
 
@@ -1695,8 +1699,7 @@ void SceneStage01::OpenShoji(ResultSet& set)
 	left->mainPosition.transform.translate.x -= 30.0f;
 	right->mainPosition.transform.translate.x += 30.0f;
 }
-void SceneStage01::UpdateResultShoji()
-{
+void SceneStage01::UpdateResultShoji() {
 	Vector3 camPos = usingCamera_->GetPosition();
 
 	constexpr float OPEN_DIST = 10.0f; // 前と同じ距離

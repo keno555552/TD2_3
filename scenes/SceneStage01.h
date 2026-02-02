@@ -122,6 +122,7 @@ private:
 	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
 
 	// タイマー
+	Timer* startUpTimer;
 	CountdownTimer* countdownTimer_ = nullptr;
 	StartTimer* startTimer_ = nullptr;
 
