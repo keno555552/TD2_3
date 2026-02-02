@@ -545,56 +545,22 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 	// 次フェーズへ
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }
-void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
+void SceneManager::Shoji_UpdateWaitNewCamera(float dt)
+{
 	(void)dt;
 
+	// ★ ここでは一切障子を Update しない
+	// ★ 先に「新シーンのカメラ」を確定させるだけ
+
 	sceneJustSpawned_ = false;
-
-	if (shojiCam_) {
-		Vector3 camPos = shojiCam_->GetPosition();
-		Vector3 camRot = shojiCam_->GetTransform().rotate;
-		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
-
-		shojiL_->mainPosition.transform.rotate = camRot;
-		shojiR_->mainPosition.transform.rotate = camRot;
-		shojiL_->mainPosition.transform.translate = base;
-		shojiR_->mainPosition.transform.translate = base;
-		shojiL_->Update(shojiCam_);
-		shojiR_->Update(shojiCam_);
-
-		shojiL_paper_->mainPosition.transform.rotate = camRot;
-		shojiR_paper_->mainPosition.transform.rotate = camRot;
-		shojiL_paper_->mainPosition.transform.translate = base;
-		shojiR_paper_->mainPosition.transform.translate = base;
-		shojiL_paper_->Update(shojiCam_);
-		shojiR_paper_->Update(shojiCam_);
-	}
 
 	Camera* cam = ResolveCamera(sceneUsing_);
 	if (!cam) return;
 
+	// ★ カメラを確定
 	shojiCam_ = cam;
 
-	{
-		Vector3 camPos = shojiCam_->GetPosition();
-		Vector3 camRot = shojiCam_->GetTransform().rotate;
-		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
-
-		shojiL_->mainPosition.transform.rotate = camRot;
-		shojiR_->mainPosition.transform.rotate = camRot;
-		shojiL_->mainPosition.transform.translate = base;
-		shojiR_->mainPosition.transform.translate = base;
-		shojiL_->Update(shojiCam_);
-		shojiR_->Update(shojiCam_);
-
-		shojiL_paper_->mainPosition.transform.rotate = camRot;
-		shojiR_paper_->mainPosition.transform.rotate = camRot;
-		shojiL_paper_->mainPosition.transform.translate = base;
-		shojiR_paper_->mainPosition.transform.translate = base;
-		shojiL_paper_->Update(shojiCam_);
-		shojiR_paper_->Update(shojiCam_);
-	}
-
+	// ★ Opening 開始
 	shojiPhase_ = ShojiPhase::Opening;
 	shojiT_ = 1.0f;
 }
