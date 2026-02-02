@@ -23,6 +23,33 @@ public:
 
 
 	Camera* GetCamera() override { return camera_; }
+	// ★ これを追加
+	void ArrangeByArmSize();
+
+	struct ResultSet {
+		std::vector<Object*> parts;
+		std::vector<Vector3> basePos;
+
+		bool shojiOpening = false;
+		bool shojiOpened = false;
+		float shojiT = 0.0f; // 0 → 1
+	};
+
+	// リザルト一式を塊のまま複製してZ方向に並べる
+	void SpawnResultSets(int copyCount, float spacingZ);
+	void UpdateResultShoji();
+	void OpenShoji(ResultSet& set);
+	// ResultModelPaths の並びに対応
+	enum ResultPartIndex {
+		IDX_RESULT_WALL = 0,
+		IDX_RESULT_WOOD = 1,
+		IDX_SYOUJI_L = 2,
+		IDX_SYOUJI_R = 3,
+		IDX_PAPER_L = 4,
+		IDX_PAPER_R = 5,
+	};
+
+
 private:
 	kEngine *system_ = nullptr;				// 借り
 
@@ -121,6 +148,29 @@ private:
 	// タイル畳（畳 + フレーム）の実体置き場
 	std::vector<Object*> tatamiTiles_;   // 畳
 	std::vector<Object*> tatamiFrames_;  // フレーム
+	Vector3 arrangeOrigin_ = { 50.0f, 0.0f, 50.0f }; // 好きな場所
+		bool isCameraLocked_ = false; // ★ 追従停止フラグ
+
+
+	
+
+		std::vector<ResultSet> resultSets_;
+
+		bool isResultGenerated_ = false;
+
+		// ===== 門パーツ =====
+		static constexpr int kResultPartCount = 6;
+
+		Object* Results_[kResultPartCount] = {};
+		uint32_t  ResultModels_[kResultPartCount] = {};
+		int  ResultTextures_[kResultPartCount] = {};
+
+
+		// ===== Gate Debug =====
+		Vector3 ResultPos_[kResultPartCount];
+		Vector3  ResultRot_[kResultPartCount];
+		Vector3 ResultScale_[kResultPartCount];
+
 
 
 private:
