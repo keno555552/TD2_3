@@ -141,11 +141,12 @@ void SceneStage01::Update() {
 
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
-
+		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
+		isTargetCharging = player_->GetIsCharging();
 		for (auto* other : enemies_) {
 			if (other == enemy) continue; // 自身は除外
 
@@ -157,15 +158,14 @@ void SceneStage01::Update() {
 			if (distance < nearDistance) {
 				nearDistance = distance; // 一番近い距離の変更
 				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+				isTargetCharging = other->GetIsCharging();
 			}
 		}
 
-
 		enemy->SetTargetPos(nearPos);
-
+		enemy->SetTargetCharge(isTargetCharging);
 		enemy->Update(usingCamera_);
 	}
-
 
 	/// 衝突判定処理
 
@@ -189,6 +189,23 @@ void SceneStage01::Update() {
 				player_->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z + wall_[i]->mainPosition.transform.scale.z / 2.0f + player_->mainPosition.transform.scale.z / 2.0f;
 			}
 
+		}
+
+		for (auto* enemy : enemies_) {
+			if (crashDecision(wall_[i]->GetAABB(wall_[i]), enemy->GetAABB(enemy))){
+				if (i == 0) {
+					enemy->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x + wall_[i]->mainPosition.transform.scale.x / 2.0f + enemy->mainPosition.transform.scale.x / 2.0f;
+				}
+				if (i == 1) {
+					enemy->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z - wall_[i]->mainPosition.transform.scale.z / 2.0f - enemy->mainPosition.transform.scale.z / 2.0f;
+				}
+				if (i == 2) {
+					enemy->mainPosition.transform.translate.x = wall_[i]->mainPosition.transform.translate.x - wall_[i]->mainPosition.transform.scale.x / 2.0f - enemy->mainPosition.transform.scale.x / 2.0f;
+				}
+				if (i == 3) {
+					enemy->mainPosition.transform.translate.z = wall_[i]->mainPosition.transform.translate.z + wall_[i]->mainPosition.transform.scale.z / 2.0f + enemy->mainPosition.transform.scale.z / 2.0f;
+				}
+			}
 		}
 	}
 
