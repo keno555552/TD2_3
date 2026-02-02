@@ -9,28 +9,54 @@ static int gShojiPaperTexHandle = -1;
 // =====================================================
 // Camera Utility（Cross 不使用・安定版）
 // =====================================================
+// ===== 手動方向計算（正解版） =====
+static Vector3 NormalizeSafe(const Vector3& v) {
+	float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+	if (len < 1e-6f) return Vector3(0.0f, 0.0f, 1.0f);
+	return Vector3(v.x / len, v.y / len, v.z / len);
+}
+
+static Vector3 Cross(const Vector3& a, const Vector3& b) {
+	return Vector3(
+		a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x
+	);
+}
+float SceneManager::EaseOutSine(float t)
+{
+	if (t < 0.0f) t = 0.0f;
+	if (t > 1.0f) t = 1.0f;
+	return sinf(t * 1.57079632679f); // PI/2
+}
 
 Vector3 SceneManager::CalcForward(Vector3 r)
 {
 	const float PI = 3.14159265359f;
 	const float TWO_PI = 6.28318530718f;
 
-	// ★ 度変換は絶対にしない
-	// ★ ラジアン前提で正規化のみ
+	// ★ 度変換しない。正規化のみ
 	while (r.y > PI)  r.y -= TWO_PI;
 	while (r.y < -PI) r.y += TWO_PI;
+	while (r.x > PI)  r.x -= TWO_PI;
+	while (r.x < -PI) r.x += TWO_PI;
 
-	float sy = sinf(r.y);
+	float cx = cosf(r.x);
+	float sx = sinf(r.x);
 	float cy = cosf(r.y);
+	float sy = sinf(r.y);
 
-	// XZ 平面のみ（従来仕様）
-	return Vector3(sy, 0.0f, cy);
+	return NormalizeSafe(Vector3(
+		sy * cx,
+		-sx,
+		cy * cx
+	));
 }
 
 Vector3 SceneManager::CalcRight(const Vector3& forward)
 {
-	// Cross禁止：右へ90度回すだけ
-	return Vector3(forward.z, 0.0f, -forward.x);
+	Vector3 up(0.0f, 1.0f, 0.0f);
+	return NormalizeSafe(Cross(up, forward));
 }
 
 Vector3 SceneManager::CalcBaseFromCamera(
@@ -41,28 +67,26 @@ Vector3 SceneManager::CalcBaseFromCamera(
 {
 	Vector3 forward = CalcForward(camRot);
 	Vector3 right = CalcRight(forward);
+	Vector3 up(0.0f, 1.0f, 0.0f);
 
 	Vector3 base = camPos;
 
 	// Right
 	base.x += right.x * localOffset.x;
+	base.y += right.y * localOffset.x;
 	base.z += right.z * localOffset.x;
 
-	// Up（ワールドY）
-	base.y += localOffset.y;
+	// Up
+	base.x += up.x * localOffset.y;
+	base.y += up.y * localOffset.y;
+	base.z += up.z * localOffset.y;
 
 	// Forward
 	base.x += forward.x * localOffset.z;
+	base.y += forward.y * localOffset.z;
 	base.z += forward.z * localOffset.z;
 
 	return base;
-}
-
-float SceneManager::EaseOutSine(float t)
-{
-	if (t < 0.0f) t = 0.0f;
-	if (t > 1.0f) t = 1.0f;
-	return sinf(t * 1.57079632679f); // PI/2
 }
 
 
@@ -524,19 +548,59 @@ void SceneManager::Shoji_UpdateWaitBeforeTransition(float dt) {
 	shojiCam_ = nullptr;
 	shojiPhase_ = ShojiPhase::WaitNewCamera;
 }
-
 void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
 	(void)dt;
 
 	if (sceneUsing_) sceneUsing_->Update();
-
 	sceneJustSpawned_ = false;
+
+	// ★追加：新カメラ待ち中も「閉じた障子」を更新して描画を途切れさせない
+	if (shojiCam_) {
+		Vector3 camPos = shojiCam_->GetPosition();
+		Vector3 camRot = shojiCam_->GetTransform().rotate;
+		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+
+		// 閉じた位置を維持
+		shojiL_->mainPosition.transform.rotate = camRot;
+		shojiR_->mainPosition.transform.rotate = camRot;
+		shojiL_->mainPosition.transform.translate = base;
+		shojiR_->mainPosition.transform.translate = base;
+		shojiL_->Update(shojiCam_);
+		shojiR_->Update(shojiCam_);
+
+		shojiL_paper_->mainPosition.transform.rotate = camRot;
+		shojiR_paper_->mainPosition.transform.rotate = camRot;
+		shojiL_paper_->mainPosition.transform.translate = base;
+		shojiR_paper_->mainPosition.transform.translate = base;
+		shojiL_paper_->Update(shojiCam_);
+		shojiR_paper_->Update(shojiCam_);
+	}
 
 	Camera* cam = ResolveCamera(sceneUsing_);
 	if (!cam) return;
 
+	// ★カメラ切り替え直後に「閉じた状態」を新カメラで即反映（1フレ消えるの完全防止）
 	shojiCam_ = cam;
+	{
+		Vector3 camPos = shojiCam_->GetPosition();
+		Vector3 camRot = shojiCam_->GetTransform().rotate;
+		Vector3 base = CalcBaseFromCamera(camPos, camRot, shojiBasePos_);
+
+		shojiL_->mainPosition.transform.rotate = camRot;
+		shojiR_->mainPosition.transform.rotate = camRot;
+		shojiL_->mainPosition.transform.translate = base;
+		shojiR_->mainPosition.transform.translate = base;
+		shojiL_->Update(shojiCam_);
+		shojiR_->Update(shojiCam_);
+
+		shojiL_paper_->mainPosition.transform.rotate = camRot;
+		shojiR_paper_->mainPosition.transform.rotate = camRot;
+		shojiL_paper_->mainPosition.transform.translate = base;
+		shojiR_paper_->mainPosition.transform.translate = base;
+		shojiL_paper_->Update(shojiCam_);
+		shojiR_paper_->Update(shojiCam_);
+	}
+
 	shojiPhase_ = ShojiPhase::Opening;
 	shojiT_ = 1.0f;
 }
-
