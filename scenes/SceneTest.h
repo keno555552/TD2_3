@@ -6,6 +6,7 @@
 #include "Player\Player.h"
 #include "tool\MapChip\MapChipField.h"
 #include "StartTimer\StartTimer.h"
+#include "CountdownTimer\CountdownTimer.h"
 
 class SceneTest :public BaseScene
 {
@@ -14,6 +15,8 @@ public:
 	~SceneTest();
 	void Update() override;
 	void Draw() override;
+
+	void DrawBlock();
 
 
 private:
@@ -44,12 +47,14 @@ private:
 	SimpleSprite* sprite2_ = nullptr;
 	MapChipField* mapChipField_ = nullptr;
 	StartTimer* startTimer_ = nullptr;
+	CountdownTimer* countdownTimer_ = nullptr;
 	std::vector<std::vector<Object*>> blockObjectList_;
 
 
 	/// =============== フラグ / 変数 ================///
 	bool useDebugCamera = false;
 	float timerScale = 1.0f;
+	Vector4 countdownColor = { 1.0f,0.0f,0.0f,1.0f };
 
 private:
 	/// ============= シーン内命令 =============///
