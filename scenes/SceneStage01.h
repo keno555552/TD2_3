@@ -89,6 +89,8 @@ private:
 	int boxTextureHandle_ = 0;
 	int tryTextureHandle_ = 0;
 	int uvTextureHandle_ = 0;
+	int guideKeyHandle_ = 0; // キーボード用の画像
+	int guideGamepadHandle_ = 0;  // ゲームパッド用の画像
 
 	/// =========== ゲームオブジェクト ==========///
 	// 左右の情報をまとめる
@@ -102,6 +104,11 @@ private:
 	Player *player_ = nullptr;
 	SimpleSprite *sprite_ = nullptr;
 	SimpleSprite *sprite2_ = nullptr;
+
+	// 操作ガイド用スプライト
+	// スプライトを2つ用意する
+	SimpleSprite* guideKey_ = nullptr; // キーボード用
+	SimpleSprite* guideGamepad_ = nullptr; // パッド用
 
 	std::vector<Enemy*> enemies_{}; // enemyのリスト
 
@@ -135,7 +142,8 @@ private:
 	// ヒットストップ（スロー）管理用
 	float hitStopTimer_ = 0.0f;
 
-
+	// 現在ゲームパッドモードかどうか
+	bool isGamepadMode_ = true;
 
 
 
@@ -201,5 +209,9 @@ private:
 	/// ============ 王冠関連 ============///
 	// 王冠の更新
 	void UpdateCrown();
+
+	/// ============ 操作説明関連 ============///
+	// 操作ガイドの表示切り替え更新用関数
+	void UpdateOperationGuide();
 };
 

@@ -357,6 +357,35 @@ SceneStage01::SceneStage01(kEngine* system) {
 	startUpTimer = new Timer();
 	startUpTimer->InitM(1.0f, system->GetTimeManager());
 
+	// ■■■ 操作ガイドの初期化 ■■■
+	// 画像を2種類読み込む (パスは実際のファイルに合わせてください)
+	guideKeyHandle_ = system_->LoadTexture("resources/TemplateResource/texture/uvChecker.png");
+	guideGamepadHandle_ = system_->LoadTexture("resources/texture/Tryer.png");
+
+	// --- キーボード用スプライト ---
+	guideKey_ = new SimpleSprite();
+	guideKey_->IntObject(system_);
+	guideKey_->CreateDefaultData();
+	guideKey_->objectParts_[0].materialConfig->textureHandle = guideKeyHandle_;
+	// 座標設定 (左下)
+	// 画面左下に配置 (座標は画面サイズに合わせて調整してください)
+	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
+	// 左端なので X=10 くらい
+	float winHeight = config::GetClientHeight();
+	guideKey_->mainPosition.transform.translate = Vector3(20.0f, winHeight - 120.0f, 0.0f);
+
+	// サイズ調整（必要なら）
+
+	// --- ゲームパッド用スプライト ---
+	guideGamepad_ = new SimpleSprite();
+	guideGamepad_->IntObject(system_);
+	guideGamepad_->CreateDefaultData();
+	guideGamepad_->objectParts_[0].materialConfig->textureHandle = guideGamepadHandle_;
+	// 座標設定 (キーボード用と全く同じ位置に重ねる)
+	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate;
+
+	// サイズ調整（必要なら）
+
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);
 
@@ -407,12 +436,16 @@ SceneStage01::~SceneStage01() {
 	tatamiTiles_.clear();
 	tatamiFrames_.clear();
 
-
+	if (guideKey_) delete guideKey_;
+	if (guideGamepad_)  delete guideGamepad_;
 	delete tutorial_;
 }
 
 void SceneStage01::Update() {
 	tutorial_->Update(usingCamera_);
+
+	// 操作説明切り替え用
+	UpdateOperationGuide();
 
 	/// カメラ処理
 	CameraPart();
@@ -754,7 +787,15 @@ void SceneStage01::Draw() {
 	}
 
 
-
+	// 操作説明
+	// ■■■ ガイド描画切り替え ■■■
+	if (isGamepadMode_) {
+		// パッドモードならパッド用画像だけ描画
+		if (guideGamepad_) guideGamepad_->Draw();
+	} else {
+		// それ以外ならキーボード用画像だけ描画
+		if (guideKey_) guideKey_->Draw();
+	}
 
 	// チュートリアルお試し
 	tutorial_->Draw(); // 最前面に描画
@@ -1756,4 +1797,48 @@ void SceneStage01::UpdateResultShoji() {
 			}
 		}
 	}
+}
+
+void SceneStage01::UpdateOperationGuide() {
+	// --- 1. キーボード・マウスの入力を検知 ---
+	// 主要なキーやマウスボタンが押されたら「キーボードモード」にする
+	// (全キー判定関数がない場合、よく使うキーを羅列するのが一般的です)
+	if (system_->GetIsPush(DIK_W) || system_->GetIsPush(DIK_A) ||
+		system_->GetIsPush(DIK_S) || system_->GetIsPush(DIK_D) ||
+		system_->GetIsPush(DIK_T) ||
+		system_->GetIsPush(DIK_SPACE) || system_->GetIsPush(DIK_RETURN) ||
+		system_->GetMouseIsPush(0) || system_->GetMouseIsPush(1)) { // 左/右クリック
+
+		isGamepadMode_ = false;
+	}
+
+	// --- 2. ゲームパッドの入力を検知 ---
+	// スティックの傾きやボタン入力を検知したら「パッドモード」にする
+	// ※スティックは微小な値が入ることがあるので閾値(デッドゾーン)を設ける
+	const int kStickDeadZone = 3000; // 例: 最大32767に対して少し余裕を持つ
+
+	bool isPadInput = false;
+
+	// 左スティック入力判定
+	if (abs(system_->GetGamepadLStickX()) > kStickDeadZone ||
+		abs(system_->GetGamepadLStickY()) > kStickDeadZone) {
+		isPadInput = true;
+	}
+	// ボタン入力判定 (0番～15番くらいまでチェック)
+	// ※Engine側でAnyButtonがあればそれが楽ですが、なければループで確認
+	for (int i = 0; i < 16; i++) {
+		if (system_->GetGamepadIsPush(i)) {
+			isPadInput = true;
+			break;
+		}
+	}
+
+	if (isPadInput) {
+		isGamepadMode_ = true;
+	}
+
+	// ★重要: ここでテクスチャ差し替えは行わない！
+	// 念のため両方のUpdateを呼んでおく（アニメーション等がある場合に備えて）
+	guideKey_->Update(usingCamera_);
+	guideGamepad_->Update(usingCamera_);
 }
