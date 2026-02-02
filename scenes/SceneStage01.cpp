@@ -278,6 +278,9 @@ SceneStage01::SceneStage01(kEngine *system) {
 
 	explosion_ = new Explosion(system_);
 
+	/// --- タイマー関連 ---
+	countdownTimer_ = new CountdownTimer(system_);
+	startTimer_ = new StartTimer(system_);
 
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);
@@ -338,7 +341,19 @@ void SceneStage01::Update() {
 	// チュートリアル中はゲームを止める場合
 	if (tutorial_->IsActive()) {
 		return;
+	} else {
+		startTimer_->Start();
 	}
+
+	startTimer_->Update(usingCamera_);
+
+	if (startTimer_->IsTimeUp()) {
+		countdownTimer_->Start();
+	} else {
+		return;
+	}
+
+	countdownTimer_->Update(usingCamera_);
 
 	// ゲーム開始時やイベント発生時に呼び出し
 	if (system_->GetTriggerOn(DIK_T)) {
@@ -638,6 +653,15 @@ void SceneStage01::Draw() {
 
 	// チュートリアルお試し
 	tutorial_->Draw(); // 最前面に描画
+
+	if (tutorial_->IsActive()) {
+		return;
+	} else {
+		startTimer_->Draw();
+	}
+
+	if (startTimer_->IsTimeUp()) countdownTimer_->Draw();
+
 
 #ifdef USE_IMGUI
 	/// imgui処理

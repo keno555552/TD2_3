@@ -112,7 +112,7 @@ void StartTimer::Reset() {
 
 bool StartTimer::IsTimeUp() {
 	if (numberCount_ > -1)return false;
-	if (timer_->parameter_ != timer_->maxTime_)return false;
+	if (timer_->parameter_ != 0)return false;
 	return true;
 }
 

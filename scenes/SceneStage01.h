@@ -12,6 +12,8 @@
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
 #include "GameObject/Particle/explosion/Explosion.h"
 #include "Tutorial/Tutorial.h"
+#include "CountdownTimer/CountdownTimer.h"
+#include "StartTimer/StartTimer.h"
 
 
 class SceneStage01 :public BaseScene {
@@ -91,6 +93,10 @@ private:
 	Explosion* explosion_ = nullptr;
 
 	const Vector3 kBaseActorScale_ = Vector3(0.5f, 0.5f, 0.5f);
+
+	// タイマー
+	CountdownTimer* countdownTimer_ = nullptr;
+	StartTimer* startTimer_ = nullptr;
 
 	// チュートリアルお試し用
 	Tutorial* tutorial_ = nullptr;
