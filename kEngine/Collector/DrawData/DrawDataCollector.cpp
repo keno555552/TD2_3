@@ -266,6 +266,7 @@ void DrawDataCollector::AddSpriteToBucket(RenderData& renderData,int meshID) {
 	} else {
 		Material* material = resourceManager_->materialList_[checker->second].cpuMaterial.get();
 
+		if (material->color.w <= 0.0f)return;
 		if (material->color.w < 1.0f) {
 
 			float z = renderData.transformData.WVP.m[3][2];
