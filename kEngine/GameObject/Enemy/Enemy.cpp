@@ -67,7 +67,7 @@ void Enemy::Update(Camera *camera) {
 	{
 		/* 攻撃時のダッシュエフェクト */
 		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
-		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ * GetArmScaleL()*2.0f);
+		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ * GetArmScaleL());
 		dashWindEffectL_->SetTargetForward(forward_);
 		dashWindEffectL_->SetArmScale(GetArmScaleL());
 		dashWindEffectL_->Update(camera);
@@ -78,7 +78,7 @@ void Enemy::Update(Camera *camera) {
 		}
 
 		dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleR() - 0.5f, 0.0f));
-		dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ * GetArmScaleR()*2.0f);
+		dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ * GetArmScaleR());
 		dashWindEffectR_->SetTargetForward(forward_);
 		dashWindEffectR_->SetArmScale(GetArmScaleR());
 		dashWindEffectR_->Update(camera);
