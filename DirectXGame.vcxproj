@@ -387,6 +387,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="scenes\SceneTitle.cpp" />
     <ClCompile Include="kEngine\core\driver\SrvManager.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
+    <ClCompile Include="scenes\SceneTutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kEngine\Data\LightingType.h" />
@@ -512,6 +513,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="scenes\SceneTitle.h" />
     <ClInclude Include="kEngine\core\driver\SrvManager.h" />
     <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h" />
+    <ClInclude Include="scenes\SceneTutorial.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\Shader\FlameNeonGlow.PS.hlsl">

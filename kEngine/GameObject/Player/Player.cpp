@@ -91,6 +91,9 @@ void Player::ResetArm(bool isRight) {
 }
 
 void Player::BehaviorRootUpdate() {
+    if (isTutorial_) {
+        velocity_ = { 0.0f, 0.0f, 0.0f };
+    }
   /// 衝突情報を初期化
   CollisionMapInfo collisionMapInfo;
   /// 移動量に速度の値をコピー

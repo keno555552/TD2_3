@@ -494,9 +494,9 @@ void SceneStage01::Update() {
 	countdownTimer_->IsTimeUp();
 
 	// ゲーム開始時やイベント発生時に呼び出し
-	if (system_->GetTriggerOn(DIK_T)) {
-		tutorial_->Open(0); // 最初から再生
-	}
+	//if (system_->GetTriggerOn(DIK_T)) {
+	//	tutorial_->Open(0); // 最初から再生
+	//}
 
 	//// 特定の条件で途中から再生(イメージ)
 	//if (isSkillUnlocked) {

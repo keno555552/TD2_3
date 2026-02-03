@@ -6,6 +6,7 @@
 
 #include "BaseScene.h"
 #include "SceneTitle.h"
+#include "SceneTutorial.h"
 #include "Scene1.h"
 #include "SceneResult.h"
 #include "SceneTestForGE.h"
