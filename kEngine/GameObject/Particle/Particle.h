@@ -37,6 +37,7 @@ protected:
 		Transform direction = CreateDefaultTransform();
 		Vector3 localOffset{ 0.0f,0.0f,0.0f };
 		Vector3 velocity{ 0.0f,0.0f,0.0f };
+		Vector3 moveDirection{ 0.0f,0.0f,0.0f };
 		Vector3 target{ 0.0f,0.0f,0.0f };
 		float scaleSpeed = 1.0f;
 		float rotateSpeed = 0.0f;
