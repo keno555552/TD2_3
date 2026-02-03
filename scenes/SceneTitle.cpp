@@ -410,7 +410,12 @@ SceneTitle::SceneTitle(kEngine* system) {
     system_->LoadTexture("resources/game/texture/wood_tate.png");
 
 
-}
+     
+       selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
+       Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Gate_Open.wav");
+       DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
+       Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
+    }
 
 SceneTitle::~SceneTitle() {
     for (int i = 0; i < kGatePartCount; i++) {
@@ -433,6 +438,8 @@ SceneTitle::~SceneTitle() {
 	system_->DestroyCamera(camera_);
 
     usingCamera_ = nullptr;
+
+
 }
 
 void SceneTitle::Update() {
@@ -440,30 +447,66 @@ void SceneTitle::Update() {
 	system_->SetCamera(usingCamera_);
     /// Skydome更新
     skydome_->Update(usingCamera_);
-    // =====================
-// セレクト操作
+
+   // =====================
+// セレクト操作（キーボード + ゲームパッド対応）
 // =====================
-    bool moveRight =
+
+// ---------- キーボード ----------
+    bool moveRightKey =
         system_->GetTriggerOn(DIK_D) ||
         system_->GetTriggerOn(DIK_RIGHT);
 
-    bool moveLeft =
+    bool moveLeftKey =
         system_->GetTriggerOn(DIK_A) ||
         system_->GetTriggerOn(DIK_LEFT);
 
-    if (moveRight) {
-        selectIndex_++;
-        if (selectIndex_ >= selectCount_) {
-            selectIndex_ = selectCount_ - 1;
+    // ---------- ゲームパッド ----------
+    bool moveRightPad = false;
+    bool moveLeftPad = false;
+
+    // 左スティック左右
+    const int kStickDeadZone = 3000;
+    int lx = system_->GetGamepadLStickX();
+
+    if (lx > kStickDeadZone)  moveRightPad = true;
+    if (lx < -kStickDeadZone) moveLeftPad = true;
+
+    // 十字キー（※一般的な DirectInput 配列）
+    // 0: A / 1: B / 2: X / 3: Y
+    // 4: LB / 5: RB
+    // 6: BACK / 7: START
+    // 8: LStick / 9: RStick
+    // 10: ↑ / 11: ↓ / 12: ← / 13: →
+    if (system_->GetGamepadIsPush(13)) moveRightPad = true; // →
+    if (system_->GetGamepadIsPush(12)) moveLeftPad = true; // ←
+
+    // ---------- 実移動 ----------
+    bool moveRight = moveRightKey || moveRightPad;
+    bool moveLeft = moveLeftKey || moveLeftPad;
+
+    // ★ 押しっぱなし防止
+    static bool padNeutral = true;
+
+    if (moveRight || moveLeft) {
+        if (padNeutral) {
+            if (moveRight) selectIndex_++;
+            if (moveLeft)  selectIndex_--;
+            if (selectMoveSE_ >= 0) {
+                system_->SoundPlaySE(selectMoveSE_, 0.6f);
+            }
+
+            padNeutral = false;
         }
+    }
+    else {
+        padNeutral = true;
     }
 
-    if (moveLeft) {
-        selectIndex_--;
-        if (selectIndex_ < 0) {
-            selectIndex_ = 0;
-        }
-    }
+    // ---------- Clamp ----------
+    if (selectIndex_ < 0) selectIndex_ = 0;
+    if (selectIndex_ >= selectCount_) selectIndex_ = selectCount_ - 1;
+
 
     // =====================
     // カーソル位置反映
@@ -619,6 +662,9 @@ void SceneTitle::Update() {
 
         // 1文字分完了
         if (t >= 1.0f) {
+            if (Gate_OpenSE_ >= 0) {
+                system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+            }
             // 最終値で固定
             mozis_[moziIdx]->mainPosition.transform.translate = moziFinalPos_[moziIdx];
             mozis_[moziIdx]->mainPosition.transform.rotate = moziFinalRot_[moziIdx];
@@ -629,7 +675,9 @@ void SceneTitle::Update() {
                 punchAnimPlaying_ = true;
                 punchAnimReturning_ = false;
                 punchAnimT_ = 0.0f;
-
+                if (Title_PunchSE_ >= 0) {
+                    system_->SoundPlaySE(Title_PunchSE_, 0.6f);
+                }
                 punchScale_ = punchScaleStart_; // 念のため
             }
 
@@ -794,7 +842,9 @@ void SceneTitle::Update() {
 
         gateOpenPlaying_ = true;
         gateOpenT_ = 0.0f;
-
+        if (Gate_OpenSE_ >= 0) {
+            system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+        }
         gateStartRotY_[0] = gateRot_[0].y;
         gateStartRotY_[1] = gateRot_[1].y;
     }

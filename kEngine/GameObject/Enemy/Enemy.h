@@ -36,7 +36,9 @@ public:
 
     // 見た目を更新する
     void UpdateAppearance();
-
+    // これまでのパーツ管理ではなく、Armクラスを持つ
+    Arm* armL_ = nullptr;
+    Arm* armR_ = nullptr;
     // ImGuI用
 #ifdef USE_IMGUI
     float &GetRefArmScaleL() { return armScaleL_; }
@@ -90,9 +92,7 @@ private:
 
     Vector3 targetPos_{}; // 向かう敵(orプレイヤー)の位置
 
-    // これまでのパーツ管理ではなく、Armクラスを持つ
-    Arm* armL_ = nullptr;
-    Arm* armR_ = nullptr;
+ 
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;
