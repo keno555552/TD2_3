@@ -42,6 +42,32 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	tatami_->CreateModelData(tatamiHandle);
 	tatami_->mainPosition.transform.translate = { 0.0f, 0.0f, 10.0f };
 	tatami_->mainPosition.transform.scale = { 2.0f, 1.0f, 3.0f };
+	
+	// ■ 進捗バーの生成
+	// 背景（枠）：黒やグレーなどで表示
+	barFrame_ = new SimpleSprite();
+	// ★適当な白い四角画像を読み込むか、既存の画像を使用してください
+	// ここでは仮に "white.png" としていますが、単色の四角があれば何でもOKです
+	int barTex = system_->LoadTexture("resources/TemplateResource/texture/white5x5.png");
+	barFrame_->IntObject(system_);
+	barFrame_->CreateDefaultData();
+	barFrame_->objectParts_[0].materialConfig->textureHandle = barTex;
+	barFrame_->mainPosition.transform.translate ={ kBarPos_.x - 9.0f, kBarPos_.y - 3.0f, 0.0f };
+	barFrame_->mainPosition.transform.scale = { kBarScale_.x + 3.0f, kBarScale_.y + 4.0f, 1.0f };
+	barFrame_->objectParts_[0].materialConfig->textureColor = {0.2f, 0.2f, 0.2f, 1.0f};
+	barFrame_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
+	// ※枠なので少し大きく、色はグレーに
+
+	// 中身（ゲージ）：緑や黄色で表示
+	barFill_ = new SimpleSprite();
+	barFill_->IntObject(system_);
+	barFill_->CreateDefaultData();
+	barFill_->objectParts_[0].materialConfig->textureHandle = barTex;
+	barFill_->mainPosition.transform.translate = { kBarPos_.x, kBarPos_.y + 8.0f, 0.0f };
+	barFill_->mainPosition.transform.scale = { 0.0f, kBarScale_.y, 1.0f };
+	barFill_->objectParts_[0].materialConfig->textureColor = {0.0f, 1.0f, 0.0f, 1.0f};
+	barFill_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
+	// 初期サイズは横幅0、色は緑
 }
 
 SceneTutorial::~SceneTutorial() {
@@ -52,6 +78,8 @@ SceneTutorial::~SceneTutorial() {
 	if (tatami_) delete tatami_;
     if (player_) delete player_;
     if (textObj_) delete textObj_;
+	if (barFrame_) delete barFrame_;
+	if (barFill_) delete barFill_;
 
     for (auto e : enemies_) {
         delete e;
@@ -63,31 +91,63 @@ void SceneTutorial::Update() {
     // 共通の更新
 	skydome_->Update(usingCamera_);
 	if (tatami_) tatami_->Update(usingCamera_);
-    if (player_) player_->Update(usingCamera_);
     if (textObj_) textObj_->Update(usingCamera_);
+
+	if (player_) {
+		player_->Update(usingCamera_);
+
+		float limitX = 15.0f - 0.25f;
+		float limitZ = 15.0f - 0.25f;
+		float minLimit = -15.0f; // 下限
+
+		if (player_->mainPosition.transform.translate.x > limitX) {
+			player_->mainPosition.transform.translate.x = limitX;
+		}
+		if (player_->mainPosition.transform.translate.x < minLimit) {
+			player_->mainPosition.transform.translate.x = minLimit;
+		}
+		if (player_->mainPosition.transform.translate.z > limitZ) {
+			player_->mainPosition.transform.translate.z = limitZ;
+		}
+
+		if (player_->mainPosition.transform.translate.z < minLimit) {
+			player_->mainPosition.transform.translate.z = minLimit;
+		}
+	}
+
 	CameraPart();
 
-	if (system_->GetTriggerOn(DIK_RETURN) || system_->GetGamepadIsPush(VK_PAD_A)) {
+	if (system_->GetTriggerOn(DIK_RETURN) || system_->GetGamepadIsPush(VK_PAD_START)) {
 		outcome_ = SceneOutcome::NEXT;
 	}
 
+	// ■ バーの更新処理
+	barFrame_->mainPosition.materialConfig->textureColor = { 0.2f, 0.2f, 0.2f, 1.0f };
+	if (barFill_) {
+		barFill_->mainPosition.materialConfig->textureColor = { 0.0f, 1.0f, 0.0f, 1.0f };
+		float ratio = GetProgressRatio();
 
-	float limitX = 15.0f - 0.25f;
-	float limitZ = 15.0f - 0.25f;
-	float minLimit = -15.0f; // 下限
+		// 中身のスケール（横幅）を更新
+		// SimpleSpriteの実装によりますが、ここではサイズ(width)を直接いじると仮定
+		// もし Scale で管理している場合は transform.scale.x = ratio などに置き換えてください
+		float currentWidth = kBarScale_.x * ratio;
 
-	if (player_->mainPosition.transform.translate.x > limitX) {
-		player_->mainPosition.transform.translate.x = limitX;
-	}
-	if (player_->mainPosition.transform.translate.x < minLimit) {
-		player_->mainPosition.transform.translate.x = minLimit;
-	}
-	if (player_->mainPosition.transform.translate.z > limitZ) {
-		player_->mainPosition.transform.translate.z = limitZ;
-	}
+		barFill_->mainPosition.transform.scale.x = currentWidth;
 
-	if (player_->mainPosition.transform.translate.z < minLimit) {
-		player_->mainPosition.transform.translate.z = minLimit;
+		// ★重要: スプライトの中心が基準点(Anchor Center)の場合
+		// 幅を変えるだけだと両端が縮んでしまうため、左端を固定するように座標もずらす必要があります。
+		// もし SimpleSprite が左上基準なら座標計算は不要です。
+		// 以下は「中心基準」の場合の補正計算例です：
+
+		//// 1. まずサイズ適用
+		//barFill_->mainPosition.transform.scale = { currentWidth, kBarScale_.y, 1.0f };
+
+		//// 2. 左端合わせのための座標計算
+		//// (枠の中心X) - (枠の全幅/2) + (現在の幅/2)
+		//float leftPos = kBarPos_.x - (kBarScale_.x / 2.0f);
+		//float newPosX = leftPos + (currentWidth / 2.0f);
+
+		//barFill_->mainPosition.transform.translate = { newPosX, kBarPos_.y, 0.0f };
 	}
 
     // ステップ完了後の待機時間処理
@@ -162,6 +222,12 @@ void SceneTutorial::Draw() {
     }
 
     if (textObj_) textObj_->Draw();
+
+	if (currentStep_ != TutorialStep::Finished && currentStep_ != TutorialStep::Caution) {
+		// UIは最後に描画（最前面）
+		if (barFrame_) barFrame_->Draw();
+		if (barFill_) barFill_->Draw();
+	}
 }
 
 Camera* SceneTutorial::GetCamera() {
@@ -290,22 +356,29 @@ void SceneTutorial::UpdateStepMove() {
     // Aキー or Dキー（あるいは左スティック）が入力されているか
     bool isRotating = false;
 
-    if (system_->GetIsPush(DIK_A) || system_->GetIsPush(DIK_D)) {
+
+	if (system_->GetIsPush(DIK_A) && system_->GetIsPush(DIK_D)) {
+		isRotating = false;
+	} else if (system_->GetIsPush(DIK_A) || system_->GetIsPush(DIK_D)) {
         isRotating = true;
     }
-    // パッドのスティック判定等もあればここに追加
-    if (abs(system_->GetGamepadLStickX()) > 3000) {
-        isRotating = true;
-    }
+    // パッドの判定等もあればここに追加
+	if (system_->GetGamepadIsPush(VK_PAD_LSHOULDER) && system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
+		isRotating = false;
+	} else if (system_->GetGamepadIsPush(VK_PAD_LSHOULDER) || system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
+		isRotating = true;
+	}
 
     if (isRotating) {
-        rotateTimer_ += 1.0f / 60.0f;
+        rotateTimer_ += system_->GetDeltaTime();
     }
 
     // 一定時間旋回したら次へ
     if (rotateTimer_ >= kRotateQuota_) {
         isStepCompleted_ = true;
         // 演出：テキストを少し跳ねさせたり色を変えたりしても良い
+		player_->ResetArm(false);
+		player_->ResetArm(true);
     }
 }
 
@@ -330,9 +403,8 @@ void SceneTutorial::UpdateStepDash() {
     // 「押していた」のに「離した」瞬間、かつ「ある程度チャージされていた」場合
 	bool isAttacking = (player_->IsAttackingL() || player_->IsAttackingR());
     if (isAttacking && !wasDashing_) {
-        dashSuccessCount_++;
+		wasDashing_ = isAttacking;
     }
-    wasDashing_ = isAttacking;
 
     // 「大きく膨らんでいる状態」から「急に小さくなった（＝発射した）」を検知する
     if (wasCharging_ && !isCharging) {
@@ -392,6 +464,49 @@ void SceneTutorial::UpdateStepCaution() {
     if (system_->GetIsPush(DIK_SPACE) || system_->GetGamepadIsPush(VK_PAD_A)) {
         isStepCompleted_ = true;
     }
+}
+
+float SceneTutorial::GetProgressRatio() {
+	float ratio = 0.0f;
+
+	switch (currentStep_) {
+	case TutorialStep::Move:
+		// 現在の時間 / ノルマ時間
+		ratio = rotateTimer_ / kRotateQuota_;
+		break;
+
+	case TutorialStep::ArmExpand:
+	{
+		// 現在の腕の大きさ / 目標の大きさ (1.0fからスタートなので補正)
+		float maxScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+		// 1.0(通常) ～ 2.0(目標) の間を 0.0～1.0 に正規化
+		float target = 2.0f;
+		ratio = (maxScale - 1.0f) / (target - 1.0f);
+		break;
+	}
+
+	case TutorialStep::Dash:
+		// 成功回数 / ノルマ回数
+		ratio = (float)dashSuccessCount_ / (float)kDashQuota_;
+		break;
+
+	case TutorialStep::Battle:
+		// 撃破数 / ノルマ数
+		ratio = (float)killCount_ / (float)kKillQuota_;
+		break;
+
+	case TutorialStep::Caution:
+		// 確認待ちなので、完了するまでは0、押したら完了扱いになるが画面遷移するので0固定でもOK
+		ratio = 0.0f;
+		break;
+
+	case TutorialStep::Finished:
+		ratio = 1.0f;
+		break;
+	}
+
+	// 0.0f ～ 1.0f の範囲に収める
+	return std::clamp(ratio, 0.0f, 1.0f);
 }
 
 void SceneTutorial::ChangeTextModel(const std::string& modelPath) {

@@ -121,10 +121,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
-		
+
 	};
 
-	
+
 
 	for (int i = 0; i < kIllustrationPartCount; i++) {
 		IllustrationModels[i] = system_->SetModelObj(IllustrationModelPaths[i]);
@@ -252,7 +252,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = DoujouTextures_[i];
 
-			
+
 
 			// ★ textureColor は触らない（ここ重要）
 		}
@@ -306,7 +306,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			}
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = ResultTextures_[i];
-		
+
 		}
 
 		// 先に設定
@@ -405,7 +405,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI];
-						
+
 					}
 
 					tatamiTiles_.push_back(t);
@@ -428,7 +428,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI_FRAME];
-					
+
 					}
 
 					tatamiFrames_.push_back(f);
@@ -541,9 +541,9 @@ SceneStage01::SceneStage01(kEngine* system) {
 	suctionEffect_ = new P_Suction(system_);
 
 	planeReductionEffectL_ = new P_PlaneReduction(system_);
-	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
-	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 
 	explosion_ = new Explosion(system_);
 
@@ -657,14 +657,12 @@ SceneStage01::~SceneStage01() {
 	delete tutorial_;
 }
 
-void SceneStage01::Update()
-{
+void SceneStage01::Update() {
 
-// ===============================
-// Result中：ゲーム進行を完全停止
-// ===============================
-	if (isResultGenerated_)
-	{
+	// ===============================
+	// Result中：ゲーム進行を完全停止
+	// ===============================
+	if (isResultGenerated_) {
 		/// カメラ処理
 		/*CameraPart();*/
 		// ランクアニメを再実行（デバッグ用）
@@ -690,7 +688,7 @@ void SceneStage01::Update()
 		UpdateResultShoji(); // 距離や演出連動があるなら
 		UpdateRankModels();
 		UpdateSparkEffect2();
-		
+
 		// ★ それ以外は一切通さない
 		return;
 	}
@@ -762,27 +760,35 @@ void SceneStage01::Update()
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
+	int pCount = 0;
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
 		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		enemy->SetDistanceWithPlayer(distance); // パーティクル制御のためのプレイヤーとの距離
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
 		isTargetCharging = player_->GetIsCharging();
-		for (auto* other : enemies_) {
-			if (other == enemy) continue; // 自身は除外
+		if (distance >= 25.0f || pCount >= 2) { // 自機が一定範囲外なら他の敵を参照||プレイヤーをターゲットにしている数が2以上なら敵をターゲット
+			for (auto* other : enemies_) {
+				if (other == enemy) continue; // 自身は除外
 
-			// 差分を計算
-			difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
-			// 距離を計算
-			distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+				// 差分を計算
+				difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+				// 距離を計算
+				distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 
-			if (distance < nearDistance) {
-				nearDistance = distance; // 一番近い距離の変更
-				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
-				isTargetCharging = other->GetIsCharging();
+				if (distance < nearDistance) {
+					nearDistance = distance; // 一番近い距離の変更
+					nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+					isTargetCharging = other->GetIsCharging();
+				}
 			}
+		}
+
+		if (nearPos == player_->mainPosition.transform.translate) {
+			pCount++;
 		}
 
 		enemy->SetTargetPos(nearPos);
@@ -892,6 +898,7 @@ void SceneStage01::Update()
 	Vector3 forward = player_->GetForward();
 
 	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
@@ -966,7 +973,7 @@ void SceneStage01::Update()
 		isResultGenerated_ = true; // ★ここ
 
 	}
-	
+
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
 
 		ArrangeByArmSize();
@@ -1100,7 +1107,7 @@ void SceneStage01::Draw() {
 		/// back
 		if (i == 4 || i == 9) { changePoint.x = mainPoint.x; }
 		/// front
-		if (i <= 2 ||i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
+		if (i <= 2 || i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
 		/// right
 		if (i == 6 || i == 11) { changePoint.x = mainPoint.x * 2; }
 		/// leftは要らない
@@ -1116,7 +1123,7 @@ void SceneStage01::Draw() {
 		}
 	}
 	DrawSparkEffect2(); // ← Spark専用Draw
-	
+
 
 	//if (!isCameraLocked_) {
 	//	Doujous_[4]->Draw();
@@ -1212,8 +1219,6 @@ void SceneStage01::CameraPart() {
 	//	return;
 	//}
 
-
-
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1227,6 +1232,7 @@ void SceneStage01::CameraPart() {
 	}
 
 		
+
 
 		if (useDebugCamera) {
 			usingCamera_ = debugCamera_;
@@ -1246,6 +1252,8 @@ void SceneStage01::CameraPart() {
 			else if (system_->GetIsPush(DIK_W) || system_->GetGamepadIsPush(VK_PAD_B)) {
 				manualZoomOffset_ -= kManualZoomSpeed_ * dt;
 			}
+
+	
 
 			// 行き過ぎないように制限 (Clamp)
 			manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
@@ -1659,7 +1667,7 @@ void SceneStage01::CheckAttackCollision() {
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
-					explosion_->SetPos(player_->mainPosition.transform.translate);
+					explosion_->SetPos((player_->mainPosition.transform.translate + armPos) / 2.0f);
 				} else {
 					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
 					// ここでは簡易的に Enemy* へのキャストで対応
@@ -1668,6 +1676,7 @@ void SceneStage01::CheckAttackCollision() {
 						e->AddKnockback(knockbackForce);
 						explosion_->SetIsEmitting(true);
 						explosion_->SetPos(player_->mainPosition.transform.translate);
+						explosion_->SetPos((e->mainPosition.transform.translate + armPos) / 2.0f);
 					}
 				}
 			}
@@ -2157,7 +2166,7 @@ void SceneStage01::ArrangeByArmSize() {
 	};
 
 
-	
+
 	struct Entry {
 		Object* obj;
 		float armSize;
@@ -2208,8 +2217,7 @@ void SceneStage01::ArrangeByArmSize() {
 
 		if (i < static_cast<int>(rankPositions.size())) {
 			obj->mainPosition.transform.translate = rankPositions[i];
-		}
-		else {
+		} else {
 			obj->mainPosition.transform.translate = {
 				rankPositions.back().x,
 				rankPositions.back().y,
@@ -2306,8 +2314,7 @@ void SceneStage01::UpdateResultShoji() {
 						set.shojiClosing = true;
 						set.shojiCloseT = 0.0f;
 					}
-				}
-				else {
+				} else {
 					// 離れたらリセット
 					set.shojiCloseWait = 0.0f;
 				}
@@ -2454,7 +2461,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 	} else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
 
 
-		resultCameraT_ += dt /12.0f;   // 1秒
+		resultCameraT_ += dt / 12.0f;   // 1秒
 
 		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
 		float ease = SceneManager::EaseOutSine(t);
@@ -2480,7 +2487,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			Vector3 playerPos = player_->mainPosition.transform.translate;
 			resultCameraPlayerEnd_ = {
 				playerPos.x,
-				playerPos.y+5,
+				playerPos.y + 5,
 				playerPos.z - 30.0f
 			};
 
@@ -2490,8 +2497,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			return;
 		}
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
 
 		resultCameraPlayerT_ += dt / 1.2f;   // ← 好きな秒数
 		float t = std::clamp(resultCameraPlayerT_, 0.0f, 1.0f);
@@ -2529,8 +2535,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 		}
 
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
 
 
 
@@ -2540,7 +2545,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			// ★ ここが必須
 			rankDebugPos_ = rankAnimStart_;
 			rankDebugRot_ = Vector3(0.0f, 0.0f, 0.0f);
-			
+
 			rankAnimT_ = 0.0f;
 			isRankAnimating_ = true;
 			isFrameAnimating_ = true;
@@ -2555,7 +2560,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 
 
 
-	
+
 	// ★ 念のため：ここに来る直前に消えてても触らない（保険）
 	if (!resultShojiL_ || !resultShojiR_
 		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
@@ -2694,8 +2699,7 @@ void SceneStage01::CreateResultShoji(const Vector3& camRot) {
 		o->mainPosition.transform.rotate = camRot;
 	}
 }
-void SceneStage01::UpdateRankModels()
-{
+void SceneStage01::UpdateRankModels() {
 	if (playerRank_ < 0 || playerRank_ >= kKanjiCount) return;
 
 	Object* rankObj = KanjiObjs_[playerRank_];
@@ -2779,7 +2783,7 @@ void SceneStage01::UpdateRankModels()
 	// ★文字は「フレーム完了後」だけ反映される
 	if (!isFrameAnimating_) {
 		rankObj->mainPosition.transform.translate = rankDebugPos_;
-		rankObj->mainPosition.transform.rotate = Vector3(0,-15.6f,0);
+		rankObj->mainPosition.transform.rotate = Vector3(0, -15.6f, 0);
 		rankObj->mainPosition.transform.scale = rankDebugScale_;
 		rankObj->Update(usingCamera_);
 	}
@@ -2883,8 +2887,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	// sec / ms / us 吸収
 	if (dt > 1000.0f) {
 		dt *= 0.000001f;
-	}
-	else if (dt > 1.0f) {
+	} else if (dt > 1.0f) {
 		dt *= 0.001f;
 	}
 
@@ -3000,8 +3003,7 @@ void SceneStage01::UpdateSparkEffect2() {
 		if (it->life >= it->lifeMax) {
 			delete it->obj;
 			it = sparks_.erase(it);
-		}
-		else {
+		} else {
 			++it;
 		}
 	}
@@ -3014,8 +3016,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	}
 }
 
-void SceneStage01::DrawSparkEffect2()
-{
+void SceneStage01::DrawSparkEffect2() {
 	for (auto& s : sparks_) {
 		if (s.obj) {
 			s.obj->Draw();

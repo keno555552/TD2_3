@@ -28,7 +28,7 @@ private:
 	Vector3 targetPos_{};
 	Vector3 generationPos_{};
 
-	float lifeTime_ = 0.1f;
+	float lifeTime_ = 1.0f; // 秒生きる
 	float speed_ = 0.05f;
 	float spread_ = 0.00f;      // 横に散らす量
 	float createNumber_ = 20.0f; // 1フレームでのパーティクル生成数

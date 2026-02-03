@@ -10,6 +10,8 @@ Explosion::Explosion(kEngine* system) :Particle(system) {
 
 void Explosion::Update(Camera* camera) {
 	CreateExplosion();
+	CreateExplosion();
+	CreateExplosion();
 	UpdateExplosion();
 	DeleteExplosion();
 	Particle::Update(camera);
@@ -20,6 +22,7 @@ void Explosion::Draw() {
 }
 
 void Explosion::CreateExplosion() {
+	// 同時に数か所で発生させないようにする
 	coolTimer_ += 1.0f / 60.0f;
 	if (!isEmitting_ || coolTimer_ <= 0.5f) {
 		return;
@@ -30,6 +33,7 @@ void Explosion::CreateExplosion() {
 	if (createTimer.parameter_ != 0) return;
 
 	for (int i = 0; i < (int)createNumber_; i++) {
+		// 最大数を越えていれば早期リターン
 		if ((int)particleObjectList_.size() >= maxParticleNum_) return;
 
 		Particle::AddObject();
@@ -39,9 +43,10 @@ void Explosion::CreateExplosion() {
 		*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 		p->part->isBillboard_ = false;
 		p->part->mainPosition.transform = CreateDefaultTransform();
-		lifeTime_ = randomMaker_->randomFloat(0.5f, 1.0f);
+		lifeTime_ = randomMaker_->randomFloat(0.5f, 1.0f); // 生存時間
 		p->lifeTimeTimer.Init0(lifeTime_, system_->GetTimeManager());
 
+		// ランダムな進む方向
 		Vector3 direction = {
 			randomMaker_->randomFloat(-0.1f, 0.1f),
 			randomMaker_->randomFloat(-0.1f, 0.1f),
@@ -49,15 +54,17 @@ void Explosion::CreateExplosion() {
 		};
 		direction = Normalize(direction);
 
+		// ランダムな速さ
 		float minSpeed = 0.01f;
 		float maxSpeed = 0.05f;
 		float speed = randomMaker_->randomFloat(minSpeed, maxSpeed);
 
 		p->velocity = direction * speed;
+		// ランダムなスケール
 		float scale = randomMaker_->randomFloat(0.05f, 0.1f);
 		p->part->objectParts_[0].transform.scale = Vector3(scale, scale, scale);
-		p->part->mainPosition.transform.translate = pos_;
 		p->size = scale;
+		p->part->mainPosition.transform.translate = pos_; // 初期位置
 	}
 }
 
@@ -68,7 +75,7 @@ void Explosion::UpdateExplosion() {
 		float easedT = t * t * t * t * t; // easeInQuint
 		float scale = p->size * (1.0f - easedT) + 0.0f * easedT;
 		p->part->objectParts_[0].transform.scale = Vector3(scale, scale, scale);
-		p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f;
+		p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f; // アルファ値(念のため1.0fに設定)
 		p->part->mainPosition.transform.translate += p->velocity;
 	}
 }

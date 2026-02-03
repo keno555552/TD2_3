@@ -1,10 +1,12 @@
 #pragma once
 #include "BaseScene.h"
 #include "Object/Object.h"
+#include "Object/Sprite.h"
 #include "Player/Player.h" // プレイヤーヘッダ（既存のものを使用）
 #include "Enemy/Enemy.h"  // 敵ヘッダ
 #include "DebugCamera.h"
 #include <vector>
+#include <algorithm> // clamp用
 
 // チュートリアルの進行状況
 enum class TutorialStep {
@@ -33,6 +35,8 @@ private:
     void UpdateStepDash();      // ダッシュ判定
     void UpdateStepBattle();    // 戦闘判定
     void UpdateStepCaution();   // 注意事項確認
+    // 現在のステップの進捗率(0.0f ~ 1.0f)を計算する関数
+    float GetProgressRatio();
 
     // テキストモデルの切り替え
     void ChangeTextModel(const std::string& modelPath);
@@ -84,6 +88,14 @@ private:
 
     // --- 進行管理 ---
     TutorialStep currentStep_ = TutorialStep::Move;
+
+    // ★追加: 進捗バー用スプライト
+    SimpleSprite* barFrame_ = nullptr; // 背景（枠）
+    SimpleSprite* barFill_ = nullptr;  // 中身（伸びる方）
+
+    // バーの最大幅（スケール1.0の時のサイズ、または基準スケール）
+    const Vector2 kBarPos_ = { 660.0f, 620.0f }; // 画面下中央あたり
+    const Vector2 kBarScale_ = { 120.0f, 10.0f }; // バーのサイズ
 
     // ステップ遷移時のウェイト用
     float stepWaitTimer_ = 0.0f;

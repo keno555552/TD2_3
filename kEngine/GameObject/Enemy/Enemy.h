@@ -61,6 +61,8 @@ public:
     // セッター
     void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
     void SetTargetCharge(bool on) { isTargetCharging_ = on; }
+    void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
+
     void SetArmScaleL(float scale) { armScaleL_ = scale; }
     void SetArmScaleR(float scale) { armScaleR_ = scale; }
 
@@ -124,4 +126,6 @@ private: // パーティクル用メンバ変数
     P_Suction* suctionEffect_ = nullptr;
     P_PlaneReduction* planeReductionEffectL_ = nullptr;
     P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+    float distanceWithPlayer_ = 0.0f;
 };
