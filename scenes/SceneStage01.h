@@ -170,7 +170,7 @@ private:
 	float hitStopTimer_ = 0.0f;
 
 	// 現在ゲームパッドモードかどうか
-	bool isGamepadMode_ = true;
+	bool isGamepadMode_ = false;
 
 
 

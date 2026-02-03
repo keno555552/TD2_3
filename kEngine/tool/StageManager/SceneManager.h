@@ -107,7 +107,9 @@ public:
 
 private:
 	std::map<std::string,std::string> sceneFlow_ = {
-		{"TITLE","STAGE_01"},
+		{"TITLE","TUTORIAL"},
+		{"TUTORIAL","STAGE_01"},
+		{"STAGE_01","TITLE"},
 	};
 
 
