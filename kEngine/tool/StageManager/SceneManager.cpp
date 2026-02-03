@@ -125,6 +125,12 @@ SceneManager::SceneManager(kEngine* system) {
     EnsureShojiHoldCam(system_);
 
     defaultMenu_ = new DefaultMenu(system_);
+    SceneTitle* title = new SceneTitle(system);
+    SceneStage01* stage = new SceneStage01(system);
+
+    // ★ ここで初めて両方が存在する
+    stage->SetSceneTitle(title);
+
 }
 
 SceneManager::~SceneManager() {
