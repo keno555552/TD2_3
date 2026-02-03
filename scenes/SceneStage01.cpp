@@ -874,7 +874,7 @@ void SceneStage01::Draw() {
 		/// back
 		if (i == 4 || i == 9) { changePoint.x = mainPoint.x; }
 		/// front
-		if (i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
+		if (i <= 2 ||i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
 		/// right
 		if (i == 6 || i == 11) { changePoint.x = mainPoint.x * 2; }
 		/// leftは要らない
