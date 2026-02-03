@@ -59,6 +59,7 @@ public:
     // セッター
     void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
     void SetTargetCharge(bool on) { isTargetCharging_ = on; }
+    void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
 
 private: // メンバ関数
     void Move(); // 将来AIを入れる場所
@@ -118,4 +119,6 @@ private: // パーティクル用メンバ変数
     P_Suction* suctionEffect_ = nullptr;
     P_PlaneReduction* planeReductionEffectL_ = nullptr;
     P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+    float distanceWithPlayer_ = 0.0f;
 };

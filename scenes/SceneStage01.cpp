@@ -110,7 +110,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			// ★ textureColor は触らない（ここ重要）
 		}
 
-	
+
 
 	}
 
@@ -223,8 +223,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// =====================
 	// セット複製ループ
 	// =====================
-	for (int set = 0; set < TATAMI_SET_COUNT; ++set)
-	{
+	for (int set = 0; set < TATAMI_SET_COUNT; ++set) {
 		// ★ このセットの基準位置
 		Vector3 setOrigin = {
 			origin.x,
@@ -528,27 +527,35 @@ void SceneStage01::Update() {
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
+	int pCount = 0;
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
 		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		enemy->SetDistanceWithPlayer(distance); // パーティクル制御のためのプレイヤーとの距離
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
 		isTargetCharging = player_->GetIsCharging();
-		for (auto* other : enemies_) {
-			if (other == enemy) continue; // 自身は除外
+		if (distance >= 25.0f || pCount >= 2) { // 自機が一定範囲外なら他の敵を参照||プレイヤーをターゲットにしている数が2以上なら敵をターゲット
+			for (auto* other : enemies_) {
+				if (other == enemy) continue; // 自身は除外
 
-			// 差分を計算
-			difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
-			// 距離を計算
-			distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+				// 差分を計算
+				difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+				// 距離を計算
+				distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 
-			if (distance < nearDistance) {
-				nearDistance = distance; // 一番近い距離の変更
-				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
-				isTargetCharging = other->GetIsCharging();
+				if (distance < nearDistance) {
+					nearDistance = distance; // 一番近い距離の変更
+					nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+					isTargetCharging = other->GetIsCharging();
+				}
 			}
+		}
+
+		if (nearPos == player_->mainPosition.transform.translate) {
+			pCount++;
 		}
 
 		enemy->SetTargetPos(nearPos);
@@ -658,6 +665,7 @@ void SceneStage01::Update() {
 	Vector3 forward = player_->GetForward();
 
 	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
@@ -727,9 +735,9 @@ void SceneStage01::Update() {
 		ArrangeByArmSize();
 
 		StartResultShoji();
-			SpawnResultSets(10, -80.0f);
-		
-			isResultGenerated_ = true; // ★ここ
+		SpawnResultSets(10, -80.0f);
+
+		isResultGenerated_ = true; // ★ここ
 
 	}
 	UpdateResultShojiAnim();
@@ -862,24 +870,22 @@ void SceneStage01::Draw() {
 		RESULT_DRAW_DIST * RESULT_DRAW_DIST;
 
 	Vector3 resultSets_camPos = usingCamera_->GetPosition();
-	for (auto& set : resultSets_)
-	{
+	for (auto& set : resultSets_) {
 		// ★ セット代表位置で距離判定
 		Vector3 base = set.basePos[0];
-		Vector3 d = base - resultSets_camPos+ Vector3(0,0,-200);
+		Vector3 d = base - resultSets_camPos + Vector3(0, 0, -200);
 		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 
 		if (distSq > RESULT_DRAW_DIST_SQ)
 			continue;   // ★ このセット丸ごと描画しない
 
 		// 近いセットだけ描画
-		for (auto* obj : set.parts)
-		{
+		for (auto* obj : set.parts) {
 			if (obj) obj->Draw();
 		}
 	}
 
-	
+
 	// ===== Result Shoji (演出用) =====
 	if (resultShojiL_)        resultShojiL_->Draw();
 	if (resultShojiR_)        resultShojiR_->Draw();
@@ -922,7 +928,7 @@ void SceneStage01::CameraPart() {
 		return;
 	}
 
-	
+
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1269,7 +1275,7 @@ void SceneStage01::CheckAttackCollision() {
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
-					explosion_->SetPos(player_->mainPosition.transform.translate);
+					explosion_->SetPos((player_->mainPosition.transform.translate + armPos) / 2.0f);
 				} else {
 					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
 					// ここでは簡易的に Enemy* へのキャストで対応
@@ -1278,6 +1284,7 @@ void SceneStage01::CheckAttackCollision() {
 						e->AddKnockback(knockbackForce);
 						explosion_->SetIsEmitting(true);
 						explosion_->SetPos(player_->mainPosition.transform.translate);
+						explosion_->SetPos((e->mainPosition.transform.translate + armPos) / 2.0f);
 					}
 				}
 			}
@@ -1965,8 +1972,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultShojiWaitTimer_ = 0.0f;
 			resultShojiPhase_ = ResultShojiPhase::Wait;
 		}
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
 
 		resultShojiWaitTimer_ += dt;
 		if (resultShojiWaitTimer_ >= 1.0f) {
@@ -1989,7 +1995,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultShojiPhase_ = ResultShojiPhase::Opening;
 		}
 	}
-	 
+
 	else if (resultShojiPhase_ == ResultShojiPhase::Opening) {
 
 		resultShojiT_ -= dt;
@@ -2003,10 +2009,9 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultCameraT_ = 0.0f;
 			resultShojiPhase_ = ResultShojiPhase::CameraMove;
 		}
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
 
-		resultCameraT_ += dt /15.0f;   // 1秒
+		resultCameraT_ += dt / 15.0f;   // 1秒
 		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
 		float ease = SceneManager::EaseOutSine(t);
 
@@ -2116,8 +2121,7 @@ void SceneStage01::SetResultShojiOpenPose(
 //==============================
 // リザルト障子生成
 //==============================
-void SceneStage01::CreateResultShoji(const Vector3& camRot)
-{
+void SceneStage01::CreateResultShoji(const Vector3& camRot) {
 	resultShojiL_ = new Object;
 	resultShojiR_ = new Object;
 	resultShojiLPaper_ = new Object;
