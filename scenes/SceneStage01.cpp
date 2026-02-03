@@ -740,27 +740,35 @@ void SceneStage01::Update()
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
+	int pCount = 0;
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
 		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		enemy->SetDistanceWithPlayer(distance); // パーティクル制御のためのプレイヤーとの距離
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
 		isTargetCharging = player_->GetIsCharging();
-		for (auto* other : enemies_) {
-			if (other == enemy) continue; // 自身は除外
+		if (distance >= 25.0f || pCount >= 2) { // 自機が一定範囲外なら他の敵を参照||プレイヤーをターゲットにしている数が2以上なら敵をターゲット
+			for (auto* other : enemies_) {
+				if (other == enemy) continue; // 自身は除外
 
-			// 差分を計算
-			difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
-			// 距離を計算
-			distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+				// 差分を計算
+				difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+				// 距離を計算
+				distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 
-			if (distance < nearDistance) {
-				nearDistance = distance; // 一番近い距離の変更
-				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
-				isTargetCharging = other->GetIsCharging();
+				if (distance < nearDistance) {
+					nearDistance = distance; // 一番近い距離の変更
+					nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+					isTargetCharging = other->GetIsCharging();
+				}
 			}
+		}
+
+		if (nearPos == player_->mainPosition.transform.translate) {
+			pCount++;
 		}
 
 		enemy->SetTargetPos(nearPos);
@@ -870,6 +878,7 @@ void SceneStage01::Update()
 	Vector3 forward = player_->GetForward();
 
 	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
@@ -1183,9 +1192,7 @@ void SceneStage01::CameraPart() {
 	//	system_->SetCamera(usingCamera_);
 	//	return;
 	//}
-
-
-
+  
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1555,7 +1562,7 @@ void SceneStage01::CheckAttackCollision() {
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
-					explosion_->SetPos(player_->mainPosition.transform.translate);
+					explosion_->SetPos((player_->mainPosition.transform.translate + armPos) / 2.0f);
 				} else {
 					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
 					// ここでは簡易的に Enemy* へのキャストで対応
@@ -1564,6 +1571,7 @@ void SceneStage01::CheckAttackCollision() {
 						e->AddKnockback(knockbackForce);
 						explosion_->SetIsEmitting(true);
 						explosion_->SetPos(player_->mainPosition.transform.translate);
+						explosion_->SetPos((e->mainPosition.transform.translate + armPos) / 2.0f);
 					}
 				}
 			}

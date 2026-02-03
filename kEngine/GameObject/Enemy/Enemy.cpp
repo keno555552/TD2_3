@@ -62,55 +62,60 @@ void Enemy::Update(Camera *camera) {
 	MoveEnemyByResult();
 
 #pragma region パーティクル
-	dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
-	dashWindEffectL_->SetTargetForward(forward_);
-	dashWindEffectL_->SetArmScale(GetArmScaleL());
-	dashWindEffectL_->Update(camera);
-	dashWindEffectL_->SetEmitting(false);
-	dashWindEffectL_->SetEmitting(true);
 
-	if (IsAttackingL()) {
-		dashWindEffectL_->SetEmitting(true);
+	if(distanceWithPlayer_ <= 25.0f) // プレイヤーからの距離が遠ければ処理しない
+	{
+		/* 攻撃時のダッシュエフェクト */
+		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
+		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ * GetArmScaleL()*2.0f);
+		dashWindEffectL_->SetTargetForward(forward_);
+		dashWindEffectL_->SetArmScale(GetArmScaleL());
+		dashWindEffectL_->Update(camera);
+		dashWindEffectL_->SetEmitting(false);
+
+		if (IsAttackingL()) { // アタックしているときにダッシュエフェクト
+			dashWindEffectL_->SetEmitting(true);
+		}
+
+		dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleR() - 0.5f, 0.0f));
+		dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ * GetArmScaleR()*2.0f);
+		dashWindEffectR_->SetTargetForward(forward_);
+		dashWindEffectR_->SetArmScale(GetArmScaleR());
+		dashWindEffectR_->Update(camera);
+		dashWindEffectR_->SetEmitting(false);
+
+		if (IsAttackingR()) { // アタックしているときにダッシュエフェクト
+			dashWindEffectR_->SetEmitting(true);
+		}
+
+		/* チャージ時の吸い込みエフェクト */
+		suctionEffect_->SetArmScaleL(GetArmScaleL());
+		suctionEffect_->SetTargetPosLeft(GetArmPositionL());
+		suctionEffect_->SetTargetPosRight(GetArmPositionR());
+		suctionEffect_->SetLeftEmitting(false);
+		suctionEffect_->SetRightEmitting(false);
+		if (!isAttackingL_ && armScaleL_ > 1.0f) { // 攻撃状態ではない&&スケールが1.0f以上(つまりチャージ中のとき)
+			suctionEffect_->SetLeftEmitting(true);
+		}
+		if (!isAttackingR_ && armScaleR_ > 1.0f) { // 攻撃状態ではない&&スケールが1.0f以上(つまりチャージ中のとき)
+			suctionEffect_->SetRightEmitting(true);
+		}
+		suctionEffect_->Update(camera);
+
+		/* チャージ時の地面での円エフェクト */
+		if (!isAttackingL_ && armScaleL_ > 1.0f) {
+			planeReductionEffectL_->SetIsAction(true);
+		}
+		planeReductionEffectL_->SetTargetPos(GetArmPositionL());
+		planeReductionEffectL_->SetTargetScale(GetArmScaleL());
+		planeReductionEffectL_->Update(camera);
+		if (!isAttackingR_ && armScaleR_ > 1.0f) {
+			planeReductionEffectR_->SetIsAction(true);
+		}
+		planeReductionEffectR_->SetTargetPos(GetArmPositionR());
+		planeReductionEffectR_->SetTargetScale(GetArmScaleR());
+		planeReductionEffectR_->Update(camera);
 	}
-
-	dashWindEffectR_->SetGenerationPos(GetArmPositionR() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleR() - 0.5f, 0.0f));
-	dashWindEffectR_->SetTargetForward(forward_);
-	dashWindEffectR_->SetArmScale(GetArmScaleR());
-	dashWindEffectR_->Update(camera);
-	dashWindEffectR_->SetEmitting(false);
-	dashWindEffectR_->SetEmitting(true);
-
-	if (IsAttackingR()) {
-		dashWindEffectR_->SetEmitting(true);
-	}
-
-	suctionEffect_->SetArmScaleL(GetArmScaleL());
-	suctionEffect_->SetTargetPosLeft(GetArmPositionL());
-	suctionEffect_->SetTargetPosRight(GetArmPositionR());
-	suctionEffect_->SetLeftEmitting(false);
-	suctionEffect_->SetRightEmitting(false);
-
-	suctionEffect_->SetLeftEmitting(true);
-	suctionEffect_->SetRightEmitting(true);
-	if (system_->GetIsPush(DIK_A)) {
-		//suctionEffect_->SetLeftEmitting(true);
-	}
-	if (system_->GetIsPush(DIK_D)) {
-		//suctionEffect_->SetRightEmitting(true);
-	}
-
-	suctionEffect_->Update(camera);
-
-
-	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A));
-	planeReductionEffectL_->SetTargetPos(GetArmPositionL());
-	planeReductionEffectL_->SetTargetScale(GetArmScaleL());
-	planeReductionEffectL_->Update(camera);
-
-	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D));
-	planeReductionEffectR_->SetTargetPos(GetArmPositionR());
-	planeReductionEffectR_->SetTargetScale(GetArmScaleR());
-	planeReductionEffectR_->Update(camera);
 #pragma endregion
 
 	// 親クラスの更新（描画など）
@@ -127,12 +132,15 @@ void Enemy::Update(Camera *camera) {
 }
 
 void Enemy::Draw() {
-	dashWindEffectL_->Draw();
-	dashWindEffectR_->Draw();
-	suctionEffect_->Draw();
+	if (distanceWithPlayer_ <= 25.0f)
+	{
+		dashWindEffectL_->Draw();
+		dashWindEffectR_->Draw();
+		suctionEffect_->Draw();
 
-	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
-	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+		if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+		if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+	}
 
 	Object::Draw();
 

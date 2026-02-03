@@ -3,8 +3,9 @@
 
 P_DashWind::P_DashWind(kEngine* system) :Particle(system){
 	createTimer.Init0(0.1f, system_->GetTimeManager());
-	defaultModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/suzanne/suzanne.obj");
-	defaultTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/circle.png");
+	system_;
+	defaultModelHandle_ = system_->SetModelObj("resources/game/model/Particle_Dash.obj");
+	defaultTextureHandle_ = system_->LoadTexture("resources/game/model/Particle_Dash.png");
 	commonMaterialConfig->useModelTexture = false;
 	commonMaterialConfig->textureHandle = defaultTextureHandle_;
 }
