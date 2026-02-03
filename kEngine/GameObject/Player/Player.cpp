@@ -20,6 +20,35 @@ Player::Player(kEngine *system, const Vector3 &position) {
     // 第2引数に「自分(this)」を渡して追従させる
   armL_ = new Arm(system, this, false); // 左腕
   armR_ = new Arm(system, this, true);  // 右腕
+
+  armL_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+  armL_->objectParts_[0].materialConfig->textureColor = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->textureColor2 = {
+       36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->textureColor3 = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->intensity = 0.776f;
+  armL_->objectParts_[0].materialConfig->heightScale = 2.922f;
+
+
+  armR_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+  armR_->objectParts_[0].materialConfig->textureColor = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->textureColor2 = {
+       36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->textureColor3 = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->intensity = 0.776f;
+  armR_->objectParts_[0].materialConfig->heightScale = 2.922f;
+
+
 }
 
 void Player::Update(Camera *camera) {

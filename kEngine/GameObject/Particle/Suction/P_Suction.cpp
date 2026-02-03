@@ -52,6 +52,7 @@ void P_Suction::CreateSuction() {
 
 			p->target = *e.targetPos;
 			const float s = *e.armScale;
+			speed_ = 0.1f / s;
 
 			p->localOffset.x = randomMaker_->randomFloat(-s, s);
 			p->localOffset.y = randomMaker_->randomFloat(1.0f, s);

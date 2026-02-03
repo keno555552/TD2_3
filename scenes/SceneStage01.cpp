@@ -81,7 +81,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 		// 初期配置（必要に応じて後で順位別に動かす）
 		KanjiObjs_[i]->mainPosition.transform.translate =
-			Vector3(49.9f, 20.0f, 48.15f);
+			Vector3(49.9f, 200.0f, 48.15f);
 
 		KanjiObjs_[i]->mainPosition.transform.scale =
 			Vector3(0.2f, 0.2f, 0.2f);
@@ -121,10 +121,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
-		
+
 	};
 
-	
+
 
 	for (int i = 0; i < kIllustrationPartCount; i++) {
 		IllustrationModels[i] = system_->SetModelObj(IllustrationModelPaths[i]);
@@ -252,7 +252,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = DoujouTextures_[i];
 
-			
+
 
 			// ★ textureColor は触らない（ここ重要）
 		}
@@ -306,7 +306,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			}
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = ResultTextures_[i];
-		
+
 		}
 
 		// 先に設定
@@ -405,7 +405,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI];
-						
+
 					}
 
 					tatamiTiles_.push_back(t);
@@ -428,7 +428,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI_FRAME];
-					
+
 					}
 
 					tatamiFrames_.push_back(f);
@@ -477,16 +477,38 @@ SceneStage01::SceneStage01(kEngine* system) {
 	{  0.0f, 0.0f,  0.0f}
 	};
 
-
 	for (const auto& pos : spawnPositions) {
 		Enemy* newEnemy = new Enemy(system_, pos);
-		// モデルデータ共有（読み込み回数を減らすためハンドルを使い回す）
+
 		newEnemy->CreateModelData(playerModelHandle_);
 		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
 
-		// リストに追加
+		// === Left Arm ===
+		if (newEnemy->armL_ && !newEnemy->armL_->objectParts_.empty()) {
+			auto& m = newEnemy->armL_->objectParts_[0].materialConfig;
+			m->lightModelType = LightModelType::FlameNeonGlow;
+			m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+			m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+			m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+			m->intensity = 0.822f;
+			m->heightScale = 1.507f;
+		}
+
+		// === Right Arm ===
+		if (newEnemy->armR_ && !newEnemy->armR_->objectParts_.empty()) {
+			auto& m = newEnemy->armR_->objectParts_[0].materialConfig;
+			m->lightModelType = LightModelType::FlameNeonGlow;
+			m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+			m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+			m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+			m->intensity = 0.822f;
+			m->heightScale = 1.507f;
+		}
+
 		enemies_.push_back(newEnemy);
 	}
+
+
 
 	// ガイド矢印
 	guideArrow_ = new Object;
@@ -519,9 +541,9 @@ SceneStage01::SceneStage01(kEngine* system) {
 	suctionEffect_ = new P_Suction(system_);
 
 	planeReductionEffectL_ = new P_PlaneReduction(system_);
-	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
-	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 
 	explosion_ = new Explosion(system_);
 
@@ -635,14 +657,12 @@ SceneStage01::~SceneStage01() {
 	delete tutorial_;
 }
 
-void SceneStage01::Update()
-{
+void SceneStage01::Update() {
 
-// ===============================
-// Result中：ゲーム進行を完全停止
-// ===============================
-	if (isResultGenerated_)
-	{
+	// ===============================
+	// Result中：ゲーム進行を完全停止
+	// ===============================
+	if (isResultGenerated_) {
 		/// カメラ処理
 		/*CameraPart();*/
 		// ランクアニメを再実行（デバッグ用）
@@ -668,7 +688,7 @@ void SceneStage01::Update()
 		UpdateResultShoji(); // 距離や演出連動があるなら
 		UpdateRankModels();
 		UpdateSparkEffect2();
-		
+
 		// ★ それ以外は一切通さない
 		return;
 	}
@@ -740,27 +760,35 @@ void SceneStage01::Update()
 	sprite_->Update(usingCamera_);
 	//sprite2_->Update(usingCamera_);
 
+	int pCount = 0;
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
 		bool isTargetCharging = false;
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		enemy->SetDistanceWithPlayer(distance); // パーティクル制御のためのプレイヤーとの距離
 		float nearDistance = distance;
 		Vector3 nearPos = player_->mainPosition.transform.translate;
 		isTargetCharging = player_->GetIsCharging();
-		for (auto* other : enemies_) {
-			if (other == enemy) continue; // 自身は除外
+		if (distance >= 25.0f || pCount >= 2) { // 自機が一定範囲外なら他の敵を参照||プレイヤーをターゲットにしている数が2以上なら敵をターゲット
+			for (auto* other : enemies_) {
+				if (other == enemy) continue; // 自身は除外
 
-			// 差分を計算
-			difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
-			// 距離を計算
-			distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+				// 差分を計算
+				difference = other->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+				// 距離を計算
+				distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 
-			if (distance < nearDistance) {
-				nearDistance = distance; // 一番近い距離の変更
-				nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
-				isTargetCharging = other->GetIsCharging();
+				if (distance < nearDistance) {
+					nearDistance = distance; // 一番近い距離の変更
+					nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+					isTargetCharging = other->GetIsCharging();
+				}
 			}
+		}
+
+		if (nearPos == player_->mainPosition.transform.translate) {
+			pCount++;
 		}
 
 		enemy->SetTargetPos(nearPos);
@@ -768,7 +796,7 @@ void SceneStage01::Update()
 		enemy->Update(usingCamera_);
 	}
 
-	/// 衝突判定処理
+
 
 	// 攻撃当たり判定処理
 	CheckAttackCollision();
@@ -870,6 +898,7 @@ void SceneStage01::Update()
 	Vector3 forward = player_->GetForward();
 
 	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
 	dashWindEffect_->SetTargetForward(forward);
 	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
 	dashWindEffect_->Update(usingCamera_);
@@ -944,7 +973,7 @@ void SceneStage01::Update()
 		isResultGenerated_ = true; // ★ここ
 
 	}
-	
+
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
 
 		ArrangeByArmSize();
@@ -978,9 +1007,6 @@ void SceneStage01::Update()
 	if (system_->GetTriggerOn(DIK_SPACE)) {
 		outcome_ = SceneOutcome::NEXT;
 	}
-
-
-
 
 }
 
@@ -1081,7 +1107,7 @@ void SceneStage01::Draw() {
 		/// back
 		if (i == 4 || i == 9) { changePoint.x = mainPoint.x; }
 		/// front
-		if (i <= 2 ||i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
+		if (i <= 2 || i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
 		/// right
 		if (i == 6 || i == 11) { changePoint.x = mainPoint.x * 2; }
 		/// leftは要らない
@@ -1097,7 +1123,7 @@ void SceneStage01::Draw() {
 		}
 	}
 	DrawSparkEffect2(); // ← Spark専用Draw
-	
+
 
 	//if (!isCameraLocked_) {
 	//	Doujous_[4]->Draw();
@@ -1109,55 +1135,62 @@ void SceneStage01::Draw() {
 		RESULT_DRAW_DIST * RESULT_DRAW_DIST;
 
 	Vector3 resultSets_camPos = usingCamera_->GetPosition();
-	for (auto& set : resultSets_) {
-		// ★ セット代表位置で距離判定
-		Vector3 base = set.basePos[0];
-		Vector3 d = base - resultSets_camPos + Vector3(0, 0, -200);
-		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+	if (isResultGenerated_)
+	{
 
-		if (distSq > RESULT_DRAW_DIST_SQ)
-			continue;   // ★ このセット丸ごと描画しない
+		for (auto& set : resultSets_) {
+			// ★ セット代表位置で距離判定
+			Vector3 base = set.basePos[0];
+			Vector3 d = base - resultSets_camPos + Vector3(0, 0, -200);
+			float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 
-		// 近いセットだけ描画
-		for (auto* obj : set.parts) {
-			if (obj) obj->Draw();
+			if (distSq > RESULT_DRAW_DIST_SQ)
+				continue;   // ★ このセット丸ごと描画しない
+
+			// 近いセットだけ描画
+			for (auto* obj : set.parts) {
+				if (obj) obj->Draw();
+			}
+		}
+
+		// ===== Result Shoji (演出用) =====
+		if (resultShojiL_)        resultShojiL_->Draw();
+		if (resultShojiR_)        resultShojiR_->Draw();
+		if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+		if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
+
+		// ★順位表示（プレイヤーだけ）
+		if (playerRank_ >= 0 && playerRank_ < kKanjiCount) {
+			if (KanjiObjs_[playerRank_]) {
+				KanjiObjs_[playerRank_]->Draw();
+			}
+		}
+
+		// ★順位フレーム（常に描画）
+		if (KanjiObjs_[kFrameOuterIndex]) {
+			KanjiObjs_[kFrameOuterIndex]->Draw();
+		}
+		if (KanjiObjs_[kFrameInnerIndex]) {
+			KanjiObjs_[kFrameInnerIndex]->Draw();
+		}
+		for (int i = 0; i < kIllustrationPartCount; i++) {
+			if (Illustrations[i]) {
+				Illustrations[i]->Draw();
+			}
 		}
 	}
-
-
-	// ===== Result Shoji (演出用) =====
-	if (resultShojiL_)        resultShojiL_->Draw();
-	if (resultShojiR_)        resultShojiR_->Draw();
-	if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
-	if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
-
-	// ★順位表示（プレイヤーだけ）
-	if (playerRank_ >= 0 && playerRank_ < kKanjiCount) {
-		if (KanjiObjs_[playerRank_]) {
-			KanjiObjs_[playerRank_]->Draw();
+	if (!isResultGenerated_)
+	{
+		// 操作説明
+		// ■■■ ガイド描画切り替え ■■■
+		if (isGamepadMode_) {
+			// パッドモードならパッド用画像だけ描画
+			if (guideGamepad_) guideGamepad_->Draw();
 		}
-	}
-	// ★順位フレーム（常に描画）
-	if (KanjiObjs_[kFrameOuterIndex]) {
-		KanjiObjs_[kFrameOuterIndex]->Draw();
-	}
-	if (KanjiObjs_[kFrameInnerIndex]) {
-		KanjiObjs_[kFrameInnerIndex]->Draw();
-	}
-	for (int i = 0; i < kIllustrationPartCount; i++) {
-		if (Illustrations[i]) {
-			Illustrations[i]->Draw();
+		else {
+			// それ以外ならキーボード用画像だけ描画
+			if (guideKey_) guideKey_->Draw();
 		}
-	}
-
-	// 操作説明
-	// ■■■ ガイド描画切り替え ■■■
-	if (isGamepadMode_) {
-		// パッドモードならパッド用画像だけ描画
-		if (guideGamepad_) guideGamepad_->Draw();
-	} else {
-		// それ以外ならキーボード用画像だけ描画
-		if (guideKey_) guideKey_->Draw();
 	}
 
 	// チュートリアルお試し
@@ -1169,9 +1202,11 @@ void SceneStage01::Draw() {
 		startTimer_->Draw();
 	}
 
-	if (startTimer_->IsTimeUp()) countdownTimer_->Draw();
+	if (!isResultGenerated_)
+	{
+		if (startTimer_->IsTimeUp()) countdownTimer_->Draw();
 
-
+	}
 #ifdef USE_IMGUI
 	/// imgui処理
 	ImguiPart();
@@ -1184,8 +1219,6 @@ void SceneStage01::CameraPart() {
 	//	return;
 	//}
 
-
-
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1196,86 +1229,91 @@ void SceneStage01::CameraPart() {
 		system_->SetCamera(usingCamera_);
 		return;
 
-
-
-	//}
-
-	if (useDebugCamera) {
-		usingCamera_ = debugCamera_;
-		debugCamera_->MouseControlUpdate();
-	} else {
-		// ---------------------------------------------------------
-		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
-		// ---------------------------------------------------------
-		float dt = system_->GetDeltaTime();
-
-		// Sキー: ズームアウト（距離を足す）
-		if (system_->GetIsPush(DIK_S) || system_->GetGamepadIsPush(VK_PAD_A)) {
-			manualZoomOffset_ += kManualZoomSpeed_ * dt;
-		}
-		// Wキー: ズームイン（距離を引く）
-		else if (system_->GetIsPush(DIK_W) || system_->GetGamepadIsPush(VK_PAD_B)) {
-			manualZoomOffset_ -= kManualZoomSpeed_ * dt;
-		}
-
-		// 行き過ぎないように制限 (Clamp)
-		manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
-
-
-		// ---------------------------------------------------------
-		// 2. カメラ座標の計算
-		// ---------------------------------------------------------
-
-		// プレイヤーの情報を取得
-		Vector3 playerPos = player_->mainPosition.transform.translate;
-		float playerRotY = player_->mainPosition.transform.rotate.y;
-
-		// ★★★ 旧版から統合：回転値を [-PI, PI] に正規化 ★★★
-		const float PI = 3.14159265359f;
-		const float TWO_PI = 6.28318530718f;
-		while (playerRotY > PI) playerRotY -= TWO_PI;
-		while (playerRotY < -PI) playerRotY += TWO_PI;
-
-		// 腕の大きさに応じた距離と高さの計算(ズーム処理)
-		float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
-		// 腕が大きくなるほど距離(baseDistance)を増やす
-		// 例：基本 + 腕の余剰分 * 倍率
-		// ここの数値をいじると「引き」の強さが変わる
-		float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
-		float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
-
-		// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
-
-		// 距離: 自動値 + 手動オフセット
-		// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
-		float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
-
-		// 高さ: 自動値 + (手動オフセット * 比率)
-		// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
-		float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
-
-		// カメラの注視点と位置を計算
-		Vector3 eye = {
-			playerPos.x + std::sin(playerRotY) * finalDistance,
-			playerPos.y + finalHeight,
-			playerPos.z + std::cos(playerRotY) * finalDistance
-		};
-
-		// Transform構造体を作成して値をセットする
-		Transform cameraTransform = CreateDefaultTransform();
-		cameraTransform.translate = eye;
-
-		// 回転の設定
-		// 前進方向が {-sin, -cos} なので、
-		// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
-		cameraTransform.rotate.x = 0.5f;             // 少し見下ろす角度
-		cameraTransform.rotate.y = playerRotY + std::numbers::pi_v<float>; // プレイヤーの背中を追う向き
-		cameraTransform.rotate.z = 0.0f;
-
-		camera_->SetCamera(cameraTransform);
-		usingCamera_ = camera_;
 	}
-	system_->SetCamera(usingCamera_);
+
+		
+
+
+		if (useDebugCamera) {
+			usingCamera_ = debugCamera_;
+			debugCamera_->MouseControlUpdate();
+		}
+		else {
+			// ---------------------------------------------------------
+			// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
+			// ---------------------------------------------------------
+			float dt = system_->GetDeltaTime();
+
+			// Sキー: ズームアウト（距離を足す）
+			if (system_->GetIsPush(DIK_S) || system_->GetGamepadIsPush(VK_PAD_A)) {
+				manualZoomOffset_ += kManualZoomSpeed_ * dt;
+			}
+			// Wキー: ズームイン（距離を引く）
+			else if (system_->GetIsPush(DIK_W) || system_->GetGamepadIsPush(VK_PAD_B)) {
+				manualZoomOffset_ -= kManualZoomSpeed_ * dt;
+			}
+
+	
+
+			// 行き過ぎないように制限 (Clamp)
+			manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
+
+
+			// ---------------------------------------------------------
+			// 2. カメラ座標の計算
+			// ---------------------------------------------------------
+
+			// プレイヤーの情報を取得
+			Vector3 playerPos = player_->mainPosition.transform.translate;
+			float playerRotY = player_->mainPosition.transform.rotate.y;
+
+			// ★★★ 旧版から統合：回転値を [-PI, PI] に正規化 ★★★
+			const float PI = 3.14159265359f;
+			const float TWO_PI = 6.28318530718f;
+			while (playerRotY > PI) playerRotY -= TWO_PI;
+			while (playerRotY < -PI) playerRotY += TWO_PI;
+
+			// 腕の大きさに応じた距離と高さの計算(ズーム処理)
+			float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+			// 腕が大きくなるほど距離(baseDistance)を増やす
+			// 例：基本 + 腕の余剰分 * 倍率
+			// ここの数値をいじると「引き」の強さが変わる
+			float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
+			float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+
+			// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
+
+			// 距離: 自動値 + 手動オフセット
+			// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
+			float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
+
+			// 高さ: 自動値 + (手動オフセット * 比率)
+			// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
+			float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
+
+			// カメラの注視点と位置を計算
+			Vector3 eye = {
+				playerPos.x + std::sin(playerRotY) * finalDistance,
+				playerPos.y + finalHeight,
+				playerPos.z + std::cos(playerRotY) * finalDistance
+			};
+
+			// Transform構造体を作成して値をセットする
+			Transform cameraTransform = CreateDefaultTransform();
+			cameraTransform.translate = eye;
+
+			// 回転の設定
+			// 前進方向が {-sin, -cos} なので、
+			// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
+			cameraTransform.rotate.x = 0.5f;             // 少し見下ろす角度
+			cameraTransform.rotate.y = playerRotY + std::numbers::pi_v<float>; // プレイヤーの背中を追う向き
+			cameraTransform.rotate.z = 0.0f;
+
+			camera_->SetCamera(cameraTransform);
+			usingCamera_ = camera_;
+		}
+		system_->SetCamera(usingCamera_);
+	
 }
 
 #ifdef USE_IMGUI
@@ -1283,6 +1321,80 @@ void SceneStage01::ImguiPart() {
 	ImGui::Begin("DebugCamera");
 	ImGui::Checkbox("isUse", &useDebugCamera);
 	ImGui::End();
+
+	// =========================
+  // Enemy Lighting (ALL)
+  // =========================
+	// =========================
+// Enemy Lighting (ALL)
+// =========================
+	ImGui::Begin("Enemy Lighting (All)");
+
+	// ---------- マスター（全敵共通） ----------
+	static Vector4 masterBodyColor = { 1,1,1,1 };
+	static float   masterBodyIntensity = 1.0f;
+
+	static Vector4 masterArmColor1 = { 0,0,0,1.0f };
+	static Vector4 masterArmColor2 = { 0,0,0,1.0f };
+	static Vector4 masterArmColor3 = { 0,0,0,1.0f };
+	static float   masterArmIntensity = 0.0f;
+	static float   masterArmHeightScale = 5.0f;   // ★追加：高さ（スケール）
+
+
+	// ---------- UI ----------
+	ImGui::SeparatorText("Body (ALL)");
+	ImGui::ColorEdit4("Body Color", &masterBodyColor.x);
+	ImGui::SliderFloat("Body Intensity", &masterBodyIntensity, 0.0f, 5.0f);
+
+	ImGui::SeparatorText("Arm (ALL)");
+	ImGui::ColorEdit4("Arm Color 1", &masterArmColor1.x);
+	ImGui::ColorEdit4("Arm Color 2", &masterArmColor2.x);
+	ImGui::ColorEdit4("Arm Color 3", &masterArmColor3.x);
+	ImGui::SliderFloat("Arm Intensity", &masterArmIntensity, 0.0f, 5.0f);
+	ImGui::SliderFloat("Arm HeightScale", &masterArmHeightScale, 0.0f, 10.0f);
+
+
+	// ---------- 適用（毎フレーム・全Enemy） ----------
+	for (auto* e : enemies_)
+	{
+		if (!e) continue;
+
+		// Body
+		if (!e->objectParts_.empty() && e->objectParts_[0].materialConfig)
+		{
+			auto& m = e->objectParts_[0].materialConfig;
+			m->textureColor = masterBodyColor;
+			m->intensity = masterBodyIntensity;
+		}
+
+		// Left Arm
+		if (e->armL_ && !e->armL_->objectParts_.empty()
+			&& e->armL_->objectParts_[0].materialConfig)
+		{
+			auto& m = e->armL_->objectParts_[0].materialConfig;
+			m->textureColor = masterArmColor1;
+			m->textureColor2 = masterArmColor2;
+			m->textureColor3 = masterArmColor3;
+			m->intensity = masterArmIntensity;
+			m->heightScale = masterArmHeightScale;   // ★ここ
+		}
+
+		// Right Arm
+		if (e->armR_ && !e->armR_->objectParts_.empty()
+			&& e->armR_->objectParts_[0].materialConfig)
+		{
+			auto& m = e->armR_->objectParts_[0].materialConfig;
+			m->textureColor = masterArmColor1;
+			m->textureColor2 = masterArmColor2;
+			m->textureColor3 = masterArmColor3;
+			m->intensity = masterArmIntensity;
+			m->heightScale = masterArmHeightScale;   // ★ここ
+		}
+	}
+
+	ImGui::Separator();
+	ImGui::End();
+
 
 	{
 		Transform camTransform = usingCamera_->GetTransform();
@@ -1555,7 +1667,7 @@ void SceneStage01::CheckAttackCollision() {
 
 					player_->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
-					explosion_->SetPos(player_->mainPosition.transform.translate);
+					explosion_->SetPos((player_->mainPosition.transform.translate + armPos) / 2.0f);
 				} else {
 					// targetObjが敵リストの中にいるか確認、あるいはキャストして適用
 					// ここでは簡易的に Enemy* へのキャストで対応
@@ -1564,6 +1676,7 @@ void SceneStage01::CheckAttackCollision() {
 						e->AddKnockback(knockbackForce);
 						explosion_->SetIsEmitting(true);
 						explosion_->SetPos(player_->mainPosition.transform.translate);
+						explosion_->SetPos((e->mainPosition.transform.translate + armPos) / 2.0f);
 					}
 				}
 			}
@@ -2053,7 +2166,7 @@ void SceneStage01::ArrangeByArmSize() {
 	};
 
 
-	
+
 	struct Entry {
 		Object* obj;
 		float armSize;
@@ -2104,8 +2217,7 @@ void SceneStage01::ArrangeByArmSize() {
 
 		if (i < static_cast<int>(rankPositions.size())) {
 			obj->mainPosition.transform.translate = rankPositions[i];
-		}
-		else {
+		} else {
 			obj->mainPosition.transform.translate = {
 				rankPositions.back().x,
 				rankPositions.back().y,
@@ -2202,8 +2314,7 @@ void SceneStage01::UpdateResultShoji() {
 						set.shojiClosing = true;
 						set.shojiCloseT = 0.0f;
 					}
-				}
-				else {
+				} else {
 					// 離れたらリセット
 					set.shojiCloseWait = 0.0f;
 				}
@@ -2350,7 +2461,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 	} else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
 
 
-		resultCameraT_ += dt /12.0f;   // 1秒
+		resultCameraT_ += dt / 12.0f;   // 1秒
 
 		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
 		float ease = SceneManager::EaseOutSine(t);
@@ -2376,7 +2487,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			Vector3 playerPos = player_->mainPosition.transform.translate;
 			resultCameraPlayerEnd_ = {
 				playerPos.x,
-				playerPos.y+5,
+				playerPos.y + 5,
 				playerPos.z - 30.0f
 			};
 
@@ -2386,8 +2497,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			return;
 		}
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
 
 		resultCameraPlayerT_ += dt / 1.2f;   // ← 好きな秒数
 		float t = std::clamp(resultCameraPlayerT_, 0.0f, 1.0f);
@@ -2425,8 +2535,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 		}
 
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
 
 
 
@@ -2436,7 +2545,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			// ★ ここが必須
 			rankDebugPos_ = rankAnimStart_;
 			rankDebugRot_ = Vector3(0.0f, 0.0f, 0.0f);
-			
+
 			rankAnimT_ = 0.0f;
 			isRankAnimating_ = true;
 			isFrameAnimating_ = true;
@@ -2451,7 +2560,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 
 
 
-	
+
 	// ★ 念のため：ここに来る直前に消えてても触らない（保険）
 	if (!resultShojiL_ || !resultShojiR_
 		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
@@ -2590,8 +2699,7 @@ void SceneStage01::CreateResultShoji(const Vector3& camRot) {
 		o->mainPosition.transform.rotate = camRot;
 	}
 }
-void SceneStage01::UpdateRankModels()
-{
+void SceneStage01::UpdateRankModels() {
 	if (playerRank_ < 0 || playerRank_ >= kKanjiCount) return;
 
 	Object* rankObj = KanjiObjs_[playerRank_];
@@ -2675,7 +2783,7 @@ void SceneStage01::UpdateRankModels()
 	// ★文字は「フレーム完了後」だけ反映される
 	if (!isFrameAnimating_) {
 		rankObj->mainPosition.transform.translate = rankDebugPos_;
-		rankObj->mainPosition.transform.rotate = Vector3(0,-15.6f,0);
+		rankObj->mainPosition.transform.rotate = Vector3(0, -15.6f, 0);
 		rankObj->mainPosition.transform.scale = rankDebugScale_;
 		rankObj->Update(usingCamera_);
 	}
@@ -2779,8 +2887,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	// sec / ms / us 吸収
 	if (dt > 1000.0f) {
 		dt *= 0.000001f;
-	}
-	else if (dt > 1.0f) {
+	} else if (dt > 1.0f) {
 		dt *= 0.001f;
 	}
 
@@ -2896,8 +3003,7 @@ void SceneStage01::UpdateSparkEffect2() {
 		if (it->life >= it->lifeMax) {
 			delete it->obj;
 			it = sparks_.erase(it);
-		}
-		else {
+		} else {
 			++it;
 		}
 	}
@@ -2910,8 +3016,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	}
 }
 
-void SceneStage01::DrawSparkEffect2()
-{
+void SceneStage01::DrawSparkEffect2() {
 	for (auto& s : sparks_) {
 		if (s.obj) {
 			s.obj->Draw();

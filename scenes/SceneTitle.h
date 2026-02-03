@@ -17,6 +17,32 @@ public:
 	// タイトル側専用。Stageと共有しない
 	static constexpr int kPreloadDoujouCount = 15;
 public:
+
+
+    // セレクトSE
+    // =====================
+	int  selectMoveSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool selectSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+	int Title_PunchSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool Title_PunchSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+	int  Gate_OpenSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool Gate_OpenLoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+	int  DecideSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool DecideSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+
+
+	// パッド入力の連続防止
+	bool padSelectNeutral_ = true;
+
+	// スティック用デッドゾーン
+	static constexpr int kStickDeadZone = 3000;
+
+
+	int GetSelectedIndex() const { return selectIndex_; }
 	/// ============== カメラ関連 ==============///
 	/// ステージカメラ(mainカメラ)
 	Camera* camera_ = nullptr;
@@ -260,6 +286,9 @@ public:
 	float cursorScaleSpeed_ = 2.5f;   // 速さ（調整用）
 	float cursorScaleMin_ = 0.1f;
 	float cursorScaleMax_ = 0.105f;
+
+
+
 
 	//Camera* GetUsingCamera() override;
 	// SceneTitle / SceneStage01

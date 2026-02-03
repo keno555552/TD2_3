@@ -36,7 +36,9 @@ public:
 
     // 見た目を更新する
     void UpdateAppearance();
-
+    // これまでのパーツ管理ではなく、Armクラスを持つ
+    Arm* armL_ = nullptr;
+    Arm* armR_ = nullptr;
     // ImGuI用
 #ifdef USE_IMGUI
     float &GetRefArmScaleL() { return armScaleL_; }
@@ -59,6 +61,8 @@ public:
     // セッター
     void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
     void SetTargetCharge(bool on) { isTargetCharging_ = on; }
+    void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
+
     void SetArmScaleL(float scale) { armScaleL_ = scale; }
     void SetArmScaleR(float scale) { armScaleR_ = scale; }
 
@@ -88,9 +92,7 @@ private:
 
     Vector3 targetPos_{}; // 向かう敵(orプレイヤー)の位置
 
-    // これまでのパーツ管理ではなく、Armクラスを持つ
-    Arm* armL_ = nullptr;
-    Arm* armR_ = nullptr;
+ 
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;
@@ -124,4 +126,6 @@ private: // パーティクル用メンバ変数
     P_Suction* suctionEffect_ = nullptr;
     P_PlaneReduction* planeReductionEffectL_ = nullptr;
     P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+    float distanceWithPlayer_ = 0.0f;
 };
