@@ -23,9 +23,9 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 	suctionEffect_ = new P_Suction(system_);
 
 	planeReductionEffectL_ = new P_PlaneReduction(system_);
-	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
-	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 #pragma endregion
 }
 
