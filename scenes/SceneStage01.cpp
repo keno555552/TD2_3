@@ -121,10 +121,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
 		"resources/gate/model/punch.png",
-		
+
 	};
 
-	
+
 
 	for (int i = 0; i < kIllustrationPartCount; i++) {
 		IllustrationModels[i] = system_->SetModelObj(IllustrationModelPaths[i]);
@@ -252,7 +252,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = DoujouTextures_[i];
 
-			
+
 
 			// ★ textureColor は触らない（ここ重要）
 		}
@@ -306,7 +306,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			}
 			part.materialConfig->useModelTexture = false;
 			part.materialConfig->textureHandle = ResultTextures_[i];
-		
+
 		}
 
 		// 先に設定
@@ -405,7 +405,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI];
-						
+
 					}
 
 					tatamiTiles_.push_back(t);
@@ -428,7 +428,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 						part.materialConfig->useModelTexture = false;
 						part.materialConfig->textureHandle =
 							DoujouTextures_[IDX_TATAMI_FRAME];
-					
+
 					}
 
 					tatamiFrames_.push_back(f);
@@ -635,14 +635,12 @@ SceneStage01::~SceneStage01() {
 	delete tutorial_;
 }
 
-void SceneStage01::Update()
-{
+void SceneStage01::Update() {
 
-// ===============================
-// Result中：ゲーム進行を完全停止
-// ===============================
-	if (isResultGenerated_)
-	{
+	// ===============================
+	// Result中：ゲーム進行を完全停止
+	// ===============================
+	if (isResultGenerated_) {
 		/// カメラ処理
 		/*CameraPart();*/
 		// ランクアニメを再実行（デバッグ用）
@@ -668,7 +666,7 @@ void SceneStage01::Update()
 		UpdateResultShoji(); // 距離や演出連動があるなら
 		UpdateRankModels();
 		UpdateSparkEffect2();
-		
+
 		// ★ それ以外は一切通さない
 		return;
 	}
@@ -953,7 +951,7 @@ void SceneStage01::Update()
 		isResultGenerated_ = true; // ★ここ
 
 	}
-	
+
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
 
 		ArrangeByArmSize();
@@ -1090,7 +1088,7 @@ void SceneStage01::Draw() {
 		/// back
 		if (i == 4 || i == 9) { changePoint.x = mainPoint.x; }
 		/// front
-		if (i <= 2 ||i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
+		if (i <= 2 || i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
 		/// right
 		if (i == 6 || i == 11) { changePoint.x = mainPoint.x * 2; }
 		/// leftは要らない
@@ -1106,7 +1104,7 @@ void SceneStage01::Draw() {
 		}
 	}
 	DrawSparkEffect2(); // ← Spark専用Draw
-	
+
 
 	//if (!isCameraLocked_) {
 	//	Doujous_[4]->Draw();
@@ -1192,7 +1190,7 @@ void SceneStage01::CameraPart() {
 	//	system_->SetCamera(usingCamera_);
 	//	return;
 	//}
-  
+
 	// ★ カメラ追従停止中
 	if (isCameraLocked_) {
 		if (useDebugCamera) {
@@ -1205,7 +1203,7 @@ void SceneStage01::CameraPart() {
 
 
 
-	//}
+	}
 
 	if (useDebugCamera) {
 		usingCamera_ = debugCamera_;
@@ -2061,7 +2059,7 @@ void SceneStage01::ArrangeByArmSize() {
 	};
 
 
-	
+
 	struct Entry {
 		Object* obj;
 		float armSize;
@@ -2112,8 +2110,7 @@ void SceneStage01::ArrangeByArmSize() {
 
 		if (i < static_cast<int>(rankPositions.size())) {
 			obj->mainPosition.transform.translate = rankPositions[i];
-		}
-		else {
+		} else {
 			obj->mainPosition.transform.translate = {
 				rankPositions.back().x,
 				rankPositions.back().y,
@@ -2210,8 +2207,7 @@ void SceneStage01::UpdateResultShoji() {
 						set.shojiClosing = true;
 						set.shojiCloseT = 0.0f;
 					}
-				}
-				else {
+				} else {
 					// 離れたらリセット
 					set.shojiCloseWait = 0.0f;
 				}
@@ -2358,7 +2354,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 	} else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
 
 
-		resultCameraT_ += dt /12.0f;   // 1秒
+		resultCameraT_ += dt / 12.0f;   // 1秒
 
 		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
 		float ease = SceneManager::EaseOutSine(t);
@@ -2384,7 +2380,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			Vector3 playerPos = player_->mainPosition.transform.translate;
 			resultCameraPlayerEnd_ = {
 				playerPos.x,
-				playerPos.y+5,
+				playerPos.y + 5,
 				playerPos.z - 30.0f
 			};
 
@@ -2394,8 +2390,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			return;
 		}
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::CameraToPlayer) {
 
 		resultCameraPlayerT_ += dt / 1.2f;   // ← 好きな秒数
 		float t = std::clamp(resultCameraPlayerT_, 0.0f, 1.0f);
@@ -2433,8 +2428,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 		}
 
 
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::RankAppear) {
 
 
 
@@ -2444,7 +2438,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			// ★ ここが必須
 			rankDebugPos_ = rankAnimStart_;
 			rankDebugRot_ = Vector3(0.0f, 0.0f, 0.0f);
-			
+
 			rankAnimT_ = 0.0f;
 			isRankAnimating_ = true;
 			isFrameAnimating_ = true;
@@ -2459,7 +2453,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 
 
 
-	
+
 	// ★ 念のため：ここに来る直前に消えてても触らない（保険）
 	if (!resultShojiL_ || !resultShojiR_
 		|| !resultShojiLPaper_ || !resultShojiRPaper_) {
@@ -2598,8 +2592,7 @@ void SceneStage01::CreateResultShoji(const Vector3& camRot) {
 		o->mainPosition.transform.rotate = camRot;
 	}
 }
-void SceneStage01::UpdateRankModels()
-{
+void SceneStage01::UpdateRankModels() {
 	if (playerRank_ < 0 || playerRank_ >= kKanjiCount) return;
 
 	Object* rankObj = KanjiObjs_[playerRank_];
@@ -2683,7 +2676,7 @@ void SceneStage01::UpdateRankModels()
 	// ★文字は「フレーム完了後」だけ反映される
 	if (!isFrameAnimating_) {
 		rankObj->mainPosition.transform.translate = rankDebugPos_;
-		rankObj->mainPosition.transform.rotate = Vector3(0,-15.6f,0);
+		rankObj->mainPosition.transform.rotate = Vector3(0, -15.6f, 0);
 		rankObj->mainPosition.transform.scale = rankDebugScale_;
 		rankObj->Update(usingCamera_);
 	}
@@ -2787,8 +2780,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	// sec / ms / us 吸収
 	if (dt > 1000.0f) {
 		dt *= 0.000001f;
-	}
-	else if (dt > 1.0f) {
+	} else if (dt > 1.0f) {
 		dt *= 0.001f;
 	}
 
@@ -2904,8 +2896,7 @@ void SceneStage01::UpdateSparkEffect2() {
 		if (it->life >= it->lifeMax) {
 			delete it->obj;
 			it = sparks_.erase(it);
-		}
-		else {
+		} else {
 			++it;
 		}
 	}
@@ -2918,8 +2909,7 @@ void SceneStage01::UpdateSparkEffect2() {
 	}
 }
 
-void SceneStage01::DrawSparkEffect2()
-{
+void SceneStage01::DrawSparkEffect2() {
 	for (auto& s : sparks_) {
 		if (s.obj) {
 			s.obj->Draw();
