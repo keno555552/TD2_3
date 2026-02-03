@@ -186,6 +186,17 @@ public:
 	Vector3 cameraEndPos_;
 	Vector3 cameraPrevPos_;
 
+	Object* skydome_ = nullptr;
+
+	int skydomeModelHandle_ = 0;
+	/// テキスチャーハンドル
+	int skydomeTextureHandle_ = 0;
+
+	bool cameraShakePlaying_ = false;
+	float cameraShakeTime_ = 0.0f;
+	Vector3 cameraShakeOffset_ = { 0.0f, 0.0f, 0.0f };
+
+
 	// =====================
 // Spark Effect
 // =====================
@@ -230,6 +241,8 @@ public:
 
 	// 更新（★これが本体）
 	void UpdateSparkEffect2();
+
+	void DrawSparkEffect2();
 
 	Vector3 moziPos_[kMoziPartCount];
 	Vector3 moziRot_[kMoziPartCount];
