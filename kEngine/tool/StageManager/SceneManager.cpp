@@ -114,7 +114,7 @@ static void CopyCameraToHoldCam(Camera* src, Camera* dst) {
 SceneManager::SceneManager(kEngine* system) {
     system_ = system;
     sceneFactory_ = new SceneFactory(system_);
-    sceneUsingNameHandle_ = "TITLE";
+    sceneUsingNameHandle_ = "STAGE_01";
 
     if (gShojiFrameTexHandle < 0)
         gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
@@ -144,6 +144,7 @@ SceneManager::~SceneManager() {
 Camera* SceneManager::ResolveCamera(BaseScene* s) {
     if (!s) return nullptr;
     if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
+    if (auto* tu = dynamic_cast<SceneTutorial*>(s)) return tu->GetCamera();
     if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
     if (auto* rt = dynamic_cast<SceneResult*>(s)) return rt->GetCamera();
     return nullptr;

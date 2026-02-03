@@ -55,6 +55,10 @@ void Enemy::Update(Camera *camera) {
 		Move();
 	}
 
+	if (isTutorial_ && !isDamage_) {
+		velocity_ = { 0, 0, 0 };
+	}
+
 	MoveEnemyByResult();
 
 #pragma region パーティクル

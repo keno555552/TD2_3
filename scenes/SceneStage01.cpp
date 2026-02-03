@@ -202,6 +202,27 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 	};
 
+	Vector3 DoujouModelsForward[kDoujouPartCount] = {
+		{0,0,1},
+		{0,0,1},
+		{0,0,1},
+
+		{},
+		{0,0,-1},
+		{0,0,1},
+		{1,0,0},
+		{-1,0,0},
+
+		{},
+		{0,0,-1},
+		{0,0,1},
+		{1,0,0},
+		{-1,0,0},
+
+		{},
+		{}
+	};
+
 	for (int i = 0; i < kDoujouPartCount; i++) {
 		if (!DoujouModelPaths[i] || !DoujouTexturePaths[i]) {
 			continue;
@@ -220,6 +241,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 		Doujous_[i]->mainPosition.transform.scale = Vector3(0.205f, 0.2f, 0.2f);
 
+		Doujous_[i]->objectParts_[0].forward = DoujouModelsForward[i];
+
 		// ★ モデルごとにテクスチャを明示設定
 		for (auto& part : Doujous_[i]->objectParts_) {
 			if (!part.materialConfig) {
@@ -234,7 +257,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			// ★ textureColor は触らない（ここ重要）
 		}
 
-	
+
 
 	}
 
@@ -347,8 +370,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// =====================
 	// セット複製ループ
 	// =====================
-	for (int set = 0; set < TATAMI_SET_COUNT; ++set)
-	{
+	for (int set = 0; set < TATAMI_SET_COUNT; ++set) {
 		// ★ このセットの基準位置
 		Vector3 setOrigin = {
 			origin.x,
@@ -684,9 +706,9 @@ void SceneStage01::Update()
 	countdownTimer_->IsTimeUp();
 
 	// ゲーム開始時やイベント発生時に呼び出し
-	if (system_->GetTriggerOn(DIK_T)) {
-		tutorial_->Open(0); // 最初から再生
-	}
+	//if (system_->GetTriggerOn(DIK_T)) {
+	//	tutorial_->Open(0); // 最初から再生
+	//}
 
 	//// 特定の条件で途中から再生(イメージ)
 	//if (isSkillUnlocked) {
@@ -917,9 +939,9 @@ void SceneStage01::Update()
 		ArrangeByArmSize();
 
 		StartResultShoji();
-			SpawnResultSets(10, -80.0f);
-		
-			isResultGenerated_ = true; // ★ここ
+		SpawnResultSets(10, -80.0f);
+
+		isResultGenerated_ = true; // ★ここ
 
 	}
 	
@@ -998,10 +1020,11 @@ void SceneStage01::Draw() {
 	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
 
 	explosion_->Draw();
-	
-// =====================
-// 畳（床）距離カリング描画
-// =====================
+
+	//畳（床）
+	// =====================
+	// 畳（床）距離カリング描画
+
 	constexpr float TATAMI_DRAW_DIST = 150.0f;
 	constexpr float TATAMI_DRAW_DIST_SQ =
 		TATAMI_DRAW_DIST * TATAMI_DRAW_DIST;
@@ -1010,8 +1033,7 @@ void SceneStage01::Draw() {
 	Vector3 camPos = usingCamera_->GetPosition();
 
 	// 畳
-	for (auto* t : tatamiTiles_)
-	{
+	for (auto* t : tatamiTiles_) {
 		if (!t) continue;
 
 		Vector3 pos = t->mainPosition.transform.translate;
@@ -1026,8 +1048,7 @@ void SceneStage01::Draw() {
 	}
 
 	// フレーム
-	for (auto* f : tatamiFrames_)
-	{
+	for (auto* f : tatamiFrames_) {
 		if (!f) continue;
 
 		Vector3 pos = f->mainPosition.transform.translate;
@@ -1042,50 +1063,68 @@ void SceneStage01::Draw() {
 	}
 
 
-	
-// 背景オブジェクト
-	for (int i = 0; i < kDoujouPartCount - 2; i++)
-	{
+
+	// 背景オブジェクト
+	for (int i = 0; i < kDoujouPartCount - 2; i++) {
+
 		if (!Doujous_[i]) continue;
 
-		// 4 と 9 以外を描画
-		if (i != 4 && i != 9)
-		{
+		/// 向きがないのか判定の対象外
+
+		if (Length(Doujous_[i]->objectParts_[0].forward) < 0.0001f) {
+			Doujous_[i]->Draw();
+			continue;
+		}
+
+		Vector3 mainPoint(49.9f, 18.05f, 48.15f);
+		Vector3 changePoint{ 0,mainPoint.y,0 };
+		/// back
+		if (i == 4 || i == 9) { changePoint.x = mainPoint.x; }
+		/// front
+		if (i <= 2 ||i == 5 || i == 10) { changePoint.z = mainPoint.z * 2; }
+		/// right
+		if (i == 6 || i == 11) { changePoint.x = mainPoint.x * 2; }
+		/// leftは要らない
+
+		Doujous_[i]->objectParts_[0].transform.translate = Doujous_[i]->objectParts_[0].transform.translate + changePoint;
+		Matrix4x4 worldMatrix = Doujous_[i]->objectParts_[0].UpdateWorldMatrix();
+		Doujous_[i]->objectParts_[0].transform.translate = Doujous_[i]->objectParts_[0].transform.translate - changePoint;
+
+		Vector3 worldForward = TransformDirection(Doujous_[i]->objectParts_[0].forward, worldMatrix);
+		Vector3 blockWorldPos = { worldMatrix.m[3][0], worldMatrix.m[3][1], worldMatrix.m[3][2] };
+		if (usingCamera_->isObjectFaceCamera(worldForward, blockWorldPos, 90.0f)) {
 			Doujous_[i]->Draw();
 		}
 	}
 	DrawSparkEffect2(); // ← Spark専用Draw
 	
 
-	// カメラロック解除時のみ 4 と 9 を描画
-	if (!isCameraLocked_)
-	{
-		Doujous_[4]->Draw();
-		Doujous_[9]->Draw();
-	}
+	//if (!isCameraLocked_) {
+	//	Doujous_[4]->Draw();
+	//	Doujous_[9]->Draw();
+	//}
+
 	constexpr float RESULT_DRAW_DIST = 300.0f;
 	constexpr float RESULT_DRAW_DIST_SQ =
 		RESULT_DRAW_DIST * RESULT_DRAW_DIST;
 
 	Vector3 resultSets_camPos = usingCamera_->GetPosition();
-	for (auto& set : resultSets_)
-	{
+	for (auto& set : resultSets_) {
 		// ★ セット代表位置で距離判定
 		Vector3 base = set.basePos[0];
-		Vector3 d = base - resultSets_camPos+ Vector3(0,0,-200);
+		Vector3 d = base - resultSets_camPos + Vector3(0, 0, -200);
 		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 
 		if (distSq > RESULT_DRAW_DIST_SQ)
 			continue;   // ★ このセット丸ごと描画しない
 
 		// 近いセットだけ描画
-		for (auto* obj : set.parts)
-		{
+		for (auto* obj : set.parts) {
 			if (obj) obj->Draw();
 		}
 	}
 
-	
+
 	// ===== Result Shoji (演出用) =====
 	if (resultShojiL_)        resultShojiL_->Draw();
 	if (resultShojiR_)        resultShojiR_->Draw();
@@ -1145,16 +1184,18 @@ void SceneStage01::CameraPart() {
 	//	return;
 	//}
 
-	//
-	//// ★ カメラ追従停止中
-	//if (isCameraLocked_) {
-	//	if (useDebugCamera) {
-	//		usingCamera_ = debugCamera_;
-	//		debugCamera_->MouseControlUpdate();
-	//	}
-	//	// 位置・回転を一切更新しない
-	//	system_->SetCamera(usingCamera_);
-	//	return;
+
+
+	// ★ カメラ追従停止中
+	if (isCameraLocked_) {
+		if (useDebugCamera) {
+			usingCamera_ = debugCamera_;
+			debugCamera_->MouseControlUpdate();
+		}
+		// 位置・回転を一切更新しない
+		system_->SetCamera(usingCamera_);
+		return;
+
 
 
 	//}
@@ -2269,8 +2310,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultShojiWaitTimer_ = 0.0f;
 			resultShojiPhase_ = ResultShojiPhase::Wait;
 		}
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
 
 		resultShojiWaitTimer_ += dt;
 		if (resultShojiWaitTimer_ >= 1.0f) {
@@ -2293,7 +2333,7 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultShojiPhase_ = ResultShojiPhase::Opening;
 		}
 	}
-	 
+
 	else if (resultShojiPhase_ == ResultShojiPhase::Opening) {
 
 		resultShojiT_ -= dt;
@@ -2307,10 +2347,11 @@ void SceneStage01::UpdateResultShojiAnim() {
 			resultCameraT_ = 0.0f;
 			resultShojiPhase_ = ResultShojiPhase::CameraMove;
 		}
-	}
-	else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
+	} else if (resultShojiPhase_ == ResultShojiPhase::CameraMove) {
+
 
 		resultCameraT_ += dt /12.0f;   // 1秒
+
 		float t = std::clamp(resultCameraT_, 0.0f, 1.0f);
 		float ease = SceneManager::EaseOutSine(t);
 
@@ -2499,8 +2540,7 @@ void SceneStage01::SetResultShojiOpenPose(
 //==============================
 // リザルト障子生成
 //==============================
-void SceneStage01::CreateResultShoji(const Vector3& camRot)
-{
+void SceneStage01::CreateResultShoji(const Vector3& camRot) {
 	resultShojiL_ = new Object;
 	resultShojiR_ = new Object;
 	resultShojiLPaper_ = new Object;

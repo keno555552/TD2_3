@@ -53,6 +53,7 @@ SceneTest::SceneTest(kEngine* system) {
 	mapChipField_->SetBlockHeight(1.0f);
 
 	startTimer_ = new StartTimer(system_);
+	countdownTimer_ = new CountdownTimer(system_);
 
 	/// マップチップの初期化
 	GenerateBlocks();
@@ -96,6 +97,8 @@ void SceneTest::Update() {
 	/// スタートタイマー更新
 	startTimer_->Update(nullptr);
 
+	countdownTimer_->Update(nullptr);
+
 	if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
@@ -120,20 +123,39 @@ void SceneTest::Draw() {
 	//system_->Draw3D(model_);
 
 	/// ブロック描画
-	for (auto& row : blockObjectList_) {
-		for (auto& block : row) {
-			if (block) {
-				block->Draw();
-			}
-		}
-	}
+	DrawBlock();
 
 	startTimer_->Draw();
+	countdownTimer_->Draw();
 
 #ifdef USE_IMGUI
 	/// ImGui処理
 	ImGuiPart();
 #endif
+}
+
+void SceneTest::DrawBlock() {
+	for (auto& row : blockObjectList_) {
+		for (auto& block : row) {
+			if (block) {
+
+				/// 向きがないのか判定の対象外
+				if (block->objectParts_[0].forward == Vector3{ 0,0,0 }) {
+					block->Draw();
+					continue;
+				}
+
+				Matrix4x4 worldMatrix = block->objectParts_[0].UpdateWorldMatrix();
+
+				Vector3 worldForward = TransformDirection(block->objectParts_[0].forward, worldMatrix);
+				Vector3 blockWorldPos = { worldMatrix.m[3][0], worldMatrix.m[3][1], worldMatrix.m[3][2] };
+				if (usingCamera_->isObjectFaceCamera(worldForward, blockWorldPos, 90.0f)) {
+					block->Draw();
+				}
+
+			}
+		}
+	}
 }
 
 void SceneTest::CameraPart() {
@@ -194,7 +216,24 @@ void SceneTest::ImGuiPart() {
 	}
 	ImGui::SliderFloat("TimeScale", &timerScale, 0.0f, 5.0f);
 	ImGui::End();
-	
+
+
+	ImGui::Begin("CountdownTimer_");
+	Timer& timer2 = countdownTimer_->GetTime();
+	ImGui::Text("Time: %.2f / %.2f", timer2.parameter_, timer2.maxTime_);
+	if (ImGui::Button("Start2", size)) {
+		countdownTimer_->Start();
+	}
+	if (ImGui::Button("Stop2", size)) {
+		countdownTimer_->Stop();
+	}
+	if (ImGui::Button("Reset2", size)) {
+		countdownTimer_->Reset();
+	}
+	ImGui::ColorEdit4("Color", &countdownColor.x);
+	countdownTimer_->SetLessTimeColor(countdownColor);
+	ImGui::End();
+
 
 #endif
 }
@@ -223,6 +262,7 @@ void SceneTest::GenerateBlocks() {
 				blockObjectList_[i][j]->modelHandle_ = config::default_Cube_MeshBufferHandle_;
 				blockObjectList_[i][j]->objectParts_[0].materialConfig->useModelTexture = false;
 				blockObjectList_[i][j]->objectParts_[0].materialConfig->textureHandle = boxTextureHandle_;
+				blockObjectList_[i][j]->objectParts_[0].forward = Vector3(0.0f, 0.0f, 1.0f);
 				blockObjectList_[i][j]->mainPosition.transform.translate = mapChipField_->GetMapChipPositionByIndex(j, i);
 			}
 		}

@@ -387,6 +387,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="scenes\SceneTitle.cpp" />
     <ClCompile Include="kEngine\core\driver\SrvManager.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\Suction\P_Suction.cpp" />
+    <ClCompile Include="scenes\SceneTutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kEngine\Data\LightingType.h" />
@@ -441,6 +442,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\tool\crashDecision\crashDecision.h" />
     <ClInclude Include="kEngine\tool\DefaultMenu\DefaultMenu.h" />
     <ClInclude Include="kEngine\tool\MapChip\MapChipField.h" />
+    <ClInclude Include="kEngine\tool\mathsUnit\Vector4.h" />
     <ClInclude Include="kEngine\tool\PerlinNoise\PerlinNoise.h" />
     <ClInclude Include="kEngine\drawEngine\ResourceManager\ObjectResource\VertexIndex.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\randomMaker.h" />
@@ -473,7 +475,6 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="kEngine\tool\mathsUnit\Transform.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\Vector2.h" />
     <ClInclude Include="kEngine\tool\mathsUnit\Vector3.h" />
-    <ClInclude Include="kEngine\tool\mathsUnit\Vector4.h" />
     <ClInclude Include="kEngine\kEngine.h" />
     <ClInclude Include="kEngine\core\pso\PSO.h" />
     <ClInclude Include="kEngine\core\pso\shader_compile.h" />
@@ -512,6 +513,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="scenes\SceneTitle.h" />
     <ClInclude Include="kEngine\core\driver\SrvManager.h" />
     <ClInclude Include="kEngine\GameObject\Particle\Suction\P_Suction.h" />
+    <ClInclude Include="scenes\SceneTutorial.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\Shader\FlameNeonGlow.PS.hlsl">

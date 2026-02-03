@@ -197,7 +197,7 @@ private:
 	float hitStopTimer_ = 0.0f;
 
 	// 現在ゲームパッドモードかどうか
-	bool isGamepadMode_ = true;
+	bool isGamepadMode_ = false;
 
 	// ===== Rank Debug (ImGui用) =====
 	Vector3 rankDebugPos_ = { 49.0f, 5.0f, 0.0f };
