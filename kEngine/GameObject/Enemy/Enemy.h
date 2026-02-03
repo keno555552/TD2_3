@@ -61,6 +61,11 @@ public:
     void SetTargetCharge(bool on) { isTargetCharging_ = on; }
     void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
 
+    void SetArmScaleL(float scale) { armScaleL_ = scale; }
+    void SetArmScaleR(float scale) { armScaleR_ = scale; }
+
+    void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
+
 private: // メンバ関数
     void Move(); // 将来AIを入れる場所
 
@@ -107,6 +112,8 @@ private:
 
     bool isCharging_ = false;
     bool isTargetCharging_ = false;
+
+    bool isTutorial_ = false;
 
 private:
     // 計算用

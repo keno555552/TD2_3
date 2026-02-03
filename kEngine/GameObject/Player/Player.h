@@ -88,6 +88,9 @@ public:
 
 	bool GetIsCharging()const { return isCharging_; }
 
+
+	void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
+
 private:
 
 	enum class LRDirection { kRight, kLeft, None };
@@ -191,5 +194,8 @@ private:
 	bool isAttackingL_ = false;
 
 	bool isCharging_ = false;
+
+
+	bool isTutorial_ = false;
 };
 
