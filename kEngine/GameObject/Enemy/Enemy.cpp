@@ -1,6 +1,7 @@
 #define NOMINMAX ///<<<必ずすべでのファイルの先頭に書くこと
 #include "Enemy.h"
 #include <numbers>
+#include <SceneStage01.h>
 
 Enemy::Enemy(kEngine* system, const Vector3& position) {
 	Object::IntObject(system);
@@ -151,15 +152,19 @@ void Enemy::Update(Camera* camera) {
 }
 
 void Enemy::Draw() {
-	if (distanceWithPlayer_ <= 25.0f) {
-		dashWindEffectL_->Draw();
-		dashWindEffectR_->Draw();
-		suctionEffect_->Draw();
 
-		if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
-		if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+if (!SceneStage01::IsParticleDrawBlocked()) {
+
+		if (distanceWithPlayer_ <= 25.0f)
+		{
+			dashWindEffectL_->Draw();
+			dashWindEffectR_->Draw();
+			suctionEffect_->Draw();
+
+			if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+			if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+		}
 	}
-
 	Object::Draw();
 
 	// 腕の描画
