@@ -219,6 +219,8 @@ void Player::Move() {
 			// 【停止】両方膨らませると急ブレーキ
 			currentSpeed_ *= 0.8f;
 			isCharging_ = true;
+			isAttackingL_ = false;
+			isAttackingR_ = false;
 		} else if (!pushA && !pushD) {
 			// 【加速】ボタンを離した際、腕が縮みながら加速
 			// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算

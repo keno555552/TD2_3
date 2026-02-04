@@ -28,7 +28,7 @@ private:
 	int defaultTextureHandle_ = -1;
 	int defaultModelHandle_ = -1;
 
-	int createNumber_ = 20; // 1フレームで生成する数
+	int createNumber_ = 50; // 1フレームで生成する数
 	int maxParticleNum_ = 400; // 最大数
 
 	float lifeTime_ = 1.0f;

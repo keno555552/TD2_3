@@ -157,7 +157,7 @@ void DebugObject::updateCenterNumber() {
 
 			for (int i = 0; i < numDigits; i++) {
 
-				int digit = centerNumberArray[numDigits - 1 - i];
+				int digit = centerNumberArray[numDigits - 1 - i] - 1;
 				auto& part = centerNumberSprite_->objectParts_[i];
 
 				// 設定裁切
