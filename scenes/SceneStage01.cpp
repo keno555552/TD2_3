@@ -610,13 +610,14 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 
 
-	//selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
-	//Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Open.wav");
-	//DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
-	//Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
-	//AppearSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Appear.wav");
-	//WalkSE_ = system_->SoundLoadSE("resources/gate/SE/Title/walk.wav");
-	//BGM_ = system_->SoundLoadSE("resources/gate/SE/Title/T_BGM.wav");
+	CloseSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav");
+	OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav"); 
+	FlameSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Flame.wav"); 
+	RankSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Rank.wav");
+
+	BGM_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_G.wav");
+	BGMR_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_R.wav");
+	
 
 
 	player_->Update(usingCamera_);
@@ -749,7 +750,13 @@ void SceneStage01::Update() {
 	if (startTimer_->IsTimeUp()) {
 
 		countdownTimer_->Start();
+		if (StartSE_ >= 0) {
+			system_->SoundPlaySE(WalkSE_, 0.6f);
+		}
+		system_->SoundPlayBGM(BGM_, 0.3f);  //
+
 	} else {
+
 		return;
 	}
 
@@ -1037,9 +1044,10 @@ void SceneStage01::Update() {
 
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
+		system_->SoundStop(BGM_);
 
 		isResultGenerated_ = true; // ★ここ
-
+		system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
 	}
 
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
@@ -1047,8 +1055,10 @@ void SceneStage01::Update() {
 
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
+		system_->SoundStop(BGM_);
 
 		isResultGenerated_ = true; // ★ 一度だけ
+		system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
 	}
 
 	for (auto& set : resultSets_) {
@@ -2370,6 +2380,9 @@ void SceneStage01::UpdateResultShoji() {
 
 			if (!set.shojiOpened && !set.shojiOpening) {
 				if (dist < OPEN_DIST) {
+					if (CloseSE_ >= 0) {
+						system_->SoundPlaySE(CloseSE_, 0.6f);
+					}
 					set.shojiOpening = true;
 					set.shojiT = 0.0f;
 				}
@@ -2387,6 +2400,9 @@ void SceneStage01::UpdateResultShoji() {
 					set.shojiCloseWait += system_->GetDeltaTime();
 
 					if (set.shojiCloseWait >= CLOSE_WAIT_TIME) {
+						if (CloseSE_ >= 0) {
+							system_->SoundPlaySE(CloseSE_, 0.6f);
+						}
 						set.shojiClosing = true;
 						set.shojiCloseT = 0.0f;
 					}
@@ -2822,6 +2838,10 @@ void SceneStage01::UpdateRankModels() {
 
 		// ★ フレームが終わったら文字 easing を解禁
 		if (ft >= 1.0f) {
+			if (FlameSE_ >= 0) {
+				system_->SoundPlaySE(FlameSE_, 1.5f);
+			}
+			
 			isFrameAnimating_ = false;
 			isRankAnimating_ = true;
 			rankAnimT_ = 0.0f;
@@ -2847,7 +2867,9 @@ void SceneStage01::UpdateRankModels() {
 
 		if (t >= 1.0f) {
 			isRankAnimating_ = false;
-
+			if (RankSE_ >= 0) {
+				system_->SoundPlaySE(RankSE_, 1.2f);
+			}
 			// ★ 完全追従フェーズへ
 			isRankShake_ = true;
 			rankShakeT_ = 0.0f;
@@ -2942,7 +2964,7 @@ void SceneStage01::UpdateRankModels() {
 
 		if (rankEndWaitT_ >= rankEndWaitDuration_) {
 			isRankEndWait_ = false;
-
+			system_->SoundStop(BGMR_);  //
 			// ★ シーン遷移
 			outcome_ = SceneOutcome::NEXT;
 		}

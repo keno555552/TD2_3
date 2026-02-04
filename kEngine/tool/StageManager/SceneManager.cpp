@@ -114,15 +114,15 @@ static void CopyCameraToHoldCam(Camera* src, Camera* dst) {
 SceneManager::SceneManager(kEngine* system) {
     system_ = system;
     sceneFactory_ = new SceneFactory(system_);
-    sceneUsingNameHandle_ = "STAGE_01";
+    sceneUsingNameHandle_ = "TITLE";
 
     if (gShojiFrameTexHandle < 0)
         gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
     if (gShojiPaperTexHandle < 0)
         gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
 
-    CloseSE_ = system_->SoundLoadSE("resources/gate/SE/Close.wav");
-    OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Open.wav");
+    CloseSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav");
+    OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav");
 
     // ★ HoldCam を先に作っておく（遷移中に必ず描画できる）
     EnsureShojiHoldCam(system_);

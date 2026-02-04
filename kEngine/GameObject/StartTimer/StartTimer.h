@@ -22,7 +22,14 @@ public:
 
 
 private:
+	bool startSEPlayed_ = false;
+	bool hasStarted_ = false;
 
+	int StartSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool StartSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+	int CountSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool CountSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 	/// ========= テキスチャーハンドル =========///
 	/// 
 	/// 0 =1,1=2,2=3

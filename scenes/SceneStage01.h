@@ -349,7 +349,30 @@ private:
 
 		int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
 		bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int BGMR_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool BGMR_oaded_ = false; // ★ 一度だけロードするためのフラグ
 		SceneTitle* sceneTitle_ = nullptr;
+
+
+		int CloseSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool CloseSELoaded_ = false; // ★ 一度だけロードするための
+
+
+		int OpenSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool OpenSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int FlameSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool FlameSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int RankSE_ = -1;
+		bool RankSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int StartSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool StartSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int CountSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool CountSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();
