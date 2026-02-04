@@ -695,15 +695,15 @@ void SceneStage01::Update() {
 		/// カメラ処理
 		/*CameraPart();*/
 		// ランクアニメを再実行（デバッグ用）
-		if (system_->GetTriggerOn(DIK_L)) {
+		//if (system_->GetTriggerOn(DIK_L)) {
 
-			// アニメを最初からやり直す
-			rankAnimT_ = 0.0f;
-			isRankAnimating_ = true;
+		//	// アニメを最初からやり直す
+		//	rankAnimT_ = 0.0f;
+		//	isRankAnimating_ = true;
 
-			// ★ 開始・終了位置は「今の設定」をそのまま使う
-			// 何も再計算しない（←重要）
-		}
+		//	// ★ 開始・終了位置は「今の設定」をそのまま使う
+		//	// 何も再計算しない（←重要）
+		//}
 
 		// ■ Result演出とカメラだけは動かす
 		UpdateResultShojiAnim();
@@ -1049,6 +1049,8 @@ void SceneStage01::Update() {
 	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
+
+
 
 	explosion_->Update(usingCamera_);
 #pragma endregion
