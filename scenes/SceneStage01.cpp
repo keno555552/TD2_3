@@ -1719,10 +1719,11 @@ void SceneStage01::CheckAttackCollision() {
 
 				// ▼▼▼ 追加修正2: 最小ノックバック量の保証 ▼▼▼
 				// 計算上の威力
-				float rawPower = 8.0f * (armScale * armScale);
+				float rawPower = 5.0f * (armScale * armScale);
 				// どんなに弱くても「10.0f」の力は保証する（値は調整してください）
 				// これにより、確実に相手と距離が離れます
-				float finalPower = std::max(rawPower, 10.0f);
+				float finalPower = std::max(rawPower, 6.0f);
+				finalPower = std::min(rawPower, 13.0f);
 
 				Vector3 knockbackForce = { pushDir.x * finalPower, 0.0f, pushDir.z * finalPower };
 
@@ -1775,7 +1776,8 @@ void SceneStage01::CheckAttackCollision() {
 			if (crashDecision(boxA, boxB)) {
 				// 定数定義
 				float basePower = 8.0f;
-				float minKnockback = 10.0f; // 最小ノックバック量
+				float minKnockback = 6.0f; // 最小ノックバック量
+				float maxKnockback = 6.0f; // 最大ノックバック量
 
 				float duration = 0.3f;
 
@@ -1843,6 +1845,7 @@ void SceneStage01::CheckAttackCollision() {
 
 						// ★修正: 最小値保証
 						float power = std::max(basePower * (armScaleA * armScaleA), minKnockback);
+						power = std::min(power, maxKnockback);
 
 						// スロー演出（プレイヤーが関与している場合のみ推奨）
 						if (isCheckInPlayer) StartHitStop(0.05f, duration);
