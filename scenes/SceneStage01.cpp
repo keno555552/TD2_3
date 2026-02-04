@@ -832,16 +832,16 @@ void SceneStage01::Update() {
 		if (player_->IsDamage()) {
 			isAnyDamage = true;
 		}
-		if (isAnyDamage) {
-			usingCamera_->StartShark();
-			if (hitSETimer_->parameter_ <= 0.0f) {
-				system_->SoundPlaySE(HitSE_, 0.5f);
-				hitSETimer_->ResetM();
-			}
-		}
-		if (hitSETimer_->parameter_ > 0.0f) {
-			hitSETimer_->ToZero();
-		}
+		//if (isAnyDamage) {
+		//	usingCamera_->StartShark();
+		//	if (hitSETimer_->parameter_ <= 0.0f) {
+		//		//system_->SoundPlaySE(HitSE_, 0.5f);
+		//		hitSETimer_->ResetM();
+		//	}
+		//}
+		//if (hitSETimer_->parameter_ > 0.0f) {
+		//	hitSETimer_->ToZero();
+		//}
 	}
 	usingCamera_->SharkUpdate(system_->GetDeltaTime());
 
@@ -2136,6 +2136,7 @@ void SceneStage01::StartHitStop(float scale, float duration) {
 	if (hitStopTimer_ <= 0.0f) {
 		system_->SetTimeScale(scale);
 		hitStopTimer_ = duration;
+		system_->SoundPlaySE(HitSE_, 0.5f);
 	}
 }
 
