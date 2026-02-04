@@ -5,9 +5,9 @@ Arm::Arm(kEngine* system, Object* parent, bool isRight) {
     IntObject(system);
 
     // 新しい腕モデルの読み込み
-    leftModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armL.obj"); // パスは適宜変更
-    rightModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armR.obj"); // パスは適宜変更
-
+    rightModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armL.obj"); // パスは適宜変更
+    leftModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armR.obj"); // パスは適宜変更
+    
     isRight_ = isRight;
     if (isRight_) {
         Object::CreateModelData(rightModelHandle_);

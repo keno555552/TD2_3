@@ -247,6 +247,7 @@ void Enemy::Move() {
 				if (random <= 1) {
 					currentAction_ = Action::kCharge;
 				}
+
 			}
 		}
 		break;
@@ -258,11 +259,11 @@ void Enemy::Move() {
 			armScaleL_ = 1.0f;
 		}
 	}
-
 	if (isAttackingR_) {
 		armScaleR_ -= 0.4f * deltaTime_;
 		if (armScaleR_ <= 1.0f) {
 			armScaleR_ = 1.0f;
+
 		}
 	}
 

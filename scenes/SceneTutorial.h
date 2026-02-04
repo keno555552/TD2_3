@@ -67,6 +67,15 @@ private:
     // ズームアウトした時に、少し視点も高くするかどうかの係数
     // (1.0なら距離と同じだけ高さも増える。0.0なら高さは変わらない)
     const float kManualZoomHeightRatio_ = 0.5f;
+    // ▼▼▼ カメラ演出用変数 ▼▼▼
+    bool isCameraTransiting_ = false;   // 移動演出中フラグ
+    float cameraTransitionTimer_ = 0.0f; // 経過時間
+    const float kCameraTransitionDuration_ = 2.0f; // 移動にかける時間
+    // 補間用：開始地点と終了地点
+    Vector3 camAnimStartPos_{};
+    Vector3 camAnimEndPos_{};
+    Vector3 camAnimStartRot_{};
+    Vector3 camAnimEndRot_{};
 
     Object* skydome_ = nullptr;
 
@@ -91,11 +100,12 @@ private:
 
     // ★追加: 進捗バー用スプライト
     SimpleSprite* barFrame_ = nullptr; // 背景（枠）
+    SimpleSprite* barBrank_ = nullptr; // 空（伸びた状態）
     SimpleSprite* barFill_ = nullptr;  // 中身（伸びる方）
 
     // バーの最大幅（スケール1.0の時のサイズ、または基準スケール）
-    const Vector2 kBarPos_ = { 660.0f, 620.0f }; // 画面下中央あたり
-    const Vector2 kBarScale_ = { 120.0f, 10.0f }; // バーのサイズ
+    const Vector2 kBarPos_ = { 360.0f, 20.0f }; // 画面上中央あたり
+    const Vector2 kBarScale_ = { 120.0f, 4.0f }; // バーのサイズ
 
     // ステップ遷移時のウェイト用
     float stepWaitTimer_ = 0.0f;
@@ -112,7 +122,17 @@ private:
     bool wasDashing_ = false;        // 前フレームでダッシュしていたか
 
     // 4. バトル用変数
-    std::vector<Enemy*> enemies_;
+    // 敵管理用の構造体
+    struct TutorialEnemyData {
+        Enemy* enemy = nullptr; // 敵本体
+        bool isDefeated = false; // 倒されたかどうかのフラグ
+        // ▼▼▼ 出現アニメーション用 ▼▼▼
+        bool isSpawning = true;     // 出現演出中フラグ
+        float spawnTimer = 0.0f;    // 経過時間
+        Vector3 spawnStartPos;      // 開始位置（上空）
+        Vector3 spawnEndPos;        // 着地点（地面）
+    };
+    std::vector<TutorialEnemyData> enemies_;
     int killCount_ = 0;
     const int kKillQuota_ = 2;       // 2体倒したらクリア
     float spawnTimer_ = 0.0f;        // 敵が死んだ後の再スポーン用
