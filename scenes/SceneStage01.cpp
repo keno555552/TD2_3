@@ -1020,31 +1020,28 @@ void SceneStage01::Update() {
 	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
 	suctionEffect_->SetLeftEmitting(false);
 	suctionEffect_->SetRightEmitting(false);
-	if (system_->GetIsPush(DIK_A)) {
+	if (system_->GetIsPush(DIK_A)||
+		system_->GetGamepadIsPush(VK_PAD_LSHOULDER)) {
 		suctionEffect_->SetLeftEmitting(true);
 	}
-	if (system_->GetIsPush(DIK_D)) {
+	if (system_->GetIsPush(DIK_D)||
+		system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
 		suctionEffect_->SetRightEmitting(true);
 	}
 
 	suctionEffect_->Update(usingCamera_);
 
 
-	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A));
+	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A)|| system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
 	planeReductionEffectL_->SetTargetPos(player_->GetArmPositionL());
 	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
 	planeReductionEffectL_->Update(camera_);
 
-	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D));
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
 	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
 
-
-	if (system_->GetTriggerOn(DIK_F)) {
-		explosion_->SetIsEmitting(true);
-		explosion_->SetPos(player_->mainPosition.transform.translate);
-	}
 	explosion_->Update(usingCamera_);
 #pragma endregion
 
