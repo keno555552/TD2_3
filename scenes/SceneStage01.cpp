@@ -588,9 +588,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 	guideGamepad_->CreateDefaultData();
 	guideGamepad_->objectParts_[0].materialConfig->textureHandle = guideGamepadHandle_;
 	// 座標設定 (キーボード用と全く同じ位置に重ねる)
-	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate;
+	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate + Vector3(0.0f, -10.0f, 0.0f);
 
 	// サイズ調整（必要なら）
+	guideGamepad_->mainPosition.transform.scale = Vector3(0.15f, 0.15f, 1.0f);
 
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);

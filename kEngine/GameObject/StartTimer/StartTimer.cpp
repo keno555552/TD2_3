@@ -59,13 +59,13 @@ void StartTimer::Update(Camera* camera) {
 			// ★ 減らした後の値（= 次に表示される状態）に合わせて鳴らす
 			// 3/2/1 表示開始のタイミングで鳴る
 			if (CountSE_ >= 0 && numberCount_ >= 1) { // 3,2,1 に相当（numberCount_ が 3,2,1 のとき）
-				system_->SoundPlaySE(CountSE_, 1.2f);
+				system_->SoundPlaySE(CountSE_, 0.8f);
 			}
 
 			// START 表示開始のタイミングで鳴る（numberCount_ が 0 になった瞬間）
 			if (numberCount_ == 0) {
 				if (StartSE_ >= 0 && !startSEPlayed_) {
-					system_->SoundPlaySE(StartSE_, 1.2f);
+					system_->SoundPlaySE(StartSE_, 0.8f);
 					startSEPlayed_ = true;
 				}
 			}
@@ -119,7 +119,7 @@ void StartTimer::Start() {
 	startSEPlayed_ = false;
 	// ★ 最初の「3」が表示される瞬間のSE
 	if (CountSE_ >= 0) {
-		system_->SoundPlaySE(CountSE_, 1.2f);
+		system_->SoundPlaySE(CountSE_, 0.8f);
 	}
 }
 

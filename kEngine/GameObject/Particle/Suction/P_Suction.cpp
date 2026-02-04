@@ -45,7 +45,6 @@ void P_Suction::CreateSuction() {
 			*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 			p->part->mainPosition.transform = CreateDefaultTransform();
 			if (isPlayer_) {
-
 				p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
 				p->part->objectParts_[0].materialConfig->textureColor = {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f};
 				p->part->objectParts_[0].materialConfig->textureColor2 = {36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f};
