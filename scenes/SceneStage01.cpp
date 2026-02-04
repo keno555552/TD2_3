@@ -449,7 +449,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	skydome_->CreateModelData(skydomeModelHandle_);
 	skydome_->objectParts_[0].materialConfig->enableLighting = false;
 
-	player_ = new Player(system, Vector3(50.0f, 0.0f, 50.0f));
+	player_ = new Player(system, Vector3(50.0f, 0.0f, 15.0f));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = kBaseActorScale_;
 	//player_->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
@@ -619,9 +619,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 
 	player_->Update(usingCamera_);
-	for (auto* enemy : enemies_) {
-		enemy->Update(usingCamera_);
-	}
+	
 
 }
 
