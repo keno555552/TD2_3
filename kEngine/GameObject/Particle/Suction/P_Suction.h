@@ -10,6 +10,7 @@ public:
 	void Update(Camera* camera)override;
 	void Draw()override;
 
+	void SetIsPlayer(bool isPlayer) { isPlayer_ = isPlayer; }
 	void SetLeftEmitting(bool on) { isLeftEmitting_ = on; } // 左側のパーティクルを出すか否か
 	void SetRightEmitting(bool on) { isRightEmitting_ = on; } // 右側のパーティクルを出すか否か
 	void SetTargetForward(const Vector3& forward) { targetForward_ = forward; }
@@ -46,6 +47,8 @@ private:
 
 	int defaultTextureHandle_ = -1;
 	int defaultModelHandle_ = -1;
+
+	bool isPlayer_ = false; 
 
 	std::random_device seedGenerator;
 	std::mt19937 randomEngine{ seedGenerator() };

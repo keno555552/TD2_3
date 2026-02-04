@@ -548,6 +548,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	dashWindEffectR_ = new P_DashWind(system_);
 
 	suctionEffect_ = new P_Suction(system_);
+	suctionEffect_->SetIsPlayer(true);
 
 	planeReductionEffectL_ = new P_PlaneReduction(system_);
 	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
@@ -1789,7 +1790,7 @@ void SceneStage01::CheckAttackCollision() {
 				if (e) {
 					e->AddKnockback(knockbackForce);
 					explosion_->SetIsEmitting(true);
-					explosion_->SetPos(p->mainPosition.transform.translate);
+					explosion_->SetPos(player_->mainPosition.transform.translate);
 					explosion_->SetPos((e->mainPosition.transform.translate + armPos) / 2.0f);
 				}
 			}
