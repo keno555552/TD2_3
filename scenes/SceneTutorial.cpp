@@ -186,6 +186,50 @@ void SceneTutorial::Update() {
 					e2->SetIsTutorial(true);
 					e2->mainPosition.transform.scale = kBaseActorScale_;
 
+					// === Left Arm ===
+					if (e1->armL_ && !e1->armL_->objectParts_.empty()) {
+						auto& m = e1->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e1->armR_ && !e1->armR_->objectParts_.empty()) {
+						auto& m = e1->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Left Arm ===
+					if (e2->armL_ && !e2->armL_->objectParts_.empty()) {
+						auto& m = e2->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e2->armR_ && !e2->armR_->objectParts_.empty()) {
+						auto& m = e2->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
 					// 構造体を作って登録
 					TutorialEnemyData data1;
 					data1.enemy = e1;
