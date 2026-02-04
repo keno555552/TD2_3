@@ -1118,13 +1118,13 @@ void SceneStage01::Draw() {
 		explosion_->Draw();
 	}
 	//畳（床）
-	// =====================
-	// 畳（床）距離カリング描画
+	//畳（床）
+// =====================
+// 畳（床）距離カリング描画
 
-	constexpr float TATAMI_DRAW_DIST = 150.0f;
+	constexpr float TATAMI_DRAW_DIST = 200.0f;
 	constexpr float TATAMI_DRAW_DIST_SQ =
 		TATAMI_DRAW_DIST * TATAMI_DRAW_DIST;
-
 
 	Vector3 camPos = usingCamera_->GetPosition();
 
@@ -1135,7 +1135,7 @@ void SceneStage01::Draw() {
 		Vector3 pos = t->mainPosition.transform.translate;
 
 		Vector3 d = pos - camPos;
-		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+		float distSq = d.x * d.x + d.z * d.z; // ★ Yを計算から除外
 
 		if (distSq > TATAMI_DRAW_DIST_SQ)
 			continue;   // ★ 遠いので描画しない
@@ -1150,14 +1150,13 @@ void SceneStage01::Draw() {
 		Vector3 pos = f->mainPosition.transform.translate;
 
 		Vector3 d = pos - camPos;
-		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+		float distSq = d.x * d.x + d.z * d.z; // ★ Yを計算から除外
 
 		if (distSq > TATAMI_DRAW_DIST_SQ)
 			continue;
 
 		f->Draw();
 	}
-
 
 
 	// 背景オブジェクト
@@ -1329,48 +1328,51 @@ void SceneStage01::CameraPart() {
 
 
 
-		// 行き過ぎないように制限 (Clamp)
-		manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
+
+			// 行き過ぎないように制限 (Clamp)
+			manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_/2);
+
 
 
 		// ---------------------------------------------------------
 		// 2. カメラ座標の計算
 		// ---------------------------------------------------------
 
-		// プレイヤーの情報を取得
-		Vector3 playerPos = player_->mainPosition.transform.translate;
-		float playerRotY = player_->mainPosition.transform.rotate.y;
 
-		// ★★★ 旧版から統合：回転値を [-PI, PI] に正規化 ★★★
-		const float PI = 3.14159265359f;
-		const float TWO_PI = 6.28318530718f;
-		while (playerRotY > PI) playerRotY -= TWO_PI;
-		while (playerRotY < -PI) playerRotY += TWO_PI;
+			// プレイヤーの情報を取得
+			Vector3 playerPos = player_->mainPosition.transform.translate;
+			float playerRotY = player_->mainPosition.transform.rotate.y;
 
-		// 腕の大きさに応じた距離と高さの計算(ズーム処理)
-		float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
-		// 腕が大きくなるほど距離(baseDistance)を増やす
-		// 例：基本 + 腕の余剰分 * 倍率
-		// ここの数値をいじると「引き」の強さが変わる
-		float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
-		float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+			// ★★★ 旧版から統合：回転値を [-PI, PI] に正規化 ★★★
+			const float PI = 3.14159265359f;
+			const float TWO_PI = 6.28318530718f;
+			while (playerRotY > PI) playerRotY -= TWO_PI;
+			while (playerRotY < -PI) playerRotY += TWO_PI;
 
-		// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
+			// 腕の大きさに応じた距離と高さの計算(ズーム処理)
+			float maxArmScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
+			// 腕が大きくなるほど距離(baseDistance)を増やす
+			// 例：基本 + 腕の余剰分 * 倍率
+			// ここの数値をいじると「引き」の強さが変わる
+			float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_/2;
+			float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_/2;
 
-		// 距離: 自動値 + 手動オフセット
-		// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
-		float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
+			// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
 
-		// 高さ: 自動値 + (手動オフセット * 比率)
-		// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
-		float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
+			// 距離: 自動値 + 手動オフセット
+			// ※近すぎるとプレイヤーの中に入り込むので std::max で最低距離(2.0f程度)を保証すると安全です
+			float finalDistance = std::max(2.0f, autoDistance + manualZoomOffset_);
 
-		// カメラの注視点と位置を計算
-		Vector3 eye = {
-			playerPos.x + std::sin(playerRotY) * finalDistance,
-			playerPos.y + finalHeight,
-			playerPos.z + std::cos(playerRotY) * finalDistance
-		};
+			// 高さ: 自動値 + (手動オフセット * 比率)
+			// ※離れるほど少し高くすると、プレイヤーが画面中央に留まりやすくなります
+			float finalHeight = autoHeight + (manualZoomOffset_ * kManualZoomHeightRatio_);
+
+			// カメラの注視点と位置を計算
+			Vector3 eye = {
+				playerPos.x + std::sin(playerRotY) * finalDistance,
+				playerPos.y + finalHeight,
+				playerPos.z + std::cos(playerRotY) * finalDistance
+			};
 
 		// Transform構造体を作成して値をセットする
 		Transform cameraTransform = CreateDefaultTransform();

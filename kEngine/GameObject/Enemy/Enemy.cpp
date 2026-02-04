@@ -252,7 +252,7 @@ void Enemy::Move() {
 			// 攻撃判定解除
 			isAttackingL_ = false;
 		} else {
-			armScaleL_ -= 0.4f * deltaTime_;
+			armScaleL_ -= 0.2f * deltaTime_;
 			if (armScaleL_ <= 1.0f) {
 				armScaleL_ = 1.0f;
 			}
@@ -268,7 +268,7 @@ void Enemy::Move() {
 			// 攻撃判定解除
 			isAttackingR_ = false;
 		} else {
-			armScaleR_ -= 0.4f * deltaTime_;
+			armScaleR_ -= 0.2f * deltaTime_;
 			if (armScaleR_ <= 1.0f) {
 				armScaleR_ = 1.0f;
 			}
