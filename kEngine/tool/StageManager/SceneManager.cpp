@@ -125,6 +125,12 @@ SceneManager::SceneManager(kEngine* system) {
     EnsureShojiHoldCam(system_);
 
     defaultMenu_ = new DefaultMenu(system_);
+    SceneTitle* title = new SceneTitle(system);
+    SceneStage01* stage = new SceneStage01(system);
+
+    // ★ ここで初めて両方が存在する
+    stage->SetSceneTitle(title);
+
 }
 
 SceneManager::~SceneManager() {
@@ -138,11 +144,11 @@ SceneManager::~SceneManager() {
 Camera* SceneManager::ResolveCamera(BaseScene* s) {
     if (!s) return nullptr;
     if (auto* t = dynamic_cast<SceneTitle*>(s)) return t->camera_;
+    if (auto* tu = dynamic_cast<SceneTutorial*>(s)) return tu->GetCamera();
     if (auto* st = dynamic_cast<SceneStage01*>(s)) return st->GetCamera();
     if (auto* rt = dynamic_cast<SceneResult*>(s)) return rt->GetCamera();
     return nullptr;
 }
-
 void SceneManager::SceneChanger() {
 
     if (shojiPlaying_) return;
@@ -160,6 +166,30 @@ void SceneManager::SceneChanger() {
         if (it == sceneFlow_.end()) return;
 
         nextAfterShoji_ = it->second;
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★ 追加：TITLE の時だけ「セレクト結果」で遷移先を上書き
+        // （基本構造は崩さない：nextAfterShoji_ を差し替えるだけ）
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        if (sceneUsingNameHandle_ == "TITLE") {
+            if (auto* title = dynamic_cast<SceneTitle*>(sceneUsing_)) {
+
+                int sel = title->GetSelectedIndex();
+
+                // 例：0=修行(STAGE_01), 1=チュートリアル(TUTORIAL), 2=終了(タイトルに戻す等)
+                // ※あなたの選択肢に合わせて文字列だけ変えればOK
+                if (sel == 0) {
+                    nextAfterShoji_ = "TUTORIAL";
+                }
+                else if (sel == 1) {
+                    nextAfterShoji_ = "STAGE_01";
+                }
+                else if (sel == 2) {
+                    nextAfterShoji_ = "TITLE";
+                }
+            }
+        }
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         Camera* currentCam = ResolveCamera(sceneUsing_);
         if (!currentCam) return;
@@ -185,6 +215,7 @@ void SceneManager::SceneChanger() {
         shojiPlaying_ = true;
     }
 }
+
 
 void SceneManager::Update() {
 

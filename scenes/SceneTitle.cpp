@@ -32,6 +32,24 @@ SceneTitle::SceneTitle(kEngine* system) {
     sprite_->objectParts_[0].materialConfig->textureHandle = testTextTitle;
 
     sprite_->Update(usingCamera_);
+   
+    skydomeModelHandle_ = system_->SetModelObj("resources/gate/model/skydome.obj");
+    skydomeTextureHandle_ = system_->LoadTexture("resources/gate/model/skydome.png");
+
+
+    //skydome_->CreateDefaultData();
+    skydome_ = new Object;
+    skydome_->IntObject(system_);
+    skydome_->CreateDefaultData();
+    skydome_->CreateModelData(skydomeModelHandle_);
+
+    // ライティング無効
+    skydome_->objectParts_[0].materialConfig->enableLighting = false;
+
+    // ★ テクスチャは「設定」するだけ
+    skydome_->objectParts_[0].materialConfig->textureHandle = skydomeTextureHandle_;
+    skydome_->objectParts_[0].materialConfig->useModelTexture = false;
+
 
     // =====================
     // 門モデル一覧（画像の通り）
@@ -51,17 +69,18 @@ SceneTitle::SceneTitle(kEngine* system) {
 
     };
 
-
+ /*   "resources/game/texture/paper.png",
+        "resources/game/texture/wood_tate.png",*/
     const char* texturePaths[kGatePartCount] = {
-        "resources/gate/model/door.png",
+       "resources/gate/model/door.png",
         "resources/gate/model/door.png",
         "resources/gate/model/door_peace.png",
         "resources/gate/model/roof.png",
-        "resources/gate/model/door.png",
+         "resources/game/texture/wood_tate.png",
         "resources/gate/model/simenawa.png",
         "resources/gate/model/tourou.png",
-        "resources/gate/model/wall_stone.png",
-        "resources/gate/model/wall_wood.png",
+          "resources/game/texture/paper.png",
+        "resources/game/texture/wood_tate.png",
          "resources/gate/model/ground.png",
 
     };
@@ -391,7 +410,12 @@ SceneTitle::SceneTitle(kEngine* system) {
     system_->LoadTexture("resources/game/texture/wood_tate.png");
 
 
-}
+     
+       selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
+       Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Gate_Open.wav");
+       DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
+       Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
+    }
 
 SceneTitle::~SceneTitle() {
     for (int i = 0; i < kGatePartCount; i++) {
@@ -414,35 +438,75 @@ SceneTitle::~SceneTitle() {
 	system_->DestroyCamera(camera_);
 
     usingCamera_ = nullptr;
+
+
 }
 
 void SceneTitle::Update() {
     CameraControl();
 	system_->SetCamera(usingCamera_);
-    // =====================
-// セレクト操作
+    /// Skydome更新
+    skydome_->Update(usingCamera_);
+
+   // =====================
+// セレクト操作（キーボード + ゲームパッド対応）
 // =====================
-    bool moveRight =
+
+// ---------- キーボード ----------
+    bool moveRightKey =
         system_->GetTriggerOn(DIK_D) ||
         system_->GetTriggerOn(DIK_RIGHT);
 
-    bool moveLeft =
+    bool moveLeftKey =
         system_->GetTriggerOn(DIK_A) ||
         system_->GetTriggerOn(DIK_LEFT);
 
-    if (moveRight) {
-        selectIndex_++;
-        if (selectIndex_ >= selectCount_) {
-            selectIndex_ = selectCount_ - 1;
+    // ---------- ゲームパッド ----------
+    bool moveRightPad = false;
+    bool moveLeftPad = false;
+
+    // 左スティック左右
+    const int kStickDeadZone = 3000;
+    int lx = system_->GetGamepadLStickX();
+
+    if (lx > kStickDeadZone)  moveRightPad = true;
+    if (lx < -kStickDeadZone) moveLeftPad = true;
+
+    // 十字キー（※一般的な DirectInput 配列）
+    // 0: A / 1: B / 2: X / 3: Y
+    // 4: LB / 5: RB
+    // 6: BACK / 7: START
+    // 8: LStick / 9: RStick
+    // 10: ↑ / 11: ↓ / 12: ← / 13: →
+    if (system_->GetGamepadIsPush(13)) moveRightPad = true; // →
+    if (system_->GetGamepadIsPush(12)) moveLeftPad = true; // ←
+
+    // ---------- 実移動 ----------
+    bool moveRight = moveRightKey || moveRightPad;
+    bool moveLeft = moveLeftKey || moveLeftPad;
+
+    // ★ 押しっぱなし防止
+    static bool padNeutral = true;
+
+    if (moveRight || moveLeft) {
+        if (padNeutral) {
+            if (moveRight) selectIndex_++;
+            if (moveLeft)  selectIndex_--;
+            if (selectMoveSE_ >= 0) {
+                system_->SoundPlaySE(selectMoveSE_, 0.6f);
+            }
+
+            padNeutral = false;
         }
+    }
+    else {
+        padNeutral = true;
     }
 
-    if (moveLeft) {
-        selectIndex_--;
-        if (selectIndex_ < 0) {
-            selectIndex_ = 0;
-        }
-    }
+    // ---------- Clamp ----------
+    if (selectIndex_ < 0) selectIndex_ = 0;
+    if (selectIndex_ >= selectCount_) selectIndex_ = selectCount_ - 1;
+
 
     // =====================
     // カーソル位置反映
@@ -598,6 +662,9 @@ void SceneTitle::Update() {
 
         // 1文字分完了
         if (t >= 1.0f) {
+            if (Gate_OpenSE_ >= 0) {
+                system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+            }
             // 最終値で固定
             mozis_[moziIdx]->mainPosition.transform.translate = moziFinalPos_[moziIdx];
             mozis_[moziIdx]->mainPosition.transform.rotate = moziFinalRot_[moziIdx];
@@ -608,7 +675,9 @@ void SceneTitle::Update() {
                 punchAnimPlaying_ = true;
                 punchAnimReturning_ = false;
                 punchAnimT_ = 0.0f;
-
+                if (Title_PunchSE_ >= 0) {
+                    system_->SoundPlaySE(Title_PunchSE_, 0.6f);
+                }
                 punchScale_ = punchScaleStart_; // 念のため
             }
 
@@ -630,9 +699,15 @@ void SceneTitle::Update() {
             moziSettleT_ = 0.0f;
 
             // 全文字終了
+           // 全文字終了
             if (moziSettleIndex_ >= kMoziPartCount) {
                 moziSettlePlaying_ = false;
+
+                // ★ カメラシェイク開始
+                cameraShakePlaying_ = true;
+                cameraShakeTime_ = 0.0f;
             }
+
         }
 
     }
@@ -767,7 +842,9 @@ void SceneTitle::Update() {
 
         gateOpenPlaying_ = true;
         gateOpenT_ = 0.0f;
-
+        if (Gate_OpenSE_ >= 0) {
+            system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+        }
         gateStartRotY_[0] = gateRot_[0].y;
         gateStartRotY_[1] = gateRot_[1].y;
     }
@@ -875,6 +952,50 @@ void SceneTitle::Update() {
             cameraPrevPos_ = cameraWalkEnd_;
         }
     }
+    // =====================
+// カメラシェイク（文字配置完了後）
+// =====================
+    if (cameraShakePlaying_) {
+
+        cameraShakeTime_ += dt;
+
+        float duration = 0.35f;
+        float t = cameraShakeTime_ / duration;
+        if (t > 1.0f) t = 1.0f;
+
+        // 開始・終了が0になる重み
+        float weight = t * (1.0f - t) * 4.0f;
+
+        // 今フレームのシェイク量
+        Vector3 currentOffset;
+        currentOffset.x =
+            sinf(cameraShakeTime_ * 40.0f) * 0.25f * weight;
+        currentOffset.y =
+            cosf(cameraShakeTime_ * 55.0f) * 0.18f * weight;
+        currentOffset.z = 0.0f;
+
+        // ★ 差分だけ移動
+        Vector3 delta = currentOffset - cameraShakeOffset_;
+        camera_->Move(delta);
+
+        // 今回分を保存
+        cameraShakeOffset_ = currentOffset;
+
+        if (t >= 1.0f) {
+            cameraShakePlaying_ = false;
+
+            // ★ 念のため完全に元へ戻す
+            camera_->Move({
+     -cameraShakeOffset_.x,
+     -cameraShakeOffset_.y,
+     -cameraShakeOffset_.z
+                });
+
+            cameraShakeOffset_ = { 0.0f, 0.0f, 0.0f };
+        }
+    }
+
+
 
     sprite_->Update(usingCamera_);
 
@@ -884,6 +1005,8 @@ void SceneTitle::Update() {
 }
 
 void SceneTitle::Draw() {
+    skydome_->Draw();
+
     for (int i = 0; i < kGatePartCount; i++) {
         if (gates_[i]) {
             gates_[i]->Draw();
@@ -986,7 +1109,7 @@ void SceneTitle::Draw() {
     if (irisHole_) {
         irisHole_->Draw();
     }
-    sprite_->Draw();
+ 
 
 }
 
@@ -996,14 +1119,14 @@ void SceneTitle::CameraControl()
 {
     Vector3 move{ 0,0,0 };
 
-    if (system_->GetIsPush(DIK_W)) move.z += cameraMoveSpeed_;
+   /* if (system_->GetIsPush(DIK_W)) move.z += cameraMoveSpeed_;
     if (system_->GetIsPush(DIK_S)) move.z -= cameraMoveSpeed_;
 
     if (system_->GetIsPush(DIK_A)) move.x -= cameraMoveSpeed_;
     if (system_->GetIsPush(DIK_D)) move.x += cameraMoveSpeed_;
 
     if (system_->GetIsPush(DIK_Q)) move.y += cameraMoveSpeed_;
-    if (system_->GetIsPush(DIK_E)) move.y -= cameraMoveSpeed_;
+    if (system_->GetIsPush(DIK_E)) move.y -= cameraMoveSpeed_;*/
 
     camera_->Move(move);
 }
@@ -1285,5 +1408,13 @@ void SceneTitle::UpdateSparkEffect2() {
     // =========================
     if (sparkPlaying_ && sparkTimer_ >= sparkDuration_) {
         sparkPlaying_ = false;
+    }
+}
+void SceneTitle::DrawSparkEffect2()
+{
+    for (auto& s : sparks_) {
+        if (s.obj) {
+            s.obj->Draw();
+        }
     }
 }

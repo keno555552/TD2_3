@@ -7,6 +7,7 @@ SceneFactory::SceneFactory(kEngine* system)
 {
 
     sceneRegistry_["TITLE"] = [this]() { return new SceneTitle(system_); };
+    sceneRegistry_["TUTORIAL"] = [this]() { return new SceneTutorial(system_); };
     sceneRegistry_["STAGE_01"] = [this]() { return new SceneStage01(system_); };
     sceneRegistry_["RESULT"] = [this]() { return new SceneResult(system_); };
 

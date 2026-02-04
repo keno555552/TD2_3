@@ -14,7 +14,7 @@
 #include "Tutorial/Tutorial.h"
 #include "CountdownTimer/CountdownTimer.h"
 #include "StartTimer/StartTimer.h"
-
+#include "SceneTitle.h"
 
 class SceneStage01 :public BaseScene {
 public:
@@ -34,7 +34,14 @@ public:
 		bool shojiOpening = false;
 		bool shojiOpened = false;
 		float shojiT = 0.0f; // 0 → 1
+		// ★ 追加
+		bool shojiClosing = false;
+		float shojiCloseWait = 0.0f; // 近づいてからの待ち
+		float shojiCloseT = 0.0f;    // 閉じアニメ用
 	};
+	 float CLOSE_WAIT_TIME = 0.05f; // 近づいてから待つ時間
+	 float CLOSE_TIME = 0.5f; // 閉じる時間
+
 	bool isResultShojiActive_ = false;
 	float resultShojiWaitTimer_ = 0.0f;
 
@@ -42,6 +49,9 @@ public:
 	void SpawnResultSets(int copyCount, float spacingZ);
 	void UpdateResultShoji();
 	void OpenShoji(ResultSet& set);
+	void UpdateRankModels();
+	int playerRank_ = -1; // 0 = 1位, 1 = 2位 ...
+
 	// ResultModelPaths の並びに対応
 	enum ResultPartIndex {
 		IDX_RESULT_WALL = 0,
@@ -57,11 +67,27 @@ public:
 		Closing,
 		Wait,      // ★追加
 		Opening,
-		CameraMove   // ★追加
+		CameraMove,   // ★追加
+		CameraToPlayer,   // ★追加
+		RankAppear   // ★追加
 	};
+
+	// ===== 順位モデル演出 =====
+	bool isRankAnimating_ = false;
+	float rankAnimT_ = 0.0f;
+
+	Vector3 rankAnimStart_;
+	Vector3 rankAnimEnd_;
+
+
 	float resultCameraT_ = 0.0f;
 	Vector3 resultCameraStart_;
 	Vector3 resultCameraEnd_;
+
+	Vector3 resultCameraPlayerStart_;
+	Vector3 resultCameraPlayerEnd_;
+	float   resultCameraPlayerT_ = 0.0f;
+
 
 	ResultShojiPhase resultShojiPhase_ = ResultShojiPhase::None;
 	float resultShojiT_ = 0.0f;
@@ -78,7 +104,8 @@ public:
 	void CreateResultShoji(const Vector3& camRot);
 	void SetResultShojiOpenPose(const Vector3& base, const Vector3& camRot);
 	void DestroyResultShoji();
-
+	
+	void SetSceneTitle(SceneTitle* title);
 private:
 	kEngine *system_ = nullptr;				// 借り
 
@@ -170,8 +197,14 @@ private:
 	float hitStopTimer_ = 0.0f;
 
 	// 現在ゲームパッドモードかどうか
-	bool isGamepadMode_ = true;
+	bool isGamepadMode_ = false;
 
+	// ===== Rank Debug (ImGui用) =====
+	Vector3 rankDebugPos_ = { 49.0f, 5.0f, 0.0f };
+	Vector3 rankDebugRot_ = { 0.0f, 0.0f, 0.0f };
+	Vector3 rankDebugScale_ = { 0.2f, 0.2f, 0.2f };
+
+	bool useRankDebug_ = true; // ImGui操作を使うか
 
 
 	// ===== 門パーツ =====
@@ -194,7 +227,9 @@ private:
 		bool isCameraLocked_ = false; // ★ 追従停止フラグ
 
 
-	
+		int rankDelayFrame_ = 0;   // ランク開始待ち用
+		int rankAnimFrame_ = 0;   // ランクアニメ用
+
 
 		std::vector<ResultSet> resultSets_;
 
@@ -213,8 +248,74 @@ private:
 		Vector3  ResultRot_[kResultPartCount];
 		Vector3 ResultScale_[kResultPartCount];
 
+		static constexpr int kKanjiCount = 13;
+		 int kFrameOuterIndex = 11; // number_flame_flame.obj
+		 int kFrameInnerIndex = 12; // number_flame.obj
+		 bool isFrameAnimating_ = false;
+		 float frameAnimT_ = 0.0f;
+
+		Object* KanjiObjs_[kKanjiCount] = {};
+		uint32_t  KanjiModels_[kKanjiCount] = {};
+		int  KanjiTextures_[kKanjiCount] = {};
+		// ===== Gate Debug =====
+		Vector3 KanjiPos_[kKanjiCount];
+		Vector3  KanjiRot_[kKanjiCount];
+		Vector3 KanjiScale_[kKanjiCount];
+		
+		bool  isRankShake_ = false;
+		float rankShakeT_ = 0.0f;
+		float rankShakeDuration_ = 0.6f; // シェイク全体時間
+
+		static constexpr int kIllustrationPartCount = 10;
 
 
+		int IllustrationModels[kIllustrationPartCount] = {};
+		int IllustrationTextures[kIllustrationPartCount] = {};
+		Object* Illustrations[kIllustrationPartCount] = {};
+
+		Vector3 IllustrationPos[kIllustrationPartCount] = {};
+		Vector3 IllustrationRot[kIllustrationPartCount] = {};
+		Vector3 IllustrationScale[kIllustrationPartCount] = {};
+
+		// =====================
+// Spark Effect
+// =====================
+
+		struct Spark {
+			Object* obj = nullptr;
+			Vector3 velocity;
+			float life = 0.0f;
+			float lifeMax = 0.0f;
+			Vector3 startScale;   // ★ 追加
+		};
+
+
+		std::vector<Spark> sparks_;
+
+		bool sparkPlaying_ = false;
+		float sparkTimer_ = 0.0f;
+		float sparkIntervalTimer_ = 0.0f;
+
+		float sparkDuration_ = 0.0f;
+		float sparkInterval_ = 0.0f;
+		int sparkCountPerBurst_ = 0;
+		Vector3 sparkBasePos_;
+
+		// 開始
+		void StartSparkEffect2(
+			const Vector3& basePos,
+			int countPerBurst,
+			float duration,
+			float interval
+		);
+
+		// 更新（★これが本体）
+		void UpdateSparkEffect2();
+
+		void DrawSparkEffect2();
+
+
+		SceneTitle* sceneTitle_ = nullptr;
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();
@@ -240,5 +341,6 @@ private:
 	/// ============ 操作説明関連 ============///
 	// 操作ガイドの表示切り替え更新用関数
 	void UpdateOperationGuide();
+	
 };
 

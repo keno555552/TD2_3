@@ -2,9 +2,10 @@
 #include <numbers>
 
 P_DashWind::P_DashWind(kEngine* system) :Particle(system){
-	createTimer.Init0(0.1f, system_->GetTimeManager());
-	defaultModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/suzanne/suzanne.obj");
-	defaultTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/circle.png");
+	createTimer.Init0(0.05f, system_->GetTimeManager());
+	system_;
+	defaultModelHandle_ = system_->SetModelObj("resources/game/model/Particle_Dash.obj");
+	defaultTextureHandle_ = system_->LoadTexture("resources/game/model/Particle_Dash.png");
 	commonMaterialConfig->useModelTexture = false;
 	commonMaterialConfig->textureHandle = defaultTextureHandle_;
 }
@@ -58,8 +59,7 @@ void P_DashWind::CreateDashWind() {
 
 		Vector3 direction = u * cosf(theta) + v * sinf(theta);
 
-		p->velocity = direction * (speed_ * armScale_);
-		p->velocity = direction * speed_;
+		p->moveDirection = Normalize(direction);
 	}
 }
 
@@ -67,17 +67,22 @@ void P_DashWind::UpdateDashWind() {
 	targetForward_ = Normalize(targetForward_);
 	for (auto& p : particleObjectList_) {
 		float t = p->lifeTimeTimer.parameter_ / p->lifeTimeTimer.maxTime_;
-		// フェードアウト
-		p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f - t;
+		// アルファ値調整
+		//p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f - t;
+		p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f;
 
-		// ついでに縮めたいなら（Particle基底はscale更新してないのでここで）
-		//float s = 1.0f - t;
-		float s = t * t;
+		// スケール処理
+		float s = (1.0f - t) / 2.0f;
+		//float s = t * t;
 		p->part->mainPosition.transform.scale = Vector3(s, s, s);
 
+		float easedT = t * t * t * t; // easeIn
+		p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f) * easedT) * speed_ * armScale_;
+		p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f * armScale_) * easedT) * speed_;
+		//p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f) * easedT) * speed_;
+
 		p->part->mainPosition.transform.translate += p->velocity;
-		Vector3 f = Vector3{ -targetForward_.x,-targetForward_.y,-targetForward_.z };
-		//p->part->mainPosition.transform.translate += Normalize(f) * speed_;
+
 	}
 }
 

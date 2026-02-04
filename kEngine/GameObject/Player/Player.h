@@ -90,6 +90,9 @@ public:
 
 	bool GetIsCharging()const { return isCharging_; }
 
+
+	void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
+
 private:
 
 	enum class LRDirection { kRight, kLeft, None };
@@ -199,12 +202,6 @@ private:
 	bool isCharging_ = false;
 
 
-
-	Vector4 Color1 = { 1.0f, 0.5f, 0.5f, 1.0f };
-	Vector4 Color2 = { 0.5f, 0.5f, 1.0f, 1.0f };
-	Vector4 Color3 = { 0.5f, 1.0f, 0.5f, 1.0f };
-	float colorIntensity = 2.0f;
-	float colorHeightScale = 1.0f;
-	void ImGuiPart();
+	bool isTutorial_ = false;
 };
 

@@ -16,24 +16,39 @@ Player::Player(kEngine* system, const Vector3& position) {
 	forward_ = { -std::sin(mainPosition.transform.rotate.y), 0.0f,
 				-std::cos(mainPosition.transform.rotate.y) };
 
-	// ■■■ 新しい腕の生成 ■■■
-	  // 第2引数に「自分(this)」を渡して追従させる
-	armL_ = new Arm(system, this, false); // 左腕
-	armR_ = new Arm(system, this, true);  // 右腕
+  // ■■■ 新しい腕の生成 ■■■
+    // 第2引数に「自分(this)」を渡して追従させる
+  armL_ = new Arm(system, this, false); // 左腕
+  armR_ = new Arm(system, this, true);  // 右腕
 
-	armL_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
-	armL_->objectParts_[0].materialConfig->textureColor = { 0.8f, 0.8f, 1.0f, 1.0f };
-	armL_->objectParts_[0].materialConfig->textureColor2 = { 1.0f, 0.8f, 1.0f, 1.0f };
-	armL_->objectParts_[0].materialConfig->textureColor3 = { 0.8f, 0.8f, 0.5f, 1.0f };
-	armL_->objectParts_[0].materialConfig->intensity = 0.1f;
-	armL_->objectParts_[0].materialConfig->heightScale = 0.1f;
+  armL_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+  armL_->objectParts_[0].materialConfig->textureColor = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->textureColor2 = {
+       36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->textureColor3 = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armL_->objectParts_[0].materialConfig->intensity = 0.776f;
+  armL_->objectParts_[0].materialConfig->heightScale = 2.922f;
 
-	// デバッグ用オブジェクトの生成
-	leftHandDebugObject_ = new DebugObject(system_);
-	leftHandDebugObject_->SetShowNumber(true);
 
-	rightHandDebugObject_ = new DebugObject(system_);
-	rightHandDebugObject_->SetShowNumber(true);
+  armR_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+  armR_->objectParts_[0].materialConfig->textureColor = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->textureColor2 = {
+       36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->textureColor3 = {
+      255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+  armR_->objectParts_[0].materialConfig->intensity = 0.776f;
+  armR_->objectParts_[0].materialConfig->heightScale = 2.922f;
+
+
 }
 
 Player::~Player() {
@@ -128,10 +143,13 @@ void Player::ResetArm(bool isRight) {
 }
 
 void Player::BehaviorRootUpdate() {
-	/// 衝突情報を初期化
-	CollisionMapInfo collisionMapInfo;
-	/// 移動量に速度の値をコピー
-	collisionMapInfo.moveVector = velocity_;
+    if (isTutorial_) {
+        velocity_ = { 0.0f, 0.0f, 0.0f };
+    }
+  /// 衝突情報を初期化
+  CollisionMapInfo collisionMapInfo;
+  /// 移動量に速度の値をコピー
+  collisionMapInfo.moveVector = velocity_;
 
 	/// マップ衝突チェック
 	Move();

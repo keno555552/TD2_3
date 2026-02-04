@@ -135,6 +135,7 @@
     <ClCompile Include="kEngine\GameObject\Arm\Arm.cpp" />
     <ClCompile Include="kEngine\GameObject\Particle\explosion\Explosion.cpp" />
     <ClCompile Include="kEngine\GameObject\Tutorial\Tutorial.cpp" />
+    <ClCompile Include="scenes\SceneTutorial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imgui_stdlib.h" />
@@ -260,6 +261,7 @@
     <ClInclude Include="kEngine\GameObject\Arm\Arm.h" />
     <ClInclude Include="kEngine\GameObject\Particle\explosion\Explosion.h" />
     <ClInclude Include="kEngine\GameObject\Tutorial\Tutorial.h" />
+    <ClInclude Include="scenes\SceneTutorial.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
