@@ -44,28 +44,38 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	tatami_->mainPosition.transform.scale = { 2.0f, 1.0f, 3.0f };
 	
 	// ■ 進捗バーの生成
-	// 背景（枠）：黒やグレーなどで表示
-	barFrame_ = new SimpleSprite();
 	// ★適当な白い四角画像を読み込むか、既存の画像を使用してください
 	// ここでは仮に "white.png" としていますが、単色の四角があれば何でもOKです
 	int barTex = system_->LoadTexture("resources/TemplateResource/texture/white5x5.png");
+	// 背景（枠）：黒やグレーなどで表示
+	barFrame_ = new SimpleSprite();
 	barFrame_->IntObject(system_);
 	barFrame_->CreateDefaultData();
 	barFrame_->objectParts_[0].materialConfig->textureHandle = barTex;
-	barFrame_->mainPosition.transform.translate ={ kBarPos_.x - 9.0f, kBarPos_.y - 3.0f, 0.0f };
+	barFrame_->mainPosition.transform.translate ={ kBarPos_.x - 8.0f, kBarPos_.y - 3.0f, 0.0f };
 	barFrame_->mainPosition.transform.scale = { kBarScale_.x + 3.0f, kBarScale_.y + 4.0f, 1.0f };
-	barFrame_->objectParts_[0].materialConfig->textureColor = {0.2f, 0.2f, 0.2f, 1.0f};
+	barFrame_->objectParts_[0].materialConfig->textureColor = {0.0f, 0.0f, 0.0f, 0.4f};
 	barFrame_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
 	// ※枠なので少し大きく、色はグレーに
+
+	// 空（ゲージ）：白などで表示
+	barBrank_ = new SimpleSprite();
+	barBrank_->IntObject(system_);
+	barBrank_->CreateDefaultData();
+	barBrank_->objectParts_[0].materialConfig->textureHandle = barTex;
+	barBrank_->mainPosition.transform.translate = { kBarPos_.x, kBarPos_.y + 7.0f, 0.0f };
+	barBrank_->mainPosition.transform.scale = { kBarScale_.x, kBarScale_.y, 1.0f };
+	barBrank_->objectParts_[0].materialConfig->textureColor = { 1.0f, 1.0f, 1.0f, 0.6f };
+	barBrank_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
 
 	// 中身（ゲージ）：緑や黄色で表示
 	barFill_ = new SimpleSprite();
 	barFill_->IntObject(system_);
 	barFill_->CreateDefaultData();
 	barFill_->objectParts_[0].materialConfig->textureHandle = barTex;
-	barFill_->mainPosition.transform.translate = { kBarPos_.x, kBarPos_.y + 8.0f, 0.0f };
+	barFill_->mainPosition.transform.translate = { kBarPos_.x, kBarPos_.y + 7.0f, 0.0f };
 	barFill_->mainPosition.transform.scale = { 0.0f, kBarScale_.y, 1.0f };
-	barFill_->objectParts_[0].materialConfig->textureColor = {0.0f, 1.0f, 0.0f, 1.0f};
+	barFill_->objectParts_[0].materialConfig->textureColor = {0.0f, 1.0f, 0.0f, 0.6f};
 	barFill_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
 	// 初期サイズは横幅0、色は緑
 }
@@ -79,11 +89,12 @@ SceneTutorial::~SceneTutorial() {
     if (player_) delete player_;
     if (textObj_) delete textObj_;
 	if (barFrame_) delete barFrame_;
+	if (barBrank_) delete barBrank_;
 	if (barFill_) delete barFill_;
 
-    for (auto e : enemies_) {
-        delete e;
-    }
+	for (auto& data : enemies_) {
+		delete data.enemy;
+	}
     enemies_.clear();
 }
 
@@ -128,31 +139,23 @@ void SceneTutorial::Update() {
 		float ratio = GetProgressRatio();
 
 		// 中身のスケール（横幅）を更新
-		// SimpleSpriteの実装によりますが、ここではサイズ(width)を直接いじると仮定
-		// もし Scale で管理している場合は transform.scale.x = ratio などに置き換えてください
 		float currentWidth = kBarScale_.x * ratio;
 
 		barFill_->mainPosition.transform.scale.x = currentWidth;
-
-		// ★重要: スプライトの中心が基準点(Anchor Center)の場合
-		// 幅を変えるだけだと両端が縮んでしまうため、左端を固定するように座標もずらす必要があります。
-		// もし SimpleSprite が左上基準なら座標計算は不要です。
-		// 以下は「中心基準」の場合の補正計算例です：
-
-		//// 1. まずサイズ適用
-		//barFill_->mainPosition.transform.scale = { currentWidth, kBarScale_.y, 1.0f };
-
-		//// 2. 左端合わせのための座標計算
-		//// (枠の中心X) - (枠の全幅/2) + (現在の幅/2)
-		//float leftPos = kBarPos_.x - (kBarScale_.x / 2.0f);
-		//float newPosX = leftPos + (currentWidth / 2.0f);
-
-		//barFill_->mainPosition.transform.translate = { newPosX, kBarPos_.y, 0.0f };
 	}
 
     // ステップ完了後の待機時間処理
     if (isStepCompleted_) {
         stepWaitTimer_ += system_->GetDeltaTime();
+
+		for (int i = 0; i < enemies_.size(); i++) {
+
+			// 参照で受ける（書き換えられるように auto& にする）
+			auto& data = enemies_[i];
+
+			// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
+			data.enemy->Update(usingCamera_);
+		}
         if (stepWaitTimer_ > 1.5f) { // 1.5秒待って次へ
             stepWaitTimer_ = 0.0f;
             isStepCompleted_ = false;
@@ -172,21 +175,53 @@ void SceneTutorial::Update() {
                 ChangeTextModel("resources/TemplateResource/object/crown/crown.obj"); // 戦闘の説明へ
                 // 敵をスポーンさせる
                 {
-                    Enemy* e1 = new Enemy(system_, Vector3(-10.0f, 0.0f, 10.0f));
+					// 敵を生成してリストに追加
+                    Enemy* e1 = new Enemy(system_, Vector3(-10.0f, 20.0f, 10.0f));
 					e1->CreateModelData(playerModelHandle_);
 					e1->SetIsTutorial(true);
 					e1->mainPosition.transform.scale = kBaseActorScale_;
-                    Enemy* e2 = new Enemy(system_, Vector3(10.0f, 0.0f, 10.0f));
+                    Enemy* e2 = new Enemy(system_, Vector3(10.0f, 20.0f, 10.0f));
 					e2->CreateModelData(playerModelHandle_);
 					e2->SetIsTutorial(true);
 					e2->mainPosition.transform.scale = kBaseActorScale_;
-                    // ★敵をチャージ状態にする（Enemy側にSetStateがあれば呼ぶ）
-                    // e1->SetState(EnemyState::Charge); 
-                    enemies_.push_back(e1);
-                    enemies_.push_back(e2);
+
+					// 構造体を作って登録
+					TutorialEnemyData data1;
+					data1.enemy = e1;
+					data1.isDefeated = false;
+					// ★ アニメーション設定
+					data1.isSpawning = true;
+					data1.spawnTimer = 0.0f;
+					data1.spawnStartPos = { -10.0f, 20.0f, 10.0f }; // 開始
+					data1.spawnEndPos = { -10.0f,  0.0f, 10.0f }; // 着地
+					TutorialEnemyData data2;
+					data2.enemy = e2;
+					data2.isDefeated = false;
+					// ★ アニメーション設定
+					data2.isSpawning = true;
+					data2.spawnTimer = 0.0f;
+					data2.spawnStartPos = { 10.0f, 20.0f, 10.0f };
+					data2.spawnEndPos = { 10.0f,  0.0f, 10.0f };
+
+                    enemies_.push_back(data1);
+                    enemies_.push_back(data2);
                 }
                 break;
             case TutorialStep::Battle:
+				// ▼▼▼ カメラアニメーションの開始設定 ▼▼▼
+				isCameraTransiting_ = true;
+				cameraTransitionTimer_ = 0.0f;
+
+				// 1. 今のカメラの位置・回転を「開始地点」として保存
+				Transform currentT = camera_->GetTransform();
+				camAnimStartPos_ = currentT.translate;
+				camAnimStartRot_ = currentT.rotate;
+
+				// 2. 最終的な目標位置「終了地点」を設定 (CameraPartのif文の中身と同じ値)
+				camAnimEndPos_ = { 0.0f, 5.0f, -10.0f };
+				camAnimEndRot_ = { 0.1f, std::numbers::pi_v<float> *2.0f, 0.0f };
+				// ▲▲▲ ここまで ▲▲▲
+
                 currentStep_ = TutorialStep::Caution;
                 ChangeTextModel("resources/TemplateResource/object/plane/plane.obj"); // 注意事項へ
                 break;
@@ -217,15 +252,16 @@ void SceneTutorial::Draw() {
 	if (tatami_) tatami_->Draw();
     if (player_) player_->Draw();
 
-    for (auto e : enemies_) {
-        e->Draw();
-    }
+	for (auto& data : enemies_) {
+		data.enemy->Draw();
+	}
 
     if (textObj_) textObj_->Draw();
 
 	if (currentStep_ != TutorialStep::Finished && currentStep_ != TutorialStep::Caution) {
 		// UIは最後に描画（最前面）
 		if (barFrame_) barFrame_->Draw();
+		if (barBrank_) barBrank_->Draw();
 		if (barFill_) barFill_->Draw();
 	}
 }
@@ -235,39 +271,54 @@ Camera* SceneTutorial::GetCamera() {
 }
 
 void SceneTutorial::CameraPart() {
-	//if (isResultShojiActive_) {
-	//	system_->SetCamera(usingCamera_);
-	//	return;
-	//}
-
-
-	//// ★ カメラ追従停止中
-	//if (isCameraLocked_) {
-	//	if (useDebugCamera) {
-	//		usingCamera_ = debugCamera_;
-	//		debugCamera_->MouseControlUpdate();
-	//	}
-	//	// 位置・回転を一切更新しない
-	//	system_->SetCamera(usingCamera_);
-	//	return;
-
-
-	//}
-
+	// 最終ステップ（Caution / Finished）の場合
 	if (currentStep_ == TutorialStep::Caution || currentStep_ == TutorialStep::Finished) {
-		// Transform構造体を作成して値をセットする
-		Transform cameraTransform = CreateDefaultTransform();
-		cameraTransform.translate = {0.0f, 5.0f, -10.0f};
+		// 最短経路で角度を補間する関数
+		auto LerpAngle = [&](float a, float b, float t) {
+			float diff = b - a;
+			// 差分を -PI ~ PI (-180度 ~ 180度) の範囲に収める
+			while (diff > std::numbers::pi_v<float>) diff -= 2.0f * std::numbers::pi_v<float>;
+			while (diff < -std::numbers::pi_v<float>) diff += 2.0f * std::numbers::pi_v<float>;
+			return a + diff * t;
+			};
+		// イージング関数 (EaseInOutCubic: 最初と最後がゆっくり)
+		auto EaseInOutCubic = [&](float x) {
+			return x < 0.5f ? 4.0f * x * x * x : 1.0f - std::pow(-2.0f * x + 2.0f, 3.0f) / 2.0f;
+			};
 
-		// 回転の設定
-		// 前進方向が {-sin, -cos} なので、
-		// 基本の向き(0)が Z+方向なら、180度(3.14f)足すと Z-方向（前進方向）を向く。
-		cameraTransform.rotate.x = 0.1f;             // 少し見下ろす角度
-		cameraTransform.rotate.y = std::numbers::pi_v<float> * 2.0f;
-		cameraTransform.rotate.z = 0.0f;
+		Transform cameraTransform = CreateDefaultTransform();
+
+		// ■ アニメーション中
+		if (isCameraTransiting_) {
+			cameraTransitionTimer_ += system_->GetDeltaTime();
+
+			// 進行度 (0.0 -> 1.0)
+			float t = cameraTransitionTimer_ / kCameraTransitionDuration_;
+			if (t >= 1.0f) {
+				t = 1.0f;
+				isCameraTransiting_ = false; // 完了
+			}
+
+			// イージング適用
+			float easeT = EaseInOutCubic(t);
+
+			// 座標の線形補間 (Lerp)
+			cameraTransform.translate = camAnimStartPos_ * (1.0f - easeT) + camAnimEndPos_ * easeT;
+
+			// 回転の補間 (角度対応)
+			cameraTransform.rotate.x = std::lerp(camAnimStartRot_.x, camAnimEndRot_.x, easeT);
+			cameraTransform.rotate.y = LerpAngle(camAnimStartRot_.y, camAnimEndRot_.y, easeT); // Y軸は最短回転
+			cameraTransform.rotate.z = std::lerp(camAnimStartRot_.z, camAnimEndRot_.z, easeT);
+		}
+		// ■ アニメーション完了後（固定位置）
+		else {
+			cameraTransform.translate = camAnimEndPos_;
+			cameraTransform.rotate = camAnimEndRot_;
+		}
 
 		camera_->SetCamera(cameraTransform);
 		usingCamera_ = camera_;
+
 	} else {
 		// ---------------------------------------------------------
 		// 1. 手動ズーム入力の処理 (W:接近 / S:離れる)
@@ -423,38 +474,77 @@ void SceneTutorial::UpdateStepDash() {
 
 // 4. 腕の無敵と無防備（敵を殴る）
 void SceneTutorial::UpdateStepBattle() {
-    // 敵の更新・死亡判定
-    for (auto it = enemies_.begin(); it != enemies_.end(); ) {
-        (*it)->Update(usingCamera_);
+	auto EaseOutCubic = [&](float x) {
+		return 1.0f - std::pow(1.0f - x, 3.0f);
+		};
+	// ■ 1. 敵のループ処理
+	// イテレータを使うか、インデックスでアクセス
+	for (int i = 0; i < enemies_.size(); i++) {
 
-        // 死亡判定（HPが0、あるいはIsDeadフラグ）
-        // ここでは簡易的に「プレイヤーの攻撃判定と接触したら消す」と仮定
+		// 参照で受ける（書き換えられるように auto& にする）
+		auto& data = enemies_[i];
+
+		// ▼▼▼ 出現アニメーション処理 ▼▼▼
+		if (data.isSpawning) {
+			// タイマー進行 (1.0秒で着地とする場合)
+			data.spawnTimer += system_->GetDeltaTime();
+			float t = data.spawnTimer / 1.0f; // 1.0f は所要時間
+
+			if (t >= 1.0f) {
+				t = 1.0f;
+				data.isSpawning = false; // アニメーション終了
+			}
+
+			// イージング適用 (0.0 -> 1.0)
+			float easeT = EaseOutCubic(t);
+
+			// 座標更新 (Lerp計算: start + (end - start) * t)
+			Vector3 currentPos;
+			currentPos.x = data.spawnStartPos.x + (data.spawnEndPos.x - data.spawnStartPos.x) * easeT;
+			currentPos.y = data.spawnStartPos.y + (data.spawnEndPos.y - data.spawnStartPos.y) * easeT;
+			currentPos.z = data.spawnStartPos.z + (data.spawnEndPos.z - data.spawnStartPos.z) * easeT;
+
+			data.enemy->mainPosition.transform.translate = currentPos;
+
+			// 落下中は向きやアニメーションを更新するだけにして、攻撃判定などはスキップ
+			data.enemy->Update(usingCamera_);
+			continue;
+		}
+		// ▲▲▲ ここまで ▲▲▲
+
+		// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
+		data.enemy->Update(usingCamera_);
+
+		// 既に倒されているなら、衝突判定はスキップする
+		if (data.isDefeated) {
+			// 必要ならここで「やられた状態」の演出（色を変える、縮むなど）
+			data.enemy->ResetArm(false);
+			data.enemy->ResetArm(true);
+			continue;
+		}
+
+		// 常にチャージ状態に見せる（倒される前）
+		data.enemy->SetArmScaleL(2.0f);
+		data.enemy->SetArmScaleR(2.0f);
+
+		// ■ 2. 攻撃当たり判定
+		// ここで「プレイヤーの攻撃がこの敵(data.enemy)に当たったか」をチェックします
+		// ※ 内部でヒット処理
 		CheckAttackCollision();
-        if ((*it)->IsDamage()) { // ※IsDead()実装が必要
-            delete (*it);
-            it = enemies_.erase(it);
-            killCount_++;
-        } else {
-			// 常にチャージ状態に見せる（腕を大きくしておくなど）
-			(*it)->SetArmScaleL(2.0f);
-			(*it)->SetArmScaleR(2.0f);
-            ++it;
-        }
-    }
 
-    // 2体倒したら次へ
-    if (killCount_ >= kKillQuota_) {
-        isStepCompleted_ = true;
-    }
-    // もし敵がいなくなってもノルマ未達成なら再スポーン（詰み防止）
-    else if (enemies_.empty()) {
-        spawnTimer_ += 1.0f / 60.0f;
-        if (spawnTimer_ > 2.0f) {
-            Enemy* e = new Enemy(system_, Vector3(0.0f, 0.0f, 5.0f));
-            enemies_.push_back(e);
-            spawnTimer_ = 0.0f;
-        }
-    }
+		bool isHit = data.enemy->IsDamage();
+		if (isHit) {
+			// 倒した扱いにする
+			data.isDefeated = true;
+			killCount_++;
+			data.enemy->Update(usingCamera_);
+		}
+	}
+
+	// ■ 3. 終了判定
+	if (killCount_ >= kKillQuota_) {
+		isStepCompleted_ = true;
+	}
 }
 
 // 5. 注意事項（テキスト表示のみ）
@@ -477,6 +567,11 @@ float SceneTutorial::GetProgressRatio() {
 
 	case TutorialStep::ArmExpand:
 	{
+		if (isStepCompleted_) {
+			ratio = 1.0f;
+			break;
+		}
+
 		// 現在の腕の大きさ / 目標の大きさ (1.0fからスタートなので補正)
 		float maxScale = std::max(player_->GetArmScaleL(), player_->GetArmScaleR());
 		// 1.0(通常) ～ 2.0(目標) の間を 0.0～1.0 に正規化
@@ -794,88 +889,28 @@ void SceneTutorial::CheckAttackCollision() {
 	};
 
 	// 全エネミーに対してループ処理
-	for (auto* enemy : enemies_) {
-
+	for (int enemyIdx = 0; enemyIdx < enemies_.size(); enemyIdx++) {
+		// 参照で受ける（書き換えられるように auto& にする）
+		auto& data = enemies_[enemyIdx];
 		// エネミーの情報
-		AABB eBodyAABB = enemy->GetAABB(enemy);
-		float eBodyScale = enemy->mainPosition.transform.scale.x;
+		AABB eBodyAABB = data.enemy->GetAABB(data.enemy);
+		float eBodyScale = data.enemy->mainPosition.transform.scale.x;
 		// 敵の左右の情報（敵が複数の場合はループ内で）
 		ArmInfo eArms[2] = {
-			{ false, enemy->GetArmPositionL(), enemy->GetArmScaleL(), enemy->IsAttackingL() },
-			{ true,  enemy->GetArmPositionR(), enemy->GetArmScaleR(), enemy->IsAttackingR() }
+			{ false, data.enemy->GetArmPositionL(), data.enemy->GetArmScaleL(), data.enemy->IsAttackingL() },
+			{ true,  data.enemy->GetArmPositionR(), data.enemy->GetArmScaleR(), data.enemy->IsAttackingR() }
 		};
 
-		for (int i = 0; i < 2; i++) {
+		for (int armIdx = 0; armIdx < 2; armIdx++) {
 			// 1. 敵の攻撃 vs プレイヤーの体
-			if (eArms[i].isAtk) CheckArmCollision(player_, pBodyAABB, eArms[i].pos, eArms[i].scale, eBodyScale);
+			if (eArms[armIdx].isAtk) CheckArmCollision(player_, pBodyAABB, eArms[armIdx].pos, eArms[armIdx].scale, eBodyScale);
 			// 2. プレイヤーの攻撃 vs 敵の体
-			if (pArms[i].isAtk) CheckArmCollision(enemy, eBodyAABB, pArms[i].pos, pArms[i].scale, pBodyScale);
+			if (pArms[armIdx].isAtk) CheckArmCollision(data.enemy, eBodyAABB, pArms[armIdx].pos, pArms[armIdx].scale, pBodyScale);
 			for (int j = 0; j < 2; j++) {
 				// 3. 腕同士の衝突
 				CheckArmToArm(
-					player_, pArms[i].pos, pArms[i].scale, pBodyScale, pArms[i].isRight, pArms[i].isAtk,
-					enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
-			}
-		}
-	}
-
-	// ▼▼▼▼▼▼▼▼▼ 【追加】敵同士の総当たり判定 ▼▼▼▼▼▼▼▼▼
-
-	size_t enemyCount = enemies_.size();
-	for (size_t i = 0; i < enemyCount; ++i) {
-		// j は i + 1 から始めることで、(A, B) を判定したら (B, A) は判定しないようにする（重複防止）
-		for (size_t j = i + 1; j < enemyCount; ++j) {
-
-			Enemy* enemyA = enemies_[i];
-			Enemy* enemyB = enemies_[j];
-
-			// --- Aの情報取得 ---
-			AABB bodyAABB_A = enemyA->GetAABB(enemyA);
-			float bodyScaleA = enemyA->mainPosition.transform.scale.x;
-			ArmInfo armsA[2] = {
-				{ false, enemyA->GetArmPositionL(), enemyA->GetArmScaleL(), enemyA->IsAttackingL() },
-				{ true,  enemyA->GetArmPositionR(), enemyA->GetArmScaleR(), enemyA->IsAttackingR() }
-			};
-
-			// --- Bの情報取得 ---
-			AABB bodyAABB_B = enemyB->GetAABB(enemyB);
-			float bodyScaleB = enemyB->mainPosition.transform.scale.x;
-			ArmInfo armsB[2] = {
-				{ false, enemyB->GetArmPositionL(), enemyB->GetArmScaleL(), enemyB->IsAttackingL() },
-				{ true,  enemyB->GetArmPositionR(), enemyB->GetArmScaleR(), enemyB->IsAttackingR() }
-			};
-
-			// --- 判定実行 ---
-
-			// 左右の腕についてループ
-			for (int aIdx = 0; aIdx < 2; aIdx++) {
-
-				// 1. Aの攻撃 vs Bの体 (AがBを殴った)
-				if (armsA[aIdx].isAtk) {
-					CheckArmCollision(enemyB, bodyAABB_B, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA);
-				}
-
-				// 2. Bの攻撃 vs Aの体 (BがAを殴った)
-				// ※ループの構造上、ここで逆方向もチェックする必要があります
-				// (armsBのループを別途回すより、ここでまとめてチェックした方が効率的です)
-				// ただし、腕インデックスを合わせる必要はないので、このループ内でBの左右両方を確認します。
-			}
-
-			// B側の攻撃チェック（Aの体に対して）
-			for (int bIdx = 0; bIdx < 2; bIdx++) {
-				if (armsB[bIdx].isAtk) {
-					CheckArmCollision(enemyA, bodyAABB_A, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB);
-				}
-			}
-
-			// 3. 腕同士の衝突 (Aの左右 × Bの左右)
-			for (int aIdx = 0; aIdx < 2; aIdx++) {
-				for (int bIdx = 0; bIdx < 2; bIdx++) {
-					CheckArmToArm(
-						enemyA, armsA[aIdx].pos, armsA[aIdx].scale, bodyScaleA, armsA[aIdx].isRight, armsA[aIdx].isAtk,
-						enemyB, armsB[bIdx].pos, armsB[bIdx].scale, bodyScaleB, armsB[bIdx].isRight, armsB[bIdx].isAtk
-					);
-				}
+					player_, pArms[armIdx].pos, pArms[armIdx].scale, pBodyScale, pArms[armIdx].isRight, pArms[armIdx].isAtk,
+					data.enemy, eArms[j].pos, eArms[j].scale, eBodyScale, eArms[j].isRight, eArms[j].isAtk);
 			}
 		}
 	}
