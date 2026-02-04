@@ -1108,15 +1108,15 @@ void SceneStage01::Update() {
 	for (auto* t : tatamiTiles_)  t->Update(usingCamera_);
 	for (auto* f : tatamiFrames_) f->Update(usingCamera_);
 
-	if (system_->GetTriggerOn(DIK_P)) {
+	//if (system_->GetTriggerOn(DIK_P)) {
 
-		StartResultShoji();
-		SpawnResultSets(10, -80.0f);
-		system_->SoundStop(BGM_);
+	//	StartResultShoji();
+	//	SpawnResultSets(10, -80.0f);
+	//	system_->SoundStop(BGM_);
 
-		isResultGenerated_ = true; // ★ここ
-		system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
-	}
+	//	isResultGenerated_ = true; // ★ここ
+	//	system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
+	//}
 
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
 
@@ -1145,10 +1145,10 @@ void SceneStage01::Update() {
 		UpdateResultShoji();
 	}
 
-	if (system_->GetTriggerOn(DIK_0)) {
+	/*if (system_->GetTriggerOn(DIK_0)) {
 		if (useDebugCamera)useDebugCamera = false;
 		else useDebugCamera = true;
-	}
+	}*/
 
 	/*if (system_->GetTriggerOn(DIK_SPACE)) {
 		outcome_ = SceneOutcome::NEXT;
