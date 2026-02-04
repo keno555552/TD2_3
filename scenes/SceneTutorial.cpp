@@ -78,6 +78,18 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	barFill_->objectParts_[0].materialConfig->textureColor = {0.0f, 1.0f, 0.0f, 0.6f};
 	barFill_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
 	// 初期サイズは横幅0、色は緑
+
+	dashWindEffectL_ = new P_DashWind(system_);
+	dashWindEffectR_ = new P_DashWind(system_);
+
+	suctionEffect_ = new P_Suction(system_);
+
+	planeReductionEffectL_ = new P_PlaneReduction(system_);
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
+	planeReductionEffectR_ = new P_PlaneReduction(system_);
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
+
+	explosion_ = new Explosion(system_);
 }
 
 SceneTutorial::~SceneTutorial() {
@@ -96,6 +108,13 @@ SceneTutorial::~SceneTutorial() {
 		delete data.enemy;
 	}
     enemies_.clear();
+
+	delete dashWindEffectL_;
+	delete dashWindEffectR_;
+	delete suctionEffect_;
+	delete planeReductionEffectL_;
+	delete planeReductionEffectR_;
+	delete explosion_;
 }
 
 void SceneTutorial::Update() {
@@ -245,6 +264,60 @@ void SceneTutorial::Update() {
         outcome_ = SceneOutcome::NEXT;
         break;
     }
+#pragma region パーティクル
+	Vector3 forward = player_->GetForward();
+
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
+	dashWindEffectL_->SetTargetForward(forward);
+	dashWindEffectL_->SetArmScale(player_->GetArmScaleL());
+	dashWindEffectL_->Update(usingCamera_);
+	dashWindEffectL_->SetEmitting(false);
+
+	if (player_->IsAttackingL()) {
+		dashWindEffectL_->SetEmitting(true);
+	}
+
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + forward + Vector3(0.0f, player_->GetArmScaleR() - 0.5f, 0.0f));
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + (forward * player_->GetArmScaleR() * 2.0f));
+	dashWindEffectR_->SetTargetForward(forward);
+	dashWindEffectR_->SetArmScale(player_->GetArmScaleR());
+	dashWindEffectR_->Update(usingCamera_);
+	dashWindEffectR_->SetEmitting(false);
+
+	if (player_->IsAttackingR()) {
+		dashWindEffectR_->SetEmitting(true);
+	}
+
+	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetArmScaleR(player_->GetArmScaleL());
+	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
+	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
+	suctionEffect_->SetLeftEmitting(false);
+	suctionEffect_->SetRightEmitting(false);
+	if (system_->GetIsPush(DIK_A) ||
+		system_->GetGamepadIsPush(VK_PAD_LSHOULDER)) {
+		suctionEffect_->SetLeftEmitting(true);
+	}
+	if (system_->GetIsPush(DIK_D) ||
+		system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
+		suctionEffect_->SetRightEmitting(true);
+	}
+
+	suctionEffect_->Update(usingCamera_);
+
+	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A) || system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
+	planeReductionEffectL_->SetTargetPos(player_->GetArmPositionL());
+	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
+	planeReductionEffectL_->Update(camera_);
+
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D) || system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
+	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
+	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
+	planeReductionEffectR_->Update(camera_);
+
+	explosion_->Update(usingCamera_);
+#pragma endregion
 }
 
 void SceneTutorial::Draw() {
@@ -264,6 +337,17 @@ void SceneTutorial::Draw() {
 		if (barBrank_) barBrank_->Draw();
 		if (barFill_) barFill_->Draw();
 	}
+
+	// 自機が進む際のダッシュエフェクト
+	dashWindEffectL_->Draw();
+	dashWindEffectR_->Draw();
+	// 自機の腕がでかくなる際の吸い込みエフェクト
+	suctionEffect_->Draw();
+
+	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+
+	explosion_->Draw();
 }
 
 Camera* SceneTutorial::GetCamera() {
@@ -423,6 +507,8 @@ void SceneTutorial::UpdateStepMove() {
     if (isRotating) {
         rotateTimer_ += system_->GetDeltaTime();
     }
+
+
 
     // 一定時間旋回したら次へ
     if (rotateTimer_ >= kRotateQuota_) {
@@ -802,6 +888,9 @@ void SceneTutorial::CheckAttackCollision() {
 							player_->AddKnockback(force);
 							player_->ResetArm(isRightB);
 						}
+						// エフェクト
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (winB) {
 					// Bが勝った場合（Aを吹き飛ばす）
@@ -831,6 +920,8 @@ void SceneTutorial::CheckAttackCollision() {
 							player_->AddKnockback(force);
 							player_->ResetArm(isRightA);
 						}
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (draw) {
 					// 引き分け（両方吹っ飛ぶ）
@@ -850,10 +941,14 @@ void SceneTutorial::CheckAttackCollision() {
 							Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
 							if (objA == player_) {
 								player_->AddKnockback(forceA);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							} else {
 								Enemy* e = dynamic_cast<Enemy*>(objA);
 								if (e) {
 									e->AddKnockback(forceA);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
 								}
 							}
 						}
@@ -866,10 +961,14 @@ void SceneTutorial::CheckAttackCollision() {
 							Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
 							if (objB == player_) {
 								player_->AddKnockback(forceB);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							} else {
 								Enemy* e = dynamic_cast<Enemy*>(objB);
 								if (e) {
 									e->AddKnockback(forceB);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
 								}
 							}
 						}
