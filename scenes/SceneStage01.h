@@ -16,6 +16,7 @@
 #include "CountdownTimer/CountdownTimer.h"
 #include "StartTimer/StartTimer.h"
 #include "SceneTitle.h"
+#include "randomMaker.h"
 
 class SceneStage01 :public BaseScene {
 public:
@@ -115,6 +116,8 @@ public:
 private:
 	kEngine *system_ = nullptr;				// 借り
 
+	RandomMaker* randomMaker_ = new RandomMaker();
+
 	/// ============== カメラ関連 ==============///
 	/// ステージカメラ(mainカメラ)
 	Camera *camera_ = nullptr;
@@ -171,6 +174,8 @@ private:
 	SimpleSprite* guideGamepad_ = nullptr; // パッド用
 
 	std::vector<Enemy*> enemies_{}; // enemyのリスト
+
+	Object* currentTopCharacter_ = nullptr; // 現在1位のキャラクター
 
 	Object* guideArrow_ = nullptr; // ガイド矢印
 	Crown* crown_ = nullptr; // 1位用王冠
