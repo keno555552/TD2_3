@@ -290,7 +290,7 @@ void Enemy::Move() {
 	velocity_ = forward_ * currentSpeed_; // 速度を正面に設定
 
 	// 見た目更新(仮の体部分のため)
-	UpdateAppearance();
+	//UpdateAppearance();
 }
 
 void Enemy::AddKnockback(const Vector3& force) {

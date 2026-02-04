@@ -484,7 +484,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 	for (const auto& pos : spawnPositions) {
 		Enemy* newEnemy = new Enemy(system_, pos);
-		int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
+		int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/enemy/enemy.obj");
 		newEnemy->CreateModelData(enemyHandle);
 		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
 

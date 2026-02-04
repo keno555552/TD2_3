@@ -176,7 +176,7 @@ void SceneTutorial::Update() {
                 // 敵をスポーンさせる
                 {
 					// 敵を生成してリストに追加
-					int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
+					int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/enemy/enemy.obj");
                     Enemy* e1 = new Enemy(system_, Vector3(-10.0f, 20.0f, 10.0f));
 					e1->CreateModelData(enemyHandle);
 					e1->SetIsTutorial(true);
