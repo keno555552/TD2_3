@@ -3,6 +3,7 @@
 #include "TransformationMatrix.h"
 #include "MathsIncluder.h"
 #include "config.h"
+#include <random>
 
 
 Transform CameraDefaultTransform();
@@ -39,6 +40,9 @@ public:
 	void SetAspect(float aspect);
 	void SetNearClip(float nearClip);
 	void SetFarClip(float farClip);
+
+	void StartShark();
+	void SharkUpdate(float deltaTime);
 
 	/// ゲットカメラ
 	Matrix4x4 GetWorldMatrix();
@@ -85,6 +89,11 @@ protected:
 	/// カメラ変数を作る
 	Transform cameraTransform_;
 
+	/// カメラshark(仮)
+	Transform cameraSharkTransform_;
+	float shackTimer_ = 0;
+	float shackPower_ = 1.0f;
+
 	/// リセット用カメラ変数
 	Transform defaultTransform_;
 
@@ -100,5 +109,10 @@ protected:
 	/// 更新フラグ
 	bool dirty_{ true };
 
+	float RandomFloat(float min, float max) {
+		static std::mt19937 rng(std::random_device{}());
+		std::uniform_real_distribution<float> dist(min, max);
+		return dist(rng);
+	}
 };
 

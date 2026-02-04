@@ -15,20 +15,37 @@ Camera::Camera()
 	, farClip_(100.0f)
 	, projectionMatrix_(MakePerspectiveFovMatrix(0.45f, float(config::GetClientWidth()) / float(config::GetClientHeight()), 0.1f, 100.0f))
 	, cameraTransform_(CameraDefaultTransform())
+	, cameraSharkTransform_(CreateDefaultTransform())
 	, defaultTransform_(CameraDefaultTransform())
-	, matRot_(MakeRotateMatrix4x4(cameraTransform_.rotate)) {
+	, matRot_(MakeRotateMatrix4x4(cameraTransform_.rotate)) 
+{
 }
 
 void Camera::Update() {
+
+	Transform finalCameraTransform = cameraTransform_;
+	
+	finalCameraTransform.translate += cameraSharkTransform_.translate;
+	
 	/// ProjectionMatrix更新
 	projectionMatrix_ = MakePerspectiveFovMatrix(fovY_, aspect_, nearClip_, farClip_);
 	/// カメラMatrix更新
-	if (cameraTransform_.scale != Vector3{ 1,1,1 })cameraTransform_.scale = { 1,1,1 }; /// カメラのスケールは1固定
-	worldMatrix_ = MakeAffineMatrix(cameraTransform_.scale, cameraTransform_.rotate, cameraTransform_.translate);
+	if (finalCameraTransform.scale != Vector3{ 1,1,1 })finalCameraTransform.scale = { 1,1,1 }; /// カメラのスケールは1固定
+	worldMatrix_ = MakeAffineMatrix(finalCameraTransform.scale, finalCameraTransform.rotate, finalCameraTransform.translate);
 	/// ビュー行列更新
 	viewMatrix_ = Inverse(worldMatrix_);
 	/// 更新フラグオフ
 	dirty_ = false;
+
+	///// ProjectionMatrix更新
+	//projectionMatrix_ = MakePerspectiveFovMatrix(fovY_, aspect_, nearClip_, farClip_);
+	///// カメラMatrix更新
+	//if (cameraTransform_.scale != Vector3{ 1,1,1 })cameraTransform_.scale = { 1,1,1 }; /// カメラのスケールは1固定
+	//worldMatrix_ = MakeAffineMatrix(cameraTransform_.scale, cameraTransform_.rotate, cameraTransform_.translate + cameraSharkTransform_.translate);
+	///// ビュー行列更新
+	//viewMatrix_ = Inverse(worldMatrix_);
+	///// 更新フラグオフ
+	//dirty_ = false;
 }
 
 TransformationMatrix Camera::transformationMatrixTransform(Transform objTransform) {
@@ -83,6 +100,27 @@ void Camera::SetNearClip(float nearClip) {
 void Camera::SetFarClip(float farClip) {
 	if (farClip <= nearClip_) return; // far <= near 回避
 	farClip_ = farClip;
+	dirty_ = true;
+}
+
+void Camera::StartShark() {
+	shackTimer_ = 0.5f;
+}
+
+void Camera::SharkUpdate(float dt) {
+	if (shackTimer_ <= 0.0f) {
+		cameraSharkTransform_.translate = { 0, 0, 0 };
+		return;
+	}
+
+	shackTimer_ -= dt;
+	if (shackTimer_ < 0.0f) shackTimer_ = 0.0f;
+
+	float falloff = shackTimer_ * shackTimer_; // 自然衰減
+
+	cameraSharkTransform_.translate.x = RandomFloat(-1.0f, 1.0f) * shackPower_ * falloff;
+	cameraSharkTransform_.translate.y = RandomFloat(-1.0f, 1.0f) * shackPower_ * falloff;
+
 	dirty_ = true;
 }
 
