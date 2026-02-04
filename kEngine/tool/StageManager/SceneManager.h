@@ -149,7 +149,11 @@ private:
 
 	bool isEnd_ = false;
 
-
+	int CloseSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool CloseSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+	
+	int OpenSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool OpenSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 
 
 

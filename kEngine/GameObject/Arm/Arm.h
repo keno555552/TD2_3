@@ -1,6 +1,7 @@
 #pragma once
 #include "kEngine.h"
 #include "Object/Object.h"
+#include "DebugTool/DebugObject.h"
 
 class Arm : public Object {
 public:
@@ -29,4 +30,5 @@ private:
     const float kBodyAttachmentX_ = 0.8f;
 
     void LinkToObject(Object* targetObject);
+
 };

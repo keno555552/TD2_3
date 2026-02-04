@@ -412,9 +412,16 @@ SceneTitle::SceneTitle(kEngine* system) {
 
      
        selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
-       Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Gate_Open.wav");
+       Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Open.wav");
        DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
        Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
+       AppearSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Appear.wav");
+       WalkSE_ = system_->SoundLoadSE("resources/gate/SE/Title/walk.wav");
+       BGM_ = system_->SoundLoadSE("resources/gate/SE/Title/T_BGM.wav");
+       
+       system_->SoundPlayBGM(BGM_, 0.3f);  // ← 効果音！！
+
+
     }
 
 SceneTitle::~SceneTitle() {
@@ -445,8 +452,7 @@ SceneTitle::~SceneTitle() {
 void SceneTitle::Update() {
     CameraControl();
 	system_->SetCamera(usingCamera_);
-    /// Skydome更新
-    skydome_->Update(usingCamera_);
+   
 
    // =====================
 // セレクト操作（キーボード + ゲームパッド対応）
@@ -662,8 +668,8 @@ void SceneTitle::Update() {
 
         // 1文字分完了
         if (t >= 1.0f) {
-            if (Gate_OpenSE_ >= 0) {
-                system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+            if (AppearSE_ >= 0) {
+                system_->SoundPlaySE(AppearSE_, 0.6f);
             }
             // 最終値で固定
             mozis_[moziIdx]->mainPosition.transform.translate = moziFinalPos_[moziIdx];
@@ -785,11 +791,7 @@ void SceneTitle::Update() {
     }
 
 
-    // Update内
-    if (!irisPlaying_ && system_->GetTriggerOn(DIK_RETURN)) {
-        irisPlaying_ = true;
-        irisT_ = 0.0f;
-    }
+   
     if (irisPlaying_ && irisHole_) {
         irisT_ += system_->GetDeltaTime() * irisSpeed_;
         if (irisT_ > 1.0f) irisT_ = 1.0f;
@@ -910,6 +912,10 @@ void SceneTitle::Update() {
 
             if (!cameraWalkPlaying_) {
                 cameraWalkPlaying_ = true;
+                if (WalkSE_ >= 0) {
+                    system_->SoundPlaySE(WalkSE_, 0.6f);
+                }
+               
                 cameraWalkT_ = 0.0f;
                 cameraWalkBobTime_ = 0.0f;
 
@@ -996,11 +1002,29 @@ void SceneTitle::Update() {
     }
 
 
+    if (dt > 0.1f) dt = 0.1f; // 保険
 
+    skydomeRotateY_ += kSkydomeRotateSpeed_ * dt;
+
+    // 0～2π に収めたいなら（任意）
+    if (skydomeRotateY_ > DirectX::XM_2PI) {
+        skydomeRotateY_ -= DirectX::XM_2PI;
+    }
+
+    skydome_->mainPosition.transform.rotate.y = skydomeRotateY_;
+
+    /// Skydome更新
+    skydome_->Update(usingCamera_);
     sprite_->Update(usingCamera_);
 
     if (system_->GetTriggerOn(DIK_SPACE)) {
+
+        if (DecideSE_ >= 0) {
+            system_->SoundPlaySE(DecideSE_, 0.6f);
+        }
 		outcome_ = SceneOutcome::NEXT;
+        system_->SoundStop(BGM_);
+
     }
 }
 

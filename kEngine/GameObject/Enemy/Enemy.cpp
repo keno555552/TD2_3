@@ -1,6 +1,7 @@
 #define NOMINMAX ///<<<必ずすべでのファイルの先頭に書くこと
 #include "Enemy.h"
 #include <numbers>
+#include <SceneStage01.h>
 
 Enemy::Enemy(kEngine* system, const Vector3& position) {
 	Object::IntObject(system);
@@ -16,6 +17,13 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 	armL_ = new Arm(system, this, false); // 左腕
 	armR_ = new Arm(system, this, true);  // 右腕
 
+	// デバッグ用オブジェクトの生成
+	leftHandDebugObject_ = new DebugObject(system_);
+	leftHandDebugObject_->SetShowNumber(true);
+
+	rightHandDebugObject_ = new DebugObject(system_);
+	rightHandDebugObject_->SetShowNumber(true);
+
 #pragma region パーティクル
 	dashWindEffectL_ = new P_DashWind(system_);
 	dashWindEffectR_ = new P_DashWind(system_);
@@ -29,9 +37,16 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 #pragma endregion
 }
 
-void Enemy::Update(Camera *camera) {
-  // 1. エンジンから値を取得
-  float rawDeltaTime = system_->GetScaledDeltaTime();
+Enemy::~Enemy() {
+	delete armL_;
+	delete armR_;
+	delete leftHandDebugObject_;
+	delete rightHandDebugObject_;
+}
+
+void Enemy::Update(Camera* camera) {
+	// 1. エンジンから値を取得
+	float rawDeltaTime = system_->GetScaledDeltaTime();
 
 	// 2. 異常な値をカットする（最大でも 0.1秒 = 10FPS相当 に制限）
 	// これにより、起動直後やデバッグ中の巨大な跳ね上がりを無視できます
@@ -63,7 +78,7 @@ void Enemy::Update(Camera *camera) {
 
 #pragma region パーティクル
 
-	if(distanceWithPlayer_ <= 25.0f) // プレイヤーからの距離が遠ければ処理しない
+	if (distanceWithPlayer_ <= 25.0f) // プレイヤーからの距離が遠ければ処理しない
 	{
 		/* 攻撃時のダッシュエフェクト */
 		dashWindEffectL_->SetGenerationPos(GetArmPositionL() + forward_ / 2.0f + Vector3(0.0f, GetArmScaleL() - 0.5f, 0.0f));
@@ -125,31 +140,42 @@ void Enemy::Update(Camera *camera) {
 	 // ここで現在の「倍率(armScaleL_/R_)」を渡すだけ！
 	if (armL_) {
 		armL_->Update(camera, armScaleL_);
+		leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
+		leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
+		leftHandDebugObject_->Update(camera);
 	}
 	if (armR_) {
 		armR_->Update(camera, armScaleR_);
+		rightHandDebugObject_->mainPosition.transform.translate = GetArmPositionR();
+		rightHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleR_ * 10.0f));
+		rightHandDebugObject_->Update(camera);
 	}
 }
 
 void Enemy::Draw() {
-	if (distanceWithPlayer_ <= 25.0f)
-	{
-		dashWindEffectL_->Draw();
-		dashWindEffectR_->Draw();
-		suctionEffect_->Draw();
 
-		if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
-		if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+if (!SceneStage01::IsParticleDrawBlocked()) {
+
+		if (distanceWithPlayer_ <= 25.0f)
+		{
+			dashWindEffectL_->Draw();
+			dashWindEffectR_->Draw();
+			suctionEffect_->Draw();
+
+			if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+			if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+		}
 	}
-
 	Object::Draw();
 
 	// 腕の描画
 	if (armL_) {
 		armL_->Draw();
+		leftHandDebugObject_->Draw();
 	}
 	if (armR_) {
 		armR_->Draw();
+		rightHandDebugObject_->Draw();
 	}
 }
 
@@ -157,6 +183,11 @@ void Enemy::MoveEnemyByResult() {
 	mainPosition.transform.translate.x += velocity_.x * deltaTime_;
 	mainPosition.transform.translate.y += velocity_.y * deltaTime_;
 	mainPosition.transform.translate.z += velocity_.z * deltaTime_;
+}
+
+void Enemy::SetNumberShow(bool flag) {
+	leftHandDebugObject_->SetShowNumber(flag);
+	rightHandDebugObject_->SetShowNumber(flag);
 }
 
 void Enemy::Move() {
@@ -324,18 +355,18 @@ Vector3 Enemy::GetArmPositionL() const {
 }
 
 void Enemy::OnWallHit(const Vector3& normal) {
-    // X方向の壁（左右）
-    if (normal.x != 0.0f) {
-        if ((normal.x > 0 && velocity_.x < 0) || (normal.x < 0 && velocity_.x > 0)) {
-            velocity_.x = 0.0f;
-        }
-    }
-    // Z方向の壁（奥・手前）
-    if (normal.z != 0.0f) {
-        if ((normal.z > 0 && velocity_.z < 0) || (normal.z < 0 && velocity_.z > 0)) {
-            velocity_.z = 0.0f;
-        }
-    }
+	// X方向の壁（左右）
+	if (normal.x != 0.0f) {
+		if ((normal.x > 0 && velocity_.x < 0) || (normal.x < 0 && velocity_.x > 0)) {
+			velocity_.x = 0.0f;
+		}
+	}
+	// Z方向の壁（奥・手前）
+	if (normal.z != 0.0f) {
+		if ((normal.z > 0 && velocity_.z < 0) || (normal.z < 0 && velocity_.z > 0)) {
+			velocity_.z = 0.0f;
+		}
+	}
 }
 
 Vector3 Enemy::GetArmPositionR() const {

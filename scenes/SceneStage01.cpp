@@ -6,6 +6,8 @@
 #include <numbers>
 #include "SceneManager.h"
 
+
+bool SceneStage01::particleDrawBlocked_ = false;
 SceneStage01::SceneStage01(kEngine* system) {
 	/// =========== システム初期化 ============///
 	system_ = system;
@@ -176,7 +178,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 			"resources/game/model/tatami.obj",
 			"resources/game/model/tatami_flame.obj",
 
-
+			"resources/game/model/doujou_wood.obj",
 	};
 
 
@@ -200,6 +202,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 		"resources/game/texture/tatami.png",
 		"resources/game/texture/tatami_flame.png",
 
+		"resources/game/texture/wood_tate.png",
 	};
 
 	Vector3 DoujouModelsForward[kDoujouPartCount] = {
@@ -220,7 +223,9 @@ SceneStage01::SceneStage01(kEngine* system) {
 		{-1,0,0},
 
 		{},
-		{}
+		{},
+
+			{},
 	};
 
 	for (int i = 0; i < kDoujouPartCount; i++) {
@@ -444,7 +449,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	skydome_->CreateModelData(skydomeModelHandle_);
 	skydome_->objectParts_[0].materialConfig->enableLighting = false;
 
-	player_ = new Player(system, Vector3(5.0f, 0.0f, 5.0f));
+	player_ = new Player(system, Vector3(50.0f, 0.0f, 15.0f));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = kBaseActorScale_;
 	//player_->mainPosition.transform.translate = Vector3(0.0f, 0.0f, 0.0f);
@@ -464,17 +469,17 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// --- エネミーの複数生成 ---
 	// テスト用に3体ほど配置
 	std::vector<Vector3> spawnPositions = {
-	{ 20.0f, 0.0f, 20.0f}, // 右奥
-	{ 20.0f, 0.0f, 10.0f},
-	{ 20.0f, 0.0f,  0.0f},
+	{ 90.0f, 0.0f, 90.0f}, // 右奥
+	{ 45.0f, 0.0f, 45.0f},
+	{ 0.0f, 0.0f,  0.0f},
 
-	{ 10.0f, 0.0f, 20.0f},
+	{ 45.0f, 0.0f, 90.0f},
 	{ 10.0f, 0.0f, 10.0f},
-	{ 10.0f, 0.0f,  0.0f},
+	{ 90.0f, 0.0f,  45.0f},
 
-	{  0.0f, 0.0f, 20.0f},
-	{  0.0f, 0.0f, 10.0f},
-	{  0.0f, 0.0f,  0.0f}
+	{  0.0f, 0.0f, 45.0f},
+	{  25.0f, 0.0f, 90.0f},
+	{  50.0f, 0.0f,  90.0f}
 	};
 
 	for (const auto& pos : spawnPositions) {
@@ -568,7 +573,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// 画面左下に配置 (座標は画面サイズに合わせて調整してください)
 	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
 	// 左端なので X=10 くらい
-	float winHeight = config::GetClientHeight();
+	float winHeight = (float)config::GetClientHeight();
 	guideKey_->mainPosition.transform.translate = Vector3(30.0f, winHeight - 170.0f, 0.0f);
 
 	// サイズ調整（必要なら）
@@ -602,6 +607,20 @@ SceneStage01::SceneStage01(kEngine* system) {
 		tutorial_->AddPage(path);
 	}
 	/// -------------------------------------------
+
+
+
+	//selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
+	//Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Open.wav");
+	//DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
+	//Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
+	//AppearSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Appear.wav");
+	//WalkSE_ = system_->SoundLoadSE("resources/gate/SE/Title/walk.wav");
+	//BGM_ = system_->SoundLoadSE("resources/gate/SE/Title/T_BGM.wav");
+
+
+	player_->Update(usingCamera_);
+	
 
 }
 
@@ -661,6 +680,7 @@ SceneStage01::~SceneStage01() {
 
 void SceneStage01::Update() {
 
+
 	// ===============================
 	// Result中：ゲーム進行を完全停止
 	// ===============================
@@ -690,6 +710,13 @@ void SceneStage01::Update() {
 		UpdateResultShoji(); // 距離や演出連動があるなら
 		UpdateRankModels();
 		UpdateSparkEffect2();
+
+		
+		dashWindEffectL_->Update(usingCamera_);
+    dashWindEffectR_->Update(usingCamera_);
+		suctionEffect_->Update(usingCamera_);
+		planeReductionEffectL_->Update(camera_);
+		planeReductionEffectR_->Update(camera_);
 
 		// ★ それ以外は一切通さない
 		return;
@@ -797,7 +824,7 @@ void SceneStage01::Update() {
 		enemy->SetTargetCharge(isTargetCharging);
 		enemy->Update(usingCamera_);
 	}
-
+	
 
 
 	// 攻撃当たり判定処理
@@ -978,8 +1005,7 @@ void SceneStage01::Update() {
 	for (auto* f : tatamiFrames_) f->Update(usingCamera_);
 
 	if (system_->GetTriggerOn(DIK_P)) {
-		ArrangeByArmSize();
-
+	
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
 
@@ -989,7 +1015,7 @@ void SceneStage01::Update() {
 
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
 
-		ArrangeByArmSize();
+		
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
 
@@ -1017,9 +1043,9 @@ void SceneStage01::Update() {
 		else useDebugCamera = true;
 	}
 
-	if (system_->GetTriggerOn(DIK_SPACE)) {
+	/*if (system_->GetTriggerOn(DIK_SPACE)) {
 		outcome_ = SceneOutcome::NEXT;
-	}
+	}*/
 
 }
 
@@ -1039,28 +1065,29 @@ void SceneStage01::Draw() {
 	for (auto* enemy : enemies_) {
 		enemy->Draw();
 	}
-
-	guideArrow_->Draw();
-
 	if (crown_) {
 		crown_->Draw();
 	}
-
-	for (int i = 0; i < 4; i++) {
-		wall_[i]->Draw();
-	}
-
-	// 自機が進む際のダッシュエフェクト
-	dashWindEffectL_->Draw();
+	if (!NotDraw_) {
+		guideArrow_->Draw();
+	
+	
+	
+		for (int i = 0; i < 4; i++) {
+			wall_[i]->Draw();
+		}
+	
+		// 自機が進む際のダッシュエフェクト
+		dashWindEffectL_->Draw();
 	dashWindEffectR_->Draw();
-	// 自機の腕がでかくなる際の吸い込みエフェクト
-	suctionEffect_->Draw();
+		// 自機の腕がでかくなる際の吸い込みエフェクト
+		suctionEffect_->Draw();
 
-	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
-	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
-
-	explosion_->Draw();
-
+		if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+		if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+	
+		explosion_->Draw();
+	}
 	//畳（床）
 	// =====================
 	// 畳（床）距離カリング描画
@@ -1105,13 +1132,14 @@ void SceneStage01::Draw() {
 
 
 	// 背景オブジェクト
-	for (int i = 0; i < kDoujouPartCount - 2; i++) {
+	for (int i = 0; i < kDoujouPartCount - 3; i++) {
 
 		if (!Doujous_[i]) continue;
 
 		/// 向きがないのか判定の対象外
 
 		if (Length(Doujous_[i]->objectParts_[0].forward) < 0.0001f) {
+			if (i != 3 && i != 8)
 			Doujous_[i]->Draw();
 			continue;
 		}
@@ -1136,13 +1164,13 @@ void SceneStage01::Draw() {
 			Doujous_[i]->Draw();
 		}
 	}
+	Doujous_[15]->Draw();
+	if (NotDraw_) {
+
+		Doujous_[3]->Draw();
+		Doujous_[8]->Draw();
+	}
 	DrawSparkEffect2(); // ← Spark専用Draw
-
-
-	//if (!isCameraLocked_) {
-	//	Doujous_[4]->Draw();
-	//	Doujous_[9]->Draw();
-	//}
 
 	constexpr float RESULT_DRAW_DIST = 300.0f;
 	constexpr float RESULT_DRAW_DIST_SQ =
@@ -1151,6 +1179,12 @@ void SceneStage01::Draw() {
 	Vector3 resultSets_camPos = usingCamera_->GetPosition();
 	if (isResultGenerated_)
 	{
+		/// 拳の数字をoff
+		player_->SetNumberShow(false);
+		for (auto& enemy : enemies_)
+		{
+			enemy->SetNumberShow(false);
+		}
 
 		for (auto& set : resultSets_) {
 			// ★ セット代表位置で距離判定
@@ -1166,32 +1200,35 @@ void SceneStage01::Draw() {
 				if (obj) obj->Draw();
 			}
 		}
+		if (isRankAppear_) {
 
-		// ===== Result Shoji (演出用) =====
-		if (resultShojiL_)        resultShojiL_->Draw();
-		if (resultShojiR_)        resultShojiR_->Draw();
-		if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
-		if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
-
-		// ★順位表示（プレイヤーだけ）
-		if (playerRank_ >= 0 && playerRank_ < kKanjiCount) {
-			if (KanjiObjs_[playerRank_]) {
-				KanjiObjs_[playerRank_]->Draw();
+			// ★順位表示（プレイヤーだけ）
+			if (playerRank_ >= 0 && playerRank_ < kKanjiCount) {
+				if (KanjiObjs_[playerRank_]) {
+					KanjiObjs_[playerRank_]->Draw();
+				}
 			}
-		}
 
-		// ★順位フレーム（常に描画）
-		if (KanjiObjs_[kFrameOuterIndex]) {
-			KanjiObjs_[kFrameOuterIndex]->Draw();
-		}
-		if (KanjiObjs_[kFrameInnerIndex]) {
-			KanjiObjs_[kFrameInnerIndex]->Draw();
+			// ★順位フレーム（常に描画）
+			if (KanjiObjs_[kFrameOuterIndex]) {
+				KanjiObjs_[kFrameOuterIndex]->Draw();
+			}
+			if (KanjiObjs_[kFrameInnerIndex]) {
+				KanjiObjs_[kFrameInnerIndex]->Draw();
+			}
 		}
 		for (int i = 0; i < kIllustrationPartCount; i++) {
 			if (Illustrations[i]) {
 				Illustrations[i]->Draw();
 			}
 		}
+		// ===== Result Shoji (演出用) =====
+		if (resultShojiL_)        resultShojiL_->Draw();
+		if (resultShojiR_)        resultShojiR_->Draw();
+		if (resultShojiLPaper_)  resultShojiLPaper_->Draw();
+		if (resultShojiRPaper_)  resultShojiRPaper_->Draw();
+
+	
 	}
 	if (!isResultGenerated_)
 	{
@@ -2239,7 +2276,8 @@ void SceneStage01::ArrangeByArmSize() {
 			};
 		}
 
-		obj->mainPosition.transform.rotate.y = std::numbers::pi_v<float>;
+		obj->mainPosition.transform.rotate.y = 0.0f;
+
 	}
 
 
@@ -2428,18 +2466,24 @@ void SceneStage01::UpdateResultShojiAnim() {
 	// フェーズ制御
 	// =============================
 	if (resultShojiPhase_ == ResultShojiPhase::Closing) {
-
+		
 		resultShojiT_ += dt;
 		if (resultShojiT_ >= 1.0f) {
 			resultShojiT_ = 1.0f;
 			resultShojiWaitTimer_ = 0.0f;
 			resultShojiPhase_ = ResultShojiPhase::Wait;
+			ArrangeByArmSize();
+			
+			// 例：Result の切り替えタイミング
+			
+
 		}
 	} else if (resultShojiPhase_ == ResultShojiPhase::Wait) {
 
 		resultShojiWaitTimer_ += dt;
 		if (resultShojiWaitTimer_ >= 1.0f) {
-
+			NotDraw_ = true;
+			SetParticleDrawBlocked(true);
 			// カメラを演出開始位置へ
 			Transform t = camera_->GetTransform();
 			t.translate = Vector3(49.5f, 5.0f, -800.0f);
@@ -2537,8 +2581,8 @@ void SceneStage01::UpdateResultShojiAnim() {
 			// ★ ここでは「準備」だけ
 			Vector3 camPos = camera_->GetTransform().translate;
 
-			rankAnimStart_ = camPos + Vector3(0.0f, 0.0f, -3.0f);
-			rankAnimEnd_ = camPos + Vector3(0.0f, 0.0f, 3.0f);
+			rankAnimStart_ = camPos + Vector3(0.0f, 0.0f, -4.1f);
+			rankAnimEnd_ = camPos + Vector3(0.0f, 0.0f, 4.1f);
 
 			rankAnimT_ = 0.0f;
 
@@ -2564,7 +2608,8 @@ void SceneStage01::UpdateResultShojiAnim() {
 			isRankAnimating_ = true;
 			isFrameAnimating_ = true;
 			frameAnimT_ = 0.0f;
-
+			isRankAppear_ = true;   // ★フレームが終わるまで文字は止める
+			
 			isRankAnimating_ = false;   // ★フレームが終わるまで文字は止める
 			rankAnimT_ = 0.0f;          // 文字側は後で使う
 
@@ -2858,8 +2903,27 @@ void SceneStage01::UpdateRankModels() {
 			rankObj->mainPosition.transform.translate = basePos;
 			frameOuter->mainPosition.transform.translate = basePos;
 			frameInner->mainPosition.transform.translate = basePos;
+
+			// ★ ここ追加
+			isRankEndWait_ = true;
+			rankEndWaitT_ = 0.0f;
 		}
 	}
+
+	// ============================
+// ④ シェイク後 → 少し待ってシーン遷移
+// ============================
+	if (isRankEndWait_) {
+		rankEndWaitT_ += system_->GetDeltaTime();
+
+		if (rankEndWaitT_ >= rankEndWaitDuration_) {
+			isRankEndWait_ = false;
+
+			// ★ シーン遷移
+			outcome_ = SceneOutcome::NEXT;
+		}
+	}
+
 
 }
 //==============================
@@ -3087,3 +3151,14 @@ void SceneStage01::UpdateOperationGuide() {
 void SceneStage01::SetSceneTitle(SceneTitle* title) {
 	sceneTitle_ = title;
 }
+// SceneStage01.cpp
+void SceneStage01::SetParticleDrawBlocked(bool block) {
+	particleDrawBlocked_ = block;
+}
+
+bool SceneStage01::IsParticleDrawBlocked()
+{
+	return particleDrawBlocked_;
+}
+
+
