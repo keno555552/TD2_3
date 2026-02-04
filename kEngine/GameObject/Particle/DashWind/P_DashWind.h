@@ -31,7 +31,7 @@ private:
 	float lifeTime_ = 1.0f; // 秒生きる
 	float speed_ = 0.05f;
 	float spread_ = 0.00f;      // 横に散らす量
-	float createNumber_ = 20.0f; // 1フレームでのパーティクル生成数
+	float createNumber_ = 10.0f; // 1フレームでのパーティクル生成数
 	int   maxParticleNum_ = 400;
 
 	int defaultTextureHandle_ = -1;
