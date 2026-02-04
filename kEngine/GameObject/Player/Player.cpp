@@ -456,13 +456,13 @@ void Player::UpdateAppearance() {
 
 void Player::ImGuiPart() {
 #ifdef USE_IMGUI
-	ImGui::Text("=== Player ===");
+	/*ImGui::Text("=== Player ===");
 	ImGui::ColorEdit4("Arm Color1", &Color1.x);
 	ImGui::ColorEdit4("Arm Color2", &Color2.x);
 	ImGui::ColorEdit4("Arm Color3", &Color3.x);
 	ImGui::SliderFloat("Color Intensity", &colorIntensity, 0.0f, 2.0f);
 	ImGui::SliderFloat("Color HeightScale", &colorHeightScale, 0.0f, 5.0f);
-	ImGui::Text("================");
+	ImGui::Text("================");*/
 #endif
 }
 
