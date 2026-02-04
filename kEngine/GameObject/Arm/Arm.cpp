@@ -19,8 +19,8 @@ Arm::Arm(kEngine* system, Object* parent, bool isRight) {
     LinkToObject(parent);
 
     // 初期回転など
-
 }
+
 
 void Arm::Update(Camera* camera, float gameScale) {
 
@@ -62,6 +62,7 @@ void Arm::Update(Camera* camera, float gameScale) {
 
 void Arm::Draw() {
     Object::Draw();
+	//debugObject_->Draw();
 }
 
 void Arm::LinkToObject(Object* targetObject) {
