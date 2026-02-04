@@ -115,7 +115,7 @@ SceneManager::SceneManager(kEngine* system) {
     system_ = system;
     sceneFactory_ = new SceneFactory(system_);
     //sceneUsingNameHandle_ = "TITLE";
-    sceneUsingNameHandle_ = "STAGE_01";
+    sceneUsingNameHandle_ = "TITLE";
 
     if (gShojiFrameTexHandle < 0)
         gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");

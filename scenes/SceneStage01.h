@@ -378,6 +378,7 @@ private:
 
 		int CountSE_ = -1;     // SEハンドル（-1 = 未ロード）
 		bool CountSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();
