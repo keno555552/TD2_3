@@ -114,7 +114,7 @@ static void CopyCameraToHoldCam(Camera* src, Camera* dst) {
 SceneManager::SceneManager(kEngine* system) {
     system_ = system;
     sceneFactory_ = new SceneFactory(system_);
-    sceneUsingNameHandle_ = "STAGE_01";
+    sceneUsingNameHandle_ = "TUTORIAL";
 
     if (gShojiFrameTexHandle < 0)
         gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
