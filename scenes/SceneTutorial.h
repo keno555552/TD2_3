@@ -151,4 +151,7 @@ private:
     P_PlaneReduction* planeReductionEffectR_ = nullptr;
 
     Explosion* explosion_ = nullptr;
+
+    int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
+    bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
 };

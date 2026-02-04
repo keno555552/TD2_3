@@ -809,11 +809,11 @@ void SceneTitle::Update() {
 
 
     // Mキーでカメラ移動開始
-    if (!cameraMovePlaying_ && system_->GetTriggerOn(DIK_M)) {
+ /*   if (!cameraMovePlaying_ && system_->GetTriggerOn(DIK_M)) {
         cameraMovePlaying_ = true;
         cameraMoveT_ = 0.0f;
         cameraPrevPos_ = cameraStartPos_;
-    }
+    }*/
 
     // カメラ補間
     if (cameraMovePlaying_) {
@@ -848,7 +848,7 @@ void SceneTitle::Update() {
         }
     }
 
-    if (!gateOpenTriggered_ && system_->GetIsPush(DIK_O)) {
+ /*   if (!gateOpenTriggered_ && system_->GetIsPush(DIK_O)) {
         gateOpenTriggered_ = true;
 
         gateOpenPlaying_ = true;
@@ -858,18 +858,18 @@ void SceneTitle::Update() {
         }
         gateStartRotY_[0] = gateRot_[0].y;
         gateStartRotY_[1] = gateRot_[1].y;
-    }
+    }*/
 
 
 
-    if (system_->GetTriggerOn(DIK_P)) {
-        StartSparkEffect(
-            Vector3(0.0f, 17.5f, 0.0f), // 基準位置
-            6,        // 1回あたりの数
-            1.5f,     // 演出全体時間
-            0.15f     // 発生間隔
-        );
-    }
+    //if (system_->GetTriggerOn(DIK_P)) {
+    //    StartSparkEffect(
+    //        Vector3(0.0f, 17.5f, 0.0f), // 基準位置
+    //        6,        // 1回あたりの数
+    //        1.5f,     // 演出全体時間
+    //        0.15f     // 発生間隔
+    //    );
+    //}
     UpdateSparkEffect();
     UpdateSparkEffect2();
     if (gateOpenPlaying_) {
