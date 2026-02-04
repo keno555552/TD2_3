@@ -3,7 +3,6 @@
 
 P_DashWind::P_DashWind(kEngine* system) :Particle(system){
 	createTimer.Init0(0.05f, system_->GetTimeManager());
-	system_;
 	defaultModelHandle_ = system_->SetModelObj("resources/game/model/Particle_Dash.obj");
 	defaultTextureHandle_ = system_->LoadTexture("resources/game/model/Particle_Dash.png");
 	commonMaterialConfig->useModelTexture = false;
@@ -76,10 +75,11 @@ void P_DashWind::UpdateDashWind() {
 		//float s = t * t;
 		p->part->mainPosition.transform.scale = Vector3(s, s, s);
 
-		float easedT = t * t * t * t; // easeIn
-		p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f) * easedT) * speed_ * armScale_;
-		p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f * armScale_) * easedT) * speed_;
-		//p->velocity = (p->moveDirection * (1.0f - easedT) + (-1.0f * targetForward_ * 2.0f) * easedT) * speed_;
+		float easedT = 1.0f - powf(1.0f - t, 3); // easeOut
+		
+		Vector3 start = p->moveDirection;
+		Vector3 end = -1.0f * targetForward_;
+		p->velocity = (start * (1.0f - easedT) + end * easedT) * speed_ * (armScale_ / 2.0f);
 
 		p->part->mainPosition.transform.translate += p->velocity;
 

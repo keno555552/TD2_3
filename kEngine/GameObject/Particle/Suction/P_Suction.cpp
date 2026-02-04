@@ -2,8 +2,8 @@
 
 P_Suction::P_Suction(kEngine* system) :Particle(system) {
 	createTimer.Init0(0.1f, system_->GetTimeManager());
-	defaultModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/suzanne/suzanne.obj");
-	defaultTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/circle.png");
+	defaultModelHandle_ = system_->SetModelObj("resources/game/model/Particle_Charge.obj");
+	defaultTextureHandle_ = system_->LoadTexture("resources/game/model/Particle_Charge.png");
 	commonMaterialConfig->useModelTexture = false;
 	commonMaterialConfig->textureHandle = defaultTextureHandle_;
 }
@@ -44,6 +44,22 @@ void P_Suction::CreateSuction() {
 			p->lifeTimeTimer.Init0(lifeTime_, system_->GetTimeManager());
 			*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 			p->part->mainPosition.transform = CreateDefaultTransform();
+			if (isPlayer_) {
+
+				p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+				p->part->objectParts_[0].materialConfig->textureColor = {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f};
+				p->part->objectParts_[0].materialConfig->textureColor2 = {36.0f / 255.0f, 195.0f / 255.0f, 255.0f / 255.0f, 174.0f / 255.0f};
+				p->part->objectParts_[0].materialConfig->textureColor3 = {255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f};
+				p->part->objectParts_[0].materialConfig->intensity = 0.776f;
+				p->part->objectParts_[0].materialConfig->heightScale = 2.922f;
+			} else {
+				p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+				p->part->objectParts_[0].materialConfig->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+				p->part->objectParts_[0].materialConfig->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+				p->part->objectParts_[0].materialConfig->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+				p->part->objectParts_[0].materialConfig->intensity = 0.822f;
+				p->part->objectParts_[0].materialConfig->heightScale = 1.507f;
+			}
 
 
 			p->part->objectParts_[0].transform.scale = Vector3(0.05f, 0.05f, 0.05f);
