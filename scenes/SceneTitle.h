@@ -20,7 +20,7 @@ public:
 
 	float skydomeRotateY_ = 0.0f;
 	const float kSkydomeRotateSpeed_ = 0.05f; // rad / sec（好みで）
-
+	
     // セレクトSE
     // =====================
 	int  selectMoveSE_ = -1;     // SEハンドル（-1 = 未ロード）
@@ -296,7 +296,7 @@ public:
 	float cursorScaleMin_ = 0.1f;
 	float cursorScaleMax_ = 0.105f;
 
-
+	bool padDecideNeutral_ = true;
 
 
 	//Camera* GetUsingCamera() override;

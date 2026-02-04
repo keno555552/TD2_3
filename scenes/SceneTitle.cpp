@@ -836,6 +836,15 @@ void SceneTitle::Update() {
 
         if (cameraMoveT_ >= 1.0f) {
             cameraMovePlaying_ = false;
+            gateOpenTriggered_ = true;
+
+            gateOpenPlaying_ = true;
+            gateOpenT_ = 0.0f;
+            if (Gate_OpenSE_ >= 0) {
+                system_->SoundPlaySE(Gate_OpenSE_, 0.6f);
+            }
+            gateStartRotY_[0] = gateRot_[0].y;
+            gateStartRotY_[1] = gateRot_[1].y;
         }
     }
 
@@ -1017,15 +1026,19 @@ void SceneTitle::Update() {
     skydome_->Update(usingCamera_);
     sprite_->Update(usingCamera_);
 
-    if (system_->GetTriggerOn(DIK_SPACE)) {
-
+    if (
+        system_->GetTriggerOn(DIK_SPACE) ||
+        system_->GetGamepadIsPush(VK_PAD_A)
+        ) {
         if (DecideSE_ >= 0) {
             system_->SoundPlaySE(DecideSE_, 0.6f);
         }
-		outcome_ = SceneOutcome::NEXT;
+        outcome_ = SceneOutcome::NEXT;
         system_->SoundStop(BGM_);
-
     }
+
+
+
 }
 
 void SceneTitle::Draw() {
