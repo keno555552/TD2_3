@@ -94,6 +94,10 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 
+	BGM_ = system_->SoundLoadSE("resources/gate/SE/BBBB.wav");
+
+	system_->SoundPlayBGM(BGM_, 0.3f);  // ← 効果音！！
+
 	explosion_ = new Explosion(system_);
 }
 
@@ -339,6 +343,7 @@ void SceneTutorial::Update() {
     case TutorialStep::Finished:
         // 完了したらタイトルやステージ1へ
         outcome_ = SceneOutcome::NEXT;
+		system_->SoundStop(BGM_);
         break;
     }
 #pragma region パーティクル
