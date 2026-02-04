@@ -403,7 +403,7 @@ void SceneTutorial::CameraPart() {
 // 1. 基本移動（左右旋回）
 void SceneTutorial::UpdateStepMove() {
 	// 移動を停止
-	player_->SetIsTutorial(true);
+	//player_->SetIsTutorial(true);
 
     // Aキー or Dキー（あるいは左スティック）が入力されているか
     bool isRotating = false;
@@ -462,7 +462,7 @@ void SceneTutorial::UpdateStepDash() {
     if (wasCharging_ && !isCharging) {
         // 離して発射したとみなす
 		// 移動を停止
-		player_->SetIsTutorial(false);
+		//player_->SetIsTutorial(false);
         dashSuccessCount_++;
     }
     // チャージ中フラグ更新
