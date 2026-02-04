@@ -19,7 +19,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	debugCamera_->SetFarClip(2000.0f);
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
-	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
 	guideArrowModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arrow/arrow.obj");
 	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
@@ -484,8 +484,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 	for (const auto& pos : spawnPositions) {
 		Enemy* newEnemy = new Enemy(system_, pos);
-
-		newEnemy->CreateModelData(playerModelHandle_);
+		int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
+		newEnemy->CreateModelData(enemyHandle);
 		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
 
 		// === Left Arm ===
@@ -1581,7 +1581,7 @@ void SceneStage01::ImguiPart() {
 					e->mainPosition.transform.translate = Vector3(10.0f * (i + 1), 0.0f, 10.0f);
 				}
 
-				if (ImGui::Checkbox("Test Expand", &e->IsTestExpand()));
+				//if (ImGui::Checkbox("Test Expand", &e->IsTestExpand()));
 
 				if (ImGui::TreeNode("Transform")) {
 					ImGui::DragFloat3("Pos", &e->mainPosition.transform.translate.x, 0.1f);

@@ -53,9 +53,9 @@ public:
 	float& GetRefDamageTimer() { return kDamageParameter_; }
 	float& GetRefKnockbackCD() { return knockbackCD_; }
 	float& GetRefKnockbackTimer() { return knockbackTimer_; }
-	bool& IsTestExpand() {
+	/*bool& IsTestExpand() {
 		return isTestExpand_;
-	}
+	}*/
 #endif
 
 	bool IsDamage() { return isDamage_; }
