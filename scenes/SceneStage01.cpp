@@ -1024,6 +1024,7 @@ void SceneStage01::Update() {
 	}
 
 	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetArmScaleR(player_->GetArmScaleL());
 	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
 	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
 	suctionEffect_->SetLeftEmitting(false);
@@ -1045,7 +1046,7 @@ void SceneStage01::Update() {
 	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
 	planeReductionEffectL_->Update(camera_);
 
-	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
 	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
