@@ -73,6 +73,8 @@ public:
     
     Vector3 GetForward() const { return forward_; }
 
+	void SetNumberShow(bool flag);
+
 	// ImGuI用
 #ifdef USE_IMGUI
     float &GetRefArmScaleL() { return armScaleL_; }
@@ -126,6 +128,8 @@ private:
 	void UpdateArmScale(float &scale, bool isPush);
 	// 見た目を更新する
 	void UpdateAppearance();
+
+	void ImGuiPart();
 
 private:
 	/////// State

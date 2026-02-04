@@ -74,6 +74,8 @@ public:
 
     void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
 
+	void SetNumberShow(bool flag);
+
 private: // メンバ関数
 	void Move(); // 将来AIを入れる場所
 

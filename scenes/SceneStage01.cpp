@@ -567,7 +567,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	// 画面左下に配置 (座標は画面サイズに合わせて調整してください)
 	// 例: 画面高さが 720 で 画像高さが 100 なら Y=620 くらい
 	// 左端なので X=10 くらい
-	float winHeight = config::GetClientHeight();
+	float winHeight = (float)config::GetClientHeight();
 	guideKey_->mainPosition.transform.translate = Vector3(30.0f, winHeight - 170.0f, 0.0f);
 
 	// サイズ調整（必要なら）
@@ -1137,6 +1137,12 @@ void SceneStage01::Draw() {
 	Vector3 resultSets_camPos = usingCamera_->GetPosition();
 	if (isResultGenerated_)
 	{
+		/// 拳の数字をoff
+		player_->SetNumberShow(false);
+		for (auto& enemy : enemies_)
+		{
+			enemy->SetNumberShow(false);
+		}
 
 		for (auto& set : resultSets_) {
 			// ★ セット代表位置で距離判定

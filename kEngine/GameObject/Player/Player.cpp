@@ -20,6 +20,13 @@ Player::Player(kEngine* system, const Vector3& position) {
     // 第2引数に「自分(this)」を渡して追従させる
   armL_ = new Arm(system, this, false); // 左腕
   armR_ = new Arm(system, this, true);  // 右腕
+  
+  // デバッグ用オブジェクトの生成
+  leftHandDebugObject_ = new DebugObject(system_);
+  leftHandDebugObject_->SetShowNumber(true);
+
+  rightHandDebugObject_ = new DebugObject(system_);
+  rightHandDebugObject_->SetShowNumber(true);
 
   armL_->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
   armL_->objectParts_[0].materialConfig->textureColor = {
@@ -72,11 +79,6 @@ void Player::Update(Camera* camera) {
 	// ■■■ 腕の更新 ■■■
 	  // ここで現在の「倍率(armScaleL_/R_)」を渡すだけ！
 	if (armL_) {
-		armL_->objectParts_[0].materialConfig->textureColor = Color1;
-		armL_->objectParts_[0].materialConfig->textureColor2 = Color2;
-		armL_->objectParts_[0].materialConfig->textureColor3 = Color3;
-		armL_->objectParts_[0].materialConfig->intensity = colorIntensity;
-		armL_->objectParts_[0].materialConfig->heightScale = colorHeightScale;
 		armL_->Update(camera, armScaleL_);
 		leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
 		leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
@@ -104,6 +106,7 @@ void Player::Draw() {
 		armR_->Draw();
 		rightHandDebugObject_->Draw();
 	}
+
 	ImGuiPart();
 }
 
@@ -555,4 +558,9 @@ Vector3 Player::GetArmPositionR() const {
 	float worldY = centerPos.y;
 
 	return Vector3{ worldX, worldY, worldZ };
+}
+
+void Player::SetNumberShow(bool flag) {
+	leftHandDebugObject_->SetShowNumber(flag);
+	rightHandDebugObject_->SetShowNumber(flag);
 }
