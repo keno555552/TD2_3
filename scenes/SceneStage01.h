@@ -74,6 +74,7 @@ public:
 
 	// ===== 順位モデル演出 =====
 	bool isRankAnimating_ = false;
+	bool isRankAppear_ = false;
 	float rankAnimT_ = 0.0f;
 
 	Vector3 rankAnimStart_;
@@ -106,6 +107,10 @@ public:
 	void DestroyResultShoji();
 	
 	void SetSceneTitle(SceneTitle* title);
+	static void SetParticleDrawBlocked(bool block);
+	static bool IsParticleDrawBlocked();
+
+	static bool particleDrawBlocked_;
 private:
 	kEngine *system_ = nullptr;				// 借り
 
@@ -208,7 +213,7 @@ private:
 
 
 	// ===== 門パーツ =====
-	static constexpr int kDoujouPartCount = 15;
+	static constexpr int kDoujouPartCount = 16;
 
 	Object* Doujous_[kDoujouPartCount] = {};
 	uint32_t  DoujouModels_[kDoujouPartCount] = {};
@@ -234,6 +239,12 @@ private:
 		std::vector<ResultSet> resultSets_;
 
 		bool isResultGenerated_ = false;
+		bool NotDraw_ = false;
+
+
+		bool  isRankEndWait_ = false;
+		float rankEndWaitT_ = 0.0f;
+		const float rankEndWaitDuration_ = 2.0f; // ← 待ち時間（秒）
 
 		// ===== 門パーツ =====
 		static constexpr int kResultPartCount = 6;
@@ -314,7 +325,28 @@ private:
 
 		void DrawSparkEffect2();
 
+		// セレクトSE
+  // =====================
+		int  selectMoveSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool selectSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 
+		int Title_PunchSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool Title_PunchSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int  Gate_OpenSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool Gate_OpenLoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int  DecideSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool DecideSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int AppearSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool AppearSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int WalkSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool WalkSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
 		SceneTitle* sceneTitle_ = nullptr;
 private:
 	/// ============= シーン内命令 =============///
