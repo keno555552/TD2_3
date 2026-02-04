@@ -680,6 +680,8 @@ SceneStage01::~SceneStage01() {
 
 void SceneStage01::Update() {
 
+	/// 王冠の更新
+	UpdateCrown();
 
 	// ===============================
 	// Result中：ゲーム進行を完全停止
@@ -1011,8 +1013,7 @@ void SceneStage01::Update() {
 
 	/// ガイド矢印更新
 	UpdateGuideArrow();
-	/// 王冠の更新
-	UpdateCrown();
+
 
 	//背景オブジェクト
 	for (int i = 0; i < kDoujouPartCount; i++) {
