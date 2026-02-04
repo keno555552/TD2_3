@@ -1074,13 +1074,13 @@ void SceneStage01::Draw() {
 		explosion_->Draw();
 	}
 	//畳（床）
-	// =====================
-	// 畳（床）距離カリング描画
+	//畳（床）
+// =====================
+// 畳（床）距離カリング描画
 
-	constexpr float TATAMI_DRAW_DIST = 150.0f;
+	constexpr float TATAMI_DRAW_DIST = 200.0f;
 	constexpr float TATAMI_DRAW_DIST_SQ =
 		TATAMI_DRAW_DIST * TATAMI_DRAW_DIST;
-
 
 	Vector3 camPos = usingCamera_->GetPosition();
 
@@ -1091,7 +1091,7 @@ void SceneStage01::Draw() {
 		Vector3 pos = t->mainPosition.transform.translate;
 
 		Vector3 d = pos - camPos;
-		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+		float distSq = d.x * d.x + d.z * d.z; // ★ Yを計算から除外
 
 		if (distSq > TATAMI_DRAW_DIST_SQ)
 			continue;   // ★ 遠いので描画しない
@@ -1106,14 +1106,13 @@ void SceneStage01::Draw() {
 		Vector3 pos = f->mainPosition.transform.translate;
 
 		Vector3 d = pos - camPos;
-		float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+		float distSq = d.x * d.x + d.z * d.z; // ★ Yを計算から除外
 
 		if (distSq > TATAMI_DRAW_DIST_SQ)
 			continue;
 
 		f->Draw();
 	}
-
 
 
 	// 背景オブジェクト
@@ -1292,7 +1291,7 @@ void SceneStage01::CameraPart() {
 	
 
 			// 行き過ぎないように制限 (Clamp)
-			manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_);
+			manualZoomOffset_ = std::clamp(manualZoomOffset_, kMinManualZoom_, kMaxManualZoom_/2);
 
 
 			// ---------------------------------------------------------
@@ -1314,8 +1313,8 @@ void SceneStage01::CameraPart() {
 			// 腕が大きくなるほど距離(baseDistance)を増やす
 			// 例：基本 + 腕の余剰分 * 倍率
 			// ここの数値をいじると「引き」の強さが変わる
-			float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_;
-			float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_;
+			float autoDistance = cameraDistance_ + (maxArmScale - 1.0f) * cameraDistanceMultiply_/2;
+			float autoHeight = cameraHeight_ + (maxArmScale - 1.0f) * cameraHeightMultiply_/2;
 
 			// ▼▼▼ 最終決定: 自動値 + 手動オフセット ▼▼▼
 

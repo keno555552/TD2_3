@@ -47,10 +47,10 @@ void Arm::Update(Camera* camera, float gameScale) {
 
     if (isRight_) {
         // 右腕はマイナス方向（Playerの実装に合わせる）
-        mainPosition.transform.translate = { +offsetX, 0.0f, 0.0f };
+        mainPosition.transform.translate = { -offsetX, 0.0f, 0.0f };
     } else {
         // 左腕はプラス方向
-        mainPosition.transform.translate = { -offsetX, 0.0f, 0.0f };
+        mainPosition.transform.translate = { +offsetX, 0.0f, 0.0f };
     }
 
     // 高さ(Y)や前後(Z)の微調整があればここで行う
