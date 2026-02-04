@@ -95,6 +95,12 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
 
 	explosion_ = new Explosion(system_);
+	BGM_ = system_->SoundLoadSE("resources/gate/SE/Game/BBGGMMM.wav");
+
+
+	system_->SoundPlayBGM(BGM_, 0.3f);  // ← 効果音！！
+
+
 }
 
 SceneTutorial::~SceneTutorial() {
@@ -310,6 +316,7 @@ void SceneTutorial::Update() {
     case TutorialStep::Battle:    UpdateStepBattle(); break;
     case TutorialStep::Caution:   UpdateStepCaution(); break;
     case TutorialStep::Finished:
+		system_->SoundStop(BGM_);   // ← ★ここで止める
         // 完了したらタイトルやステージ1へ
         outcome_ = SceneOutcome::NEXT;
         break;

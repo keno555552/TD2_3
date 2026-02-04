@@ -97,6 +97,9 @@ private:
     // チュートリアル用テキスト表示モデル
     Object* textObj_ = nullptr;
 
+    int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
+    bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
+
     Object* tatami_ = nullptr;
 
     // --- 進行管理 ---
