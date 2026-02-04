@@ -35,18 +35,41 @@ StartTimer::StartTimer(kEngine* kEngine) {
 	startSprite_->objectParts_[0].materialConfig->textureHandle = startTextureHandle_;
 	startSprite_->objectParts_[0].materialConfig->textureColor = usingColor;
 	startSprite_->objectParts_[0].anchorPoint = { 422.0f,178.0f };
+
+
+	
+	CountSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Count.wav");
+	StartSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Start.wav");
 }
 
 void StartTimer::Update(Camera* camera) {
 
-	if (!isStart_)return;
+	if (!isStart_) return;
 
 	/// ========= タイマー更新 ========= ///
 	if (numberCount_ >= 0) {
 		if (timer_->parameter_ != timer_->maxTime_) {
 			timer_->ToMix();
-		} else {
+		}
+		else {
+
+			// ここで「次の表示」に切り替わるので、先に減らす
 			numberCount_--;
+
+			// ★ 減らした後の値（= 次に表示される状態）に合わせて鳴らす
+			// 3/2/1 表示開始のタイミングで鳴る
+			if (CountSE_ >= 0 && numberCount_ >= 1) { // 3,2,1 に相当（numberCount_ が 3,2,1 のとき）
+				system_->SoundPlaySE(CountSE_, 1.2f);
+			}
+
+			// START 表示開始のタイミングで鳴る（numberCount_ が 0 になった瞬間）
+			if (numberCount_ == 0) {
+				if (StartSE_ >= 0 && !startSEPlayed_) {
+					system_->SoundPlaySE(StartSE_, 1.2f);
+					startSEPlayed_ = true;
+				}
+			}
+
 			timer_->Reset0();
 		}
 	}
@@ -59,17 +82,19 @@ void StartTimer::Update(Camera* camera) {
 		numberSprites_[movingObjectIndex]->objectParts_[0].materialConfig->textureColor.w = timer_->linearity(1.0f, 0.0f);
 		float scaleValue = timer_->linearity(startScale_, 1.0f);
 		numberSprites_[movingObjectIndex]->mainPosition.transform.scale = { scaleValue,scaleValue,1.0f };
-	} else {
+
+	}
+	else {
 		startSprite_->objectParts_[0].materialConfig->textureColor.w = timer_->linearity(1.0f, 0.0f);
 		float scaleValue = timer_->linearity(startScale_, 1.0f);
+
 		startSprite_->mainPosition.transform.scale = { scaleValue,scaleValue,1.0f };
 	}
 
 	/// ========== スプライト配置 ========== ///
 
-	
-
 }
+
 
 void StartTimer::Draw() {
 
@@ -87,7 +112,15 @@ void StartTimer::Draw() {
 }
 
 void StartTimer::Start() {
+	// ★ すでに開始済みなら何もしない
+	if (hasStarted_) return;
+	hasStarted_ = true;          // ← ★ これが抜けてた
 	isStart_ = true;
+	startSEPlayed_ = false;
+	// ★ 最初の「3」が表示される瞬間のSE
+	if (CountSE_ >= 0) {
+		system_->SoundPlaySE(CountSE_, 1.2f);
+	}
 }
 
 void StartTimer::Stop() {
@@ -107,7 +140,7 @@ void StartTimer::Reset() {
 	numberCount_ = 3;
 	isStart_ = false;
 
-
+	hasStarted_ = false;   // ★ これを忘れると再スタートできない
 }
 
 bool StartTimer::IsTimeUp() {
