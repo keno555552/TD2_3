@@ -20,7 +20,7 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	skydome_->objectParts_[0].materialConfig->enableLighting = false;
 
     // ■ プレイヤー生成
-	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
 	player_ = new Player(system_, Vector3(0.0f, 0.0f, 5.0f));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = kBaseActorScale_;
@@ -126,6 +126,15 @@ void SceneTutorial::Update() {
 		}
 	}
 
+	for (int i = 0; i < enemies_.size(); i++) {
+
+		// 参照で受ける（書き換えられるように auto& にする）
+		auto& data = enemies_[i];
+
+		// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
+		data.enemy->Update(usingCamera_);
+	}
+
 	CameraPart();
 
 	if (system_->GetTriggerOn(DIK_RETURN) || system_->GetGamepadIsPush(VK_PAD_START)) {
@@ -145,17 +154,8 @@ void SceneTutorial::Update() {
 	}
 
     // ステップ完了後の待機時間処理
-    if (isStepCompleted_) {
-        stepWaitTimer_ += system_->GetDeltaTime();
-
-		for (int i = 0; i < enemies_.size(); i++) {
-
-			// 参照で受ける（書き換えられるように auto& にする）
-			auto& data = enemies_[i];
-
-			// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
-			data.enemy->Update(usingCamera_);
-		}
+	if (isStepCompleted_) {
+		stepWaitTimer_ += system_->GetDeltaTime();
         if (stepWaitTimer_ > 1.5f) { // 1.5秒待って次へ
             stepWaitTimer_ = 0.0f;
             isStepCompleted_ = false;
@@ -176,14 +176,59 @@ void SceneTutorial::Update() {
                 // 敵をスポーンさせる
                 {
 					// 敵を生成してリストに追加
+					int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/enemy/enemy.obj");
                     Enemy* e1 = new Enemy(system_, Vector3(-10.0f, 20.0f, 10.0f));
-					e1->CreateModelData(playerModelHandle_);
+					e1->CreateModelData(enemyHandle);
 					e1->SetIsTutorial(true);
 					e1->mainPosition.transform.scale = kBaseActorScale_;
                     Enemy* e2 = new Enemy(system_, Vector3(10.0f, 20.0f, 10.0f));
-					e2->CreateModelData(playerModelHandle_);
+					e2->CreateModelData(enemyHandle);
 					e2->SetIsTutorial(true);
 					e2->mainPosition.transform.scale = kBaseActorScale_;
+
+					// === Left Arm ===
+					if (e1->armL_ && !e1->armL_->objectParts_.empty()) {
+						auto& m = e1->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e1->armR_ && !e1->armR_->objectParts_.empty()) {
+						auto& m = e1->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Left Arm ===
+					if (e2->armL_ && !e2->armL_->objectParts_.empty()) {
+						auto& m = e2->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e2->armR_ && !e2->armR_->objectParts_.empty()) {
+						auto& m = e2->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
 
 					// 構造体を作って登録
 					TutorialEnemyData data1;
@@ -402,7 +447,7 @@ void SceneTutorial::CameraPart() {
 // 1. 基本移動（左右旋回）
 void SceneTutorial::UpdateStepMove() {
 	// 移動を停止
-	player_->SetIsTutorial(true);
+	//player_->SetIsTutorial(true);
 
     // Aキー or Dキー（あるいは左スティック）が入力されているか
     bool isRotating = false;
@@ -461,7 +506,7 @@ void SceneTutorial::UpdateStepDash() {
     if (wasCharging_ && !isCharging) {
         // 離して発射したとみなす
 		// 移動を停止
-		player_->SetIsTutorial(false);
+		//player_->SetIsTutorial(false);
         dashSuccessCount_++;
     }
     // チャージ中フラグ更新
@@ -505,15 +550,9 @@ void SceneTutorial::UpdateStepBattle() {
 			currentPos.z = data.spawnStartPos.z + (data.spawnEndPos.z - data.spawnStartPos.z) * easeT;
 
 			data.enemy->mainPosition.transform.translate = currentPos;
-
-			// 落下中は向きやアニメーションを更新するだけにして、攻撃判定などはスキップ
-			data.enemy->Update(usingCamera_);
 			continue;
 		}
 		// ▲▲▲ ここまで ▲▲▲
-
-		// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
-		data.enemy->Update(usingCamera_);
 
 		// 既に倒されているなら、衝突判定はスキップする
 		if (data.isDefeated) {
@@ -537,7 +576,6 @@ void SceneTutorial::UpdateStepBattle() {
 			// 倒した扱いにする
 			data.isDefeated = true;
 			killCount_++;
-			data.enemy->Update(usingCamera_);
 		}
 	}
 

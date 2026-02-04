@@ -287,7 +287,7 @@ void Player::Move() {
 
 	}
 	// プレイヤーの見た目を更新(仮の体部分のため)
-	UpdateAppearance();
+	//UpdateAppearance();
 }
 
 void Player::OnGroundChanger(const CollisionMapInfo& info) {
