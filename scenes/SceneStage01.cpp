@@ -19,7 +19,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 	debugCamera_->SetFarClip(2000.0f);
 	/// =========== リソースロード ============///
 	skydomeModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/skydome/skydome.obj");
-	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
 	guideArrowModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arrow/arrow.obj");
 	wallModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/cube/cube.obj");
 
@@ -486,8 +486,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 	for (const auto& pos : spawnPositions) {
 		Enemy* newEnemy = new Enemy(system_, pos);
-
-		newEnemy->CreateModelData(playerModelHandle_);
+		int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/enemy/enemy.obj");
+		newEnemy->CreateModelData(enemyHandle);
 		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
 		newEnemy->SetActionSelectionTimer(randomMaker_->randomFloat(0.0f, 5.0f));
 
@@ -695,15 +695,15 @@ void SceneStage01::Update() {
 		/// カメラ処理
 		/*CameraPart();*/
 		// ランクアニメを再実行（デバッグ用）
-		if (system_->GetTriggerOn(DIK_L)) {
+		//if (system_->GetTriggerOn(DIK_L)) {
 
-			// アニメを最初からやり直す
-			rankAnimT_ = 0.0f;
-			isRankAnimating_ = true;
+		//	// アニメを最初からやり直す
+		//	rankAnimT_ = 0.0f;
+		//	isRankAnimating_ = true;
 
-			// ★ 開始・終了位置は「今の設定」をそのまま使う
-			// 何も再計算しない（←重要）
-		}
+		//	// ★ 開始・終了位置は「今の設定」をそのまま使う
+		//	// 何も再計算しない（←重要）
+		//}
 
 		// ■ Result演出とカメラだけは動かす
 		UpdateResultShojiAnim();
@@ -1024,6 +1024,7 @@ void SceneStage01::Update() {
 	}
 
 	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetArmScaleR(player_->GetArmScaleL());
 	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
 	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
 	suctionEffect_->SetLeftEmitting(false);
@@ -1045,10 +1046,12 @@ void SceneStage01::Update() {
 	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
 	planeReductionEffectL_->Update(camera_);
 
-	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
 	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
+
+
 
 	explosion_->Update(usingCamera_);
 #pragma endregion
@@ -1629,7 +1632,7 @@ void SceneStage01::ImguiPart() {
 					e->mainPosition.transform.translate = Vector3(10.0f * (i + 1), 0.0f, 10.0f);
 				}
 
-				if (ImGui::Checkbox("Test Expand", &e->IsTestExpand()));
+				//if (ImGui::Checkbox("Test Expand", &e->IsTestExpand()));
 
 				if (ImGui::TreeNode("Transform")) {
 					ImGui::DragFloat3("Pos", &e->mainPosition.transform.translate.x, 0.1f);

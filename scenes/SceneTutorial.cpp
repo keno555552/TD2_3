@@ -20,7 +20,7 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	skydome_->objectParts_[0].materialConfig->enableLighting = false;
 
     // ■ プレイヤー生成
-	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/simplePlayer.obj");
+	playerModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/charater/player/player.obj");
 	player_ = new Player(system_, Vector3(0.0f, 0.0f, 5.0f));
 	player_->CreateModelData(playerModelHandle_);
 	player_->mainPosition.transform.scale = kBaseActorScale_;
@@ -78,6 +78,18 @@ SceneTutorial::SceneTutorial(kEngine* system) {
 	barFill_->objectParts_[0].materialConfig->textureColor = {0.0f, 1.0f, 0.0f, 0.6f};
 	barFill_->objectParts_[0].anchorPoint = { 0.0f, 0.0f };
 	// 初期サイズは横幅0、色は緑
+
+	dashWindEffectL_ = new P_DashWind(system_);
+	dashWindEffectR_ = new P_DashWind(system_);
+
+	suctionEffect_ = new P_Suction(system_);
+
+	planeReductionEffectL_ = new P_PlaneReduction(system_);
+	planeReductionEffectL_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
+	planeReductionEffectR_ = new P_PlaneReduction(system_);
+	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/game/model/circle.obj"));
+
+	explosion_ = new Explosion(system_);
 }
 
 SceneTutorial::~SceneTutorial() {
@@ -96,6 +108,13 @@ SceneTutorial::~SceneTutorial() {
 		delete data.enemy;
 	}
     enemies_.clear();
+
+	delete dashWindEffectL_;
+	delete dashWindEffectR_;
+	delete suctionEffect_;
+	delete planeReductionEffectL_;
+	delete planeReductionEffectR_;
+	delete explosion_;
 }
 
 void SceneTutorial::Update() {
@@ -126,6 +145,15 @@ void SceneTutorial::Update() {
 		}
 	}
 
+	for (int i = 0; i < enemies_.size(); i++) {
+
+		// 参照で受ける（書き換えられるように auto& にする）
+		auto& data = enemies_[i];
+
+		// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
+		data.enemy->Update(usingCamera_);
+	}
+
 	CameraPart();
 
 	if (system_->GetTriggerOn(DIK_RETURN) || system_->GetGamepadIsPush(VK_PAD_START)) {
@@ -145,17 +173,8 @@ void SceneTutorial::Update() {
 	}
 
     // ステップ完了後の待機時間処理
-    if (isStepCompleted_) {
-        stepWaitTimer_ += system_->GetDeltaTime();
-
-		for (int i = 0; i < enemies_.size(); i++) {
-
-			// 参照で受ける（書き換えられるように auto& にする）
-			auto& data = enemies_[i];
-
-			// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
-			data.enemy->Update(usingCamera_);
-		}
+	if (isStepCompleted_) {
+		stepWaitTimer_ += system_->GetDeltaTime();
         if (stepWaitTimer_ > 1.5f) { // 1.5秒待って次へ
             stepWaitTimer_ = 0.0f;
             isStepCompleted_ = false;
@@ -176,14 +195,59 @@ void SceneTutorial::Update() {
                 // 敵をスポーンさせる
                 {
 					// 敵を生成してリストに追加
+					int enemyHandle = system_->SetModelObj("resources/TemplateResource/object/charater/enemy/enemy.obj");
                     Enemy* e1 = new Enemy(system_, Vector3(-10.0f, 20.0f, 10.0f));
-					e1->CreateModelData(playerModelHandle_);
+					e1->CreateModelData(enemyHandle);
 					e1->SetIsTutorial(true);
 					e1->mainPosition.transform.scale = kBaseActorScale_;
                     Enemy* e2 = new Enemy(system_, Vector3(10.0f, 20.0f, 10.0f));
-					e2->CreateModelData(playerModelHandle_);
+					e2->CreateModelData(enemyHandle);
 					e2->SetIsTutorial(true);
 					e2->mainPosition.transform.scale = kBaseActorScale_;
+
+					// === Left Arm ===
+					if (e1->armL_ && !e1->armL_->objectParts_.empty()) {
+						auto& m = e1->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e1->armR_ && !e1->armR_->objectParts_.empty()) {
+						auto& m = e1->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Left Arm ===
+					if (e2->armL_ && !e2->armL_->objectParts_.empty()) {
+						auto& m = e2->armL_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
+
+					// === Right Arm ===
+					if (e2->armR_ && !e2->armR_->objectParts_.empty()) {
+						auto& m = e2->armR_->objectParts_[0].materialConfig;
+						m->lightModelType = LightModelType::FlameNeonGlow;
+						m->textureColor = { 13.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor2 = { 0.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+						m->textureColor3 = { 248.0f / 255.0f,  0.0f / 255.0f,  5.0f / 255.0f, 1.0f };
+						m->intensity = 0.822f;
+						m->heightScale = 1.507f;
+					}
 
 					// 構造体を作って登録
 					TutorialEnemyData data1;
@@ -245,6 +309,60 @@ void SceneTutorial::Update() {
         outcome_ = SceneOutcome::NEXT;
         break;
     }
+#pragma region パーティクル
+	Vector3 forward = player_->GetForward();
+
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
+	dashWindEffectL_->SetTargetForward(forward);
+	dashWindEffectL_->SetArmScale(player_->GetArmScaleL());
+	dashWindEffectL_->Update(usingCamera_);
+	dashWindEffectL_->SetEmitting(false);
+
+	if (player_->IsAttackingL()) {
+		dashWindEffectL_->SetEmitting(true);
+	}
+
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + forward + Vector3(0.0f, player_->GetArmScaleR() - 0.5f, 0.0f));
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + (forward * player_->GetArmScaleR() * 2.0f));
+	dashWindEffectR_->SetTargetForward(forward);
+	dashWindEffectR_->SetArmScale(player_->GetArmScaleR());
+	dashWindEffectR_->Update(usingCamera_);
+	dashWindEffectR_->SetEmitting(false);
+
+	if (player_->IsAttackingR()) {
+		dashWindEffectR_->SetEmitting(true);
+	}
+
+	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
+	suctionEffect_->SetArmScaleR(player_->GetArmScaleL());
+	suctionEffect_->SetTargetPosLeft(player_->GetArmPositionL());
+	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
+	suctionEffect_->SetLeftEmitting(false);
+	suctionEffect_->SetRightEmitting(false);
+	if (system_->GetIsPush(DIK_A) ||
+		system_->GetGamepadIsPush(VK_PAD_LSHOULDER)) {
+		suctionEffect_->SetLeftEmitting(true);
+	}
+	if (system_->GetIsPush(DIK_D) ||
+		system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
+		suctionEffect_->SetRightEmitting(true);
+	}
+
+	suctionEffect_->Update(usingCamera_);
+
+	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A) || system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
+	planeReductionEffectL_->SetTargetPos(player_->GetArmPositionL());
+	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
+	planeReductionEffectL_->Update(camera_);
+
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D) || system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
+	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
+	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
+	planeReductionEffectR_->Update(camera_);
+
+	explosion_->Update(usingCamera_);
+#pragma endregion
 }
 
 void SceneTutorial::Draw() {
@@ -264,6 +382,17 @@ void SceneTutorial::Draw() {
 		if (barBrank_) barBrank_->Draw();
 		if (barFill_) barFill_->Draw();
 	}
+
+	// 自機が進む際のダッシュエフェクト
+	dashWindEffectL_->Draw();
+	dashWindEffectR_->Draw();
+	// 自機の腕がでかくなる際の吸い込みエフェクト
+	suctionEffect_->Draw();
+
+	if (planeReductionEffectL_->GetIsActive())planeReductionEffectL_->Draw();
+	if (planeReductionEffectR_->GetIsActive())planeReductionEffectR_->Draw();
+
+	explosion_->Draw();
 }
 
 Camera* SceneTutorial::GetCamera() {
@@ -402,7 +531,7 @@ void SceneTutorial::CameraPart() {
 // 1. 基本移動（左右旋回）
 void SceneTutorial::UpdateStepMove() {
 	// 移動を停止
-	player_->SetIsTutorial(true);
+	//player_->SetIsTutorial(true);
 
     // Aキー or Dキー（あるいは左スティック）が入力されているか
     bool isRotating = false;
@@ -423,6 +552,8 @@ void SceneTutorial::UpdateStepMove() {
     if (isRotating) {
         rotateTimer_ += system_->GetDeltaTime();
     }
+
+
 
     // 一定時間旋回したら次へ
     if (rotateTimer_ >= kRotateQuota_) {
@@ -461,7 +592,7 @@ void SceneTutorial::UpdateStepDash() {
     if (wasCharging_ && !isCharging) {
         // 離して発射したとみなす
 		// 移動を停止
-		player_->SetIsTutorial(false);
+		//player_->SetIsTutorial(false);
         dashSuccessCount_++;
     }
     // チャージ中フラグ更新
@@ -505,15 +636,9 @@ void SceneTutorial::UpdateStepBattle() {
 			currentPos.z = data.spawnStartPos.z + (data.spawnEndPos.z - data.spawnStartPos.z) * easeT;
 
 			data.enemy->mainPosition.transform.translate = currentPos;
-
-			// 落下中は向きやアニメーションを更新するだけにして、攻撃判定などはスキップ
-			data.enemy->Update(usingCamera_);
 			continue;
 		}
 		// ▲▲▲ ここまで ▲▲▲
-
-		// 敵の更新（倒されていてもノックバック処理等のために更新は続ける）
-		data.enemy->Update(usingCamera_);
 
 		// 既に倒されているなら、衝突判定はスキップする
 		if (data.isDefeated) {
@@ -537,7 +662,6 @@ void SceneTutorial::UpdateStepBattle() {
 			// 倒した扱いにする
 			data.isDefeated = true;
 			killCount_++;
-			data.enemy->Update(usingCamera_);
 		}
 	}
 
@@ -802,6 +926,9 @@ void SceneTutorial::CheckAttackCollision() {
 							player_->AddKnockback(force);
 							player_->ResetArm(isRightB);
 						}
+						// エフェクト
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (winB) {
 					// Bが勝った場合（Aを吹き飛ばす）
@@ -831,6 +958,8 @@ void SceneTutorial::CheckAttackCollision() {
 							player_->AddKnockback(force);
 							player_->ResetArm(isRightA);
 						}
+						explosion_->SetIsEmitting(true);
+						explosion_->SetPos((posA + posB) / 2.0f);
 					}
 				} else if (draw) {
 					// 引き分け（両方吹っ飛ぶ）
@@ -850,10 +979,14 @@ void SceneTutorial::CheckAttackCollision() {
 							Vector3 forceA = { dirA.x * powerA, 5.0f, dirA.z * powerA };
 							if (objA == player_) {
 								player_->AddKnockback(forceA);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							} else {
 								Enemy* e = dynamic_cast<Enemy*>(objA);
 								if (e) {
 									e->AddKnockback(forceA);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
 								}
 							}
 						}
@@ -866,10 +999,14 @@ void SceneTutorial::CheckAttackCollision() {
 							Vector3 forceB = { dirB.x * powerB, 5.0f, dirB.z * powerB };
 							if (objB == player_) {
 								player_->AddKnockback(forceB);
+								explosion_->SetIsEmitting(true);
+								explosion_->SetPos((posA + posB) / 2.0f);
 							} else {
 								Enemy* e = dynamic_cast<Enemy*>(objB);
 								if (e) {
 									e->AddKnockback(forceB);
+									explosion_->SetIsEmitting(true);
+									explosion_->SetPos((posA + posB) / 2.0f);
 								}
 							}
 						}

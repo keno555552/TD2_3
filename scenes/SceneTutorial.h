@@ -7,6 +7,10 @@
 #include "DebugCamera.h"
 #include <vector>
 #include <algorithm> // clamp用
+#include "kEngine/GameObject/Particle/DashWind/P_DashWind.h"
+#include "kEngine/GameObject/Particle/Suction/P_Suction.h"
+#include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
+#include "GameObject/Particle/explosion/Explosion.h"
 
 // チュートリアルの進行状況
 enum class TutorialStep {
@@ -136,4 +140,15 @@ private:
     int killCount_ = 0;
     const int kKillQuota_ = 2;       // 2体倒したらクリア
     float spawnTimer_ = 0.0f;        // 敵が死んだ後の再スポーン用
+
+    // パーティクル用変数
+    P_DashWind* dashWindEffectL_ = nullptr;
+    P_DashWind* dashWindEffectR_ = nullptr;
+
+    P_Suction* suctionEffect_ = nullptr;
+
+    P_PlaneReduction* planeReductionEffectL_ = nullptr;
+    P_PlaneReduction* planeReductionEffectR_ = nullptr;
+
+    Explosion* explosion_ = nullptr;
 };
