@@ -139,6 +139,7 @@ void Enemy::Update(Camera* camera) {
 	// ■■■ 腕の更新 ■■■
 	 // ここで現在の「倍率(armScaleL_/R_)」を渡すだけ！
 	if (armL_) {
+		armL_->Update(camera, armScaleL_);
 		leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
 		leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
 		leftHandDebugObject_->Update(camera);
