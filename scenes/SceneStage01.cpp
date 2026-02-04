@@ -541,7 +541,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 	wall_[3]->mainPosition.transform.translate = Vector3(50.0f, 0.0f, 0.0f);
 	wall_[3]->mainPosition.transform.scale = Vector3(100.0f, 1.0f, 1.0f);
 
-	dashWindEffect_ = new P_DashWind(system_);
+	dashWindEffectL_ = new P_DashWind(system_);
+	dashWindEffectR_ = new P_DashWind(system_);
 
 	suctionEffect_ = new P_Suction(system_);
 
@@ -665,7 +666,8 @@ SceneStage01::~SceneStage01() {
 	}
 	resultSets_.clear();
 	DestroyResultShoji();
-	delete dashWindEffect_;
+	delete dashWindEffectL_;
+	delete dashWindEffectR_;
 	delete suctionEffect_;
 	delete planeReductionEffectL_;
 	delete planeReductionEffectR_;
@@ -710,7 +712,8 @@ void SceneStage01::Update() {
 		UpdateSparkEffect2();
 
 		
-		dashWindEffect_->Update(usingCamera_);
+		dashWindEffectL_->Update(usingCamera_);
+    dashWindEffectR_->Update(usingCamera_);
 		suctionEffect_->Update(usingCamera_);
 		planeReductionEffectL_->Update(camera_);
 		planeReductionEffectR_->Update(camera_);
@@ -923,15 +926,26 @@ void SceneStage01::Update() {
 #pragma region 自機用パーティクル
 	Vector3 forward = player_->GetForward();
 
-	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
-	dashWindEffect_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
-	dashWindEffect_->SetTargetForward(forward);
-	dashWindEffect_->SetArmScale(player_->GetArmScaleL());
-	dashWindEffect_->Update(usingCamera_);
-	dashWindEffect_->SetEmitting(false);
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + forward + Vector3(0.0f, player_->GetArmScaleL() - 0.5f, 0.0f));
+	dashWindEffectL_->SetGenerationPos(player_->GetArmPositionL() + (forward * player_->GetArmScaleL() * 2.0f));
+	dashWindEffectL_->SetTargetForward(forward);
+	dashWindEffectL_->SetArmScale(player_->GetArmScaleL());
+	dashWindEffectL_->Update(usingCamera_);
+	dashWindEffectL_->SetEmitting(false);
 
 	if (player_->IsAttackingL()) {
-		dashWindEffect_->SetEmitting(true);
+		dashWindEffectL_->SetEmitting(true);
+	}
+
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + forward + Vector3(0.0f, player_->GetArmScaleR() - 0.5f, 0.0f));
+	dashWindEffectR_->SetGenerationPos(player_->GetArmPositionR() + (forward * player_->GetArmScaleR() * 2.0f));
+	dashWindEffectR_->SetTargetForward(forward);
+	dashWindEffectR_->SetArmScale(player_->GetArmScaleR());
+	dashWindEffectR_->Update(usingCamera_);
+	dashWindEffectR_->SetEmitting(false);
+
+	if (player_->IsAttackingR()) {
+		dashWindEffectR_->SetEmitting(true);
 	}
 
 	suctionEffect_->SetArmScaleL(player_->GetArmScaleL());
@@ -1064,7 +1078,8 @@ void SceneStage01::Draw() {
 		}
 	
 		// 自機が進む際のダッシュエフェクト
-		dashWindEffect_->Draw();
+		dashWindEffectL_->Draw();
+	dashWindEffectR_->Draw();
 		// 自機の腕がでかくなる際の吸い込みエフェクト
 		suctionEffect_->Draw();
 

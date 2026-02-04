@@ -176,7 +176,8 @@ private:
 
 	Object* wall_[4] = { nullptr };
 
-	P_DashWind* dashWindEffect_ = nullptr;
+	P_DashWind* dashWindEffectL_ = nullptr;
+	P_DashWind* dashWindEffectR_ = nullptr;
 
 	P_Suction* suctionEffect_ = nullptr;
 
