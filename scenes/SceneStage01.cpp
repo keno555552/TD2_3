@@ -469,7 +469,6 @@ SceneStage01::SceneStage01(kEngine* system) {
 	sprite2_->objectParts_[0].materialConfig->textureHandle = uvTextureHandle_;
 
 	// --- エネミーの複数生成 ---
-	// テスト用に3体ほど配置
 	std::vector<Vector3> spawnPositions = {
 	{ 90.0f, 0.0f, 90.0f}, // 右奥
 	{ 45.0f, 0.0f, 45.0f},
@@ -480,8 +479,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 	{ 90.0f, 0.0f,  45.0f},
 
 	{  0.0f, 0.0f, 45.0f},
-	{  25.0f, 0.0f, 90.0f},
-	{  50.0f, 0.0f,  90.0f}
+	{  65.0f, 0.0f, 15.0f}, // 25 90
+	{  90.0f, 0.0f,  10.0f}
 	};
 
 	for (const auto& pos : spawnPositions) {
@@ -589,9 +588,10 @@ SceneStage01::SceneStage01(kEngine* system) {
 	guideGamepad_->CreateDefaultData();
 	guideGamepad_->objectParts_[0].materialConfig->textureHandle = guideGamepadHandle_;
 	// 座標設定 (キーボード用と全く同じ位置に重ねる)
-	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate;
+	guideGamepad_->mainPosition.transform.translate = guideKey_->mainPosition.transform.translate + Vector3(0.0f, -10.0f, 0.0f);
 
 	// サイズ調整（必要なら）
+	guideGamepad_->mainPosition.transform.scale = Vector3(0.15f, 0.15f, 1.0f);
 
 	/// --- チュートリアルお試し ---
 	tutorial_ = new Tutorial(system_);

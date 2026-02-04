@@ -274,7 +274,7 @@ void Enemy::Move() {
 			// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
 			// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
 			float boostRatio = maxExtraScale / (30.0f - 1.0f);
-			currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
+			currentSpeed_ = kBaseSpeed + (100.0f * boostRatio); // kBoostPower
 		} else {
 			currentSpeed_ = kBaseSpeed;
 		}
@@ -321,7 +321,7 @@ void Enemy::ChaseTarget() {
 }
 
 void Enemy::ChargeLeftArm() {
-	armScaleL_ += 0.3f * deltaTime_;
+	armScaleL_ += 0.4f * deltaTime_;
 
 	float turnSpeed = 0.01f + (armScaleL_ - 1.0f) * 0.02f;
 	turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
@@ -332,7 +332,7 @@ void Enemy::ChargeLeftArm() {
 }
 
 void Enemy::ChargeRightArm() {
-	armScaleR_ += 0.3f * deltaTime_;
+	armScaleR_ += 0.4f * deltaTime_;
 
 	float turnSpeed = 0.01f + (armScaleR_ - 1.0f) * 0.02f;
 	turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);

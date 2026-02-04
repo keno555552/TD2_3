@@ -14,13 +14,13 @@ static inline const float kMaxArmScale = 30.0f;
 // 腕が縮む速さ
 static inline const float kShrinkSpeed = 0.2f;
 // 腕が膨らむ速さ
-static inline const float kExpandSpeed = 0.5f;
+static inline const float kExpandSpeed = 0.4f;
 // 旋回性能
 static inline const float kTurnSpeed = 0.01f;
 // 自動直進の基本速度
 static inline const float kBaseSpeed = 3.0f;
 // 離した時の加速力
-static inline const float kBoostPower = 6.0f;
+static inline const float kBoostPower = 100.0f;
 
 /// 移動速度
 static inline const float kAcceleration = 3.0f;
