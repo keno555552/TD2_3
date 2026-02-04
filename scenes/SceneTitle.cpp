@@ -992,9 +992,9 @@ void SceneTitle::Update() {
 
             // ★ 念のため完全に元へ戻す
             camera_->Move({
-     -cameraShakeOffset_.x,
-     -cameraShakeOffset_.y,
-     -cameraShakeOffset_.z
+                 -cameraShakeOffset_.x,
+                 -cameraShakeOffset_.y,
+                 -cameraShakeOffset_.z
                 });
 
             cameraShakeOffset_ = { 0.0f, 0.0f, 0.0f };

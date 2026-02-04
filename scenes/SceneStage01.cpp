@@ -456,6 +456,8 @@ SceneStage01::SceneStage01(kEngine* system) {
 	//player_->CreateDefaultData();
 	//player_->modelHandle_ = playerModelHandle_;
 
+	currentTopCharacter_ = player_;
+
 	sprite_ = new SimpleSprite;
 	sprite_->IntObject(system_);
 	sprite_->CreateDefaultData();
@@ -487,6 +489,7 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 		newEnemy->CreateModelData(playerModelHandle_);
 		newEnemy->mainPosition.transform.scale = kBaseActorScale_;
+		newEnemy->SetActionSelectionTimer(randomMaker_->randomFloat(0.0f, 5.0f));
 
 		// === Left Arm ===
 		if (newEnemy->armL_ && !newEnemy->armL_->objectParts_.empty()) {
@@ -610,13 +613,14 @@ SceneStage01::SceneStage01(kEngine* system) {
 
 
 
-	//selectMoveSE_ = system_->SoundLoadSE("resources/gate/SE/Title/select.wav");
-	//Gate_OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Open.wav");
-	//DecideSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Decide.wav");
-	//Title_PunchSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Title_Punch2.wav");
-	//AppearSE_ = system_->SoundLoadSE("resources/gate/SE/Title/Appear.wav");
-	//WalkSE_ = system_->SoundLoadSE("resources/gate/SE/Title/walk.wav");
-	//BGM_ = system_->SoundLoadSE("resources/gate/SE/Title/T_BGM.wav");
+	CloseSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav");
+	OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Game/ShojiClose.wav"); 
+	FlameSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Flame.wav"); 
+	RankSE_ = system_->SoundLoadSE("resources/gate/SE/Game/Rank.wav");
+
+	BGM_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_G.wav");
+	BGMR_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_R.wav");
+	
 
 
 	player_->Update(usingCamera_);
@@ -749,7 +753,13 @@ void SceneStage01::Update() {
 	if (startTimer_->IsTimeUp()) {
 
 		countdownTimer_->Start();
+		if (StartSE_ >= 0) {
+			system_->SoundPlaySE(WalkSE_, 0.6f);
+		}
+		system_->SoundPlayBGM(BGM_, 0.3f);  //
+
 	} else {
+
 		return;
 	}
 
@@ -822,14 +832,36 @@ void SceneStage01::Update() {
 	int pCount = 0;
 	// リスト内のエネミーを全て更新
 	for (auto* enemy : enemies_) {
-		bool isTargetCharging = false;
+
+		/// まずは自機と参照
+
+		// 差分
 		Vector3 difference = player_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+		// 距離
 		float distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		float toPlayerDistance = distance;
 		enemy->SetDistanceWithPlayer(distance); // パーティクル制御のためのプレイヤーとの距離
+		// 暫定で一番近いのは自機
 		float nearDistance = distance;
+		// 一番近い距離の位置を保存
 		Vector3 nearPos = player_->mainPosition.transform.translate;
-		isTargetCharging = player_->GetIsCharging();
-		if (distance >= 25.0f || pCount >= 2) { // 自機が一定範囲外なら他の敵を参照||プレイヤーをターゲットにしている数が2以上なら敵をターゲット
+		// ターゲットが両腕チャージ中か否か
+		bool isTargetCharging = player_->GetIsCharging();
+		// ターゲットの大きい腕スケール
+		float largeArm = std::fmaxf(player_->GetArmScaleL(), player_->GetArmScaleR());
+
+		//currentTopCharacter_->mainPosition;
+		// 暫定一位との参照
+		difference = currentTopCharacter_->mainPosition.transform.translate - enemy->mainPosition.transform.translate;
+		distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
+		if (distance < nearDistance) {
+			nearDistance = distance;
+			nearPos = currentTopCharacter_->mainPosition.transform.translate;
+		}
+
+		// 自機との距離が25以下で、かつプレイヤーをターゲットにしている敵が1体以下ならプレイヤーをターゲット
+		// || 暫定一位が自機でなければ
+		if (toPlayerDistance >= 25.0f || pCount >= 2 || nearPos != player_->mainPosition.transform.translate) {
 			for (auto* other : enemies_) {
 				if (other == enemy) continue; // 自身は除外
 
@@ -838,10 +870,21 @@ void SceneStage01::Update() {
 				// 距離を計算
 				distance = sqrtf(difference.x * difference.x + difference.y * difference.y + difference.z * difference.z);
 
+				if (nearPos == other->mainPosition.transform.translate) { // 一位であれば
+					if(distance < 25.0f) { // 一位との距離が25以内ならターゲットにする
+						nearDistance = distance; // 一番近い距離の変更
+						nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
+						isTargetCharging = other->GetIsCharging();
+						largeArm = std::fmaxf(other->GetArmScaleL(), other->GetArmScaleR());
+						break;
+					}
+				}
+
 				if (distance < nearDistance) {
 					nearDistance = distance; // 一番近い距離の変更
 					nearPos = other->mainPosition.transform.translate; // 一番近い敵の位置の変更
 					isTargetCharging = other->GetIsCharging();
+					largeArm = std::fmaxf(other->GetArmScaleL(), other->GetArmScaleR());
 				}
 			}
 		}
@@ -852,6 +895,7 @@ void SceneStage01::Update() {
 
 		enemy->SetTargetPos(nearPos);
 		enemy->SetTargetCharge(isTargetCharging);
+		enemy->SetTargetLargeArm(largeArm);
 		enemy->Update(usingCamera_);
 	}
 
@@ -1037,9 +1081,10 @@ void SceneStage01::Update() {
 
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
+		system_->SoundStop(BGM_);
 
 		isResultGenerated_ = true; // ★ここ
-
+		system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
 	}
 
 	if (!isResultGenerated_ && countdownTimer_->IsTimeUp()) {
@@ -1047,8 +1092,10 @@ void SceneStage01::Update() {
 
 		StartResultShoji();
 		SpawnResultSets(10, -80.0f);
+		system_->SoundStop(BGM_);
 
 		isResultGenerated_ = true; // ★ 一度だけ
+		system_->SoundPlayBGM(BGMR_, 0.3f);  // ← 効果音！！
 	}
 
 	for (auto& set : resultSets_) {
@@ -2223,6 +2270,7 @@ void SceneStage01::UpdateCrown() {
 	if (crown_) {
 		crown_->SetTarget(topChar, topArmScale);
 		crown_->Update(camera_);
+		currentTopCharacter_ = topChar;
 	}
 }
 void SceneStage01::ArrangeByArmSize() {
@@ -2370,6 +2418,9 @@ void SceneStage01::UpdateResultShoji() {
 
 			if (!set.shojiOpened && !set.shojiOpening) {
 				if (dist < OPEN_DIST) {
+					if (CloseSE_ >= 0) {
+						system_->SoundPlaySE(CloseSE_, 0.6f);
+					}
 					set.shojiOpening = true;
 					set.shojiT = 0.0f;
 				}
@@ -2387,6 +2438,9 @@ void SceneStage01::UpdateResultShoji() {
 					set.shojiCloseWait += system_->GetDeltaTime();
 
 					if (set.shojiCloseWait >= CLOSE_WAIT_TIME) {
+						if (CloseSE_ >= 0) {
+							system_->SoundPlaySE(CloseSE_, 0.6f);
+						}
 						set.shojiClosing = true;
 						set.shojiCloseT = 0.0f;
 					}
@@ -2822,6 +2876,10 @@ void SceneStage01::UpdateRankModels() {
 
 		// ★ フレームが終わったら文字 easing を解禁
 		if (ft >= 1.0f) {
+			if (FlameSE_ >= 0) {
+				system_->SoundPlaySE(FlameSE_, 1.5f);
+			}
+			
 			isFrameAnimating_ = false;
 			isRankAnimating_ = true;
 			rankAnimT_ = 0.0f;
@@ -2847,7 +2905,9 @@ void SceneStage01::UpdateRankModels() {
 
 		if (t >= 1.0f) {
 			isRankAnimating_ = false;
-
+			if (RankSE_ >= 0) {
+				system_->SoundPlaySE(RankSE_, 1.2f);
+			}
 			// ★ 完全追従フェーズへ
 			isRankShake_ = true;
 			rankShakeT_ = 0.0f;
@@ -2942,7 +3002,7 @@ void SceneStage01::UpdateRankModels() {
 
 		if (rankEndWaitT_ >= rankEndWaitDuration_) {
 			isRankEndWait_ = false;
-
+			system_->SoundStop(BGMR_);  //
 			// ★ シーン遷移
 			outcome_ = SceneOutcome::NEXT;
 		}

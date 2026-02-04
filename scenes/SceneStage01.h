@@ -16,6 +16,7 @@
 #include "CountdownTimer/CountdownTimer.h"
 #include "StartTimer/StartTimer.h"
 #include "SceneTitle.h"
+#include "randomMaker.h"
 
 class SceneStage01 :public BaseScene {
 public:
@@ -115,6 +116,8 @@ public:
 private:
 	kEngine *system_ = nullptr;				// 借り
 
+	RandomMaker* randomMaker_ = new RandomMaker();
+
 	/// ============== カメラ関連 ==============///
 	/// ステージカメラ(mainカメラ)
 	Camera *camera_ = nullptr;
@@ -171,6 +174,8 @@ private:
 	SimpleSprite* guideGamepad_ = nullptr; // パッド用
 
 	std::vector<Enemy*> enemies_{}; // enemyのリスト
+
+	Object* currentTopCharacter_ = nullptr; // 現在1位のキャラクター
 
 	Object* guideArrow_ = nullptr; // ガイド矢印
 	Crown* crown_ = nullptr; // 1位用王冠
@@ -349,7 +354,30 @@ private:
 
 		int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
 		bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int BGMR_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool BGMR_oaded_ = false; // ★ 一度だけロードするためのフラグ
 		SceneTitle* sceneTitle_ = nullptr;
+
+
+		int CloseSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool CloseSELoaded_ = false; // ★ 一度だけロードするための
+
+
+		int OpenSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool OpenSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int FlameSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool FlameSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int RankSE_ = -1;
+		bool RankSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int StartSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool StartSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int CountSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		bool CountSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();

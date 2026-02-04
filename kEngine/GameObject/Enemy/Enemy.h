@@ -7,6 +7,7 @@
 #include "GameObject/Particle/P_PlaneReduction/P_PlaneReduction.h"
 #include "Arm/Arm.h"
 #include "DebugTool/DebugObject.h"
+#include "randomMaker.h"
 
 static inline const float kEnemyWidth = 1.0f;
 
@@ -37,15 +38,15 @@ public:
 	float GetArmScaleR() const { return armScaleR_; }
 	Vector3 GetForward() const { return forward_; }
 
-    // 見た目を更新する
-    void UpdateAppearance();
-    // これまでのパーツ管理ではなく、Armクラスを持つ
-    Arm* armL_ = nullptr;
-    Arm* armR_ = nullptr;
+	// 見た目を更新する
+	void UpdateAppearance();
+	// これまでのパーツ管理ではなく、Armクラスを持つ
+	Arm* armL_ = nullptr;
+	Arm* armR_ = nullptr;
 	DebugObject* leftHandDebugObject_ = nullptr;
 	DebugObject* rightHandDebugObject_ = nullptr;
 
-    // ImGuI用
+	// ImGuI用
 #ifdef USE_IMGUI
 	float& GetRefArmScaleL() { return armScaleL_; }
 	float& GetRefArmScaleR() { return armScaleR_; }
@@ -64,20 +65,29 @@ public:
 	bool IsAttackingL() const { return isAttackingL_; }
 	bool GetIsCharging() const { return isCharging_; }
 
-    // セッター
-    void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
-    void SetTargetCharge(bool on) { isTargetCharging_ = on; }
-    void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
+	// セッター
+	void SetTargetPos(Vector3 pos) { targetPos_ = pos; }
+	void SetTargetCharge(bool on) { isTargetCharging_ = on; }
+	void SetTargetLargeArm(float size) { targetLargeArm_ = size; }
+	void SetDistanceWithPlayer(float distance) { distanceWithPlayer_ = distance; }
 
-    void SetArmScaleL(float scale) { armScaleL_ = scale; }
-    void SetArmScaleR(float scale) { armScaleR_ = scale; }
+	void SetArmScaleL(float scale) { armScaleL_ = scale; }
+	void SetArmScaleR(float scale) { armScaleR_ = scale; }
 
-    void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
+	void SetIsTutorial(bool isTutorial) { isTutorial_ = isTutorial; }
 
 	void SetNumberShow(bool flag);
 
+	void SetActionSelectionTimer(float time) { actionSelectionTimer_ = time; }
+
 private: // メンバ関数
 	void Move(); // 将来AIを入れる場所
+
+	void ChaseTarget();
+	void ChargeLeftArm();
+	void ChargeRightArm();
+	void ChargeArm();
+	
 
 private:
 
@@ -92,6 +102,21 @@ private:
 	float knockbackTimer_ = knockbackCD_;
 
 private:
+
+	enum class Action {
+		kCharge,
+		kChaseTarget,
+	};
+
+	Action currentAction_ = Action::kCharge;
+	const float actionSelectionInterval_ = 5;
+	float actionSelectionTimer_ = actionSelectionInterval_;
+
+
+	RandomMaker* randomMaker_ = new RandomMaker();
+	//std::random_device seedGenerator;
+	//std::mt19937 randomEngine{ seedGenerator() };
+
     // プレイヤーと同じパラメータ構造
     float armScaleL_ = 1.0f;
     float armScaleR_ = 1.0f;
@@ -106,6 +131,7 @@ private:
     const float kBaseSpeed = 3.0f;
 
 	Vector3 targetPos_{}; // 向かう敵(orプレイヤー)の位置
+	float targetLargeArm_;
 
 private:
 	// ダメージフラグ
