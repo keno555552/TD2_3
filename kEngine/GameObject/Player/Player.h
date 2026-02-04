@@ -47,6 +47,7 @@ class Player :public Object
 {
 public:
 	Player(kEngine* system, const Vector3& position = Vector3{ 0,0,0 });
+	~Player();
 
 	void Update(Camera* camera) override;
 
@@ -97,8 +98,6 @@ private:
 
 	std::vector<std::function<void()>> function;
 
-	DebugObject*  leftHandDebugObject_ = nullptr;
-	DebugObject* rightHandDebugObject_ = nullptr;
 
 private:
 
@@ -157,6 +156,9 @@ private:
 	// これまでのパーツ管理ではなく、Armクラスを持つ
 	Arm* armL_ = nullptr;
 	Arm* armR_ = nullptr;
+	DebugObject* leftHandDebugObject_ = nullptr;
+	DebugObject* rightHandDebugObject_ = nullptr;
+
 	// 左腕のスケール（1.0が通常）
 	float armScaleL_ = 1.0f;
 	// 右腕のスケール

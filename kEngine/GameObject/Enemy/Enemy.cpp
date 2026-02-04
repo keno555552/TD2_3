@@ -16,6 +16,13 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 	armL_ = new Arm(system, this, false); // 左腕
 	armR_ = new Arm(system, this, true);  // 右腕
 
+	// デバッグ用オブジェクトの生成
+	leftHandDebugObject_ = new DebugObject(system_);
+	leftHandDebugObject_->SetShowNumber(true);
+
+	rightHandDebugObject_ = new DebugObject(system_);
+	rightHandDebugObject_->SetShowNumber(true);
+
 #pragma region パーティクル
 	dashWindEffectL_ = new P_DashWind(system_);
 	dashWindEffectR_ = new P_DashWind(system_);
@@ -27,6 +34,13 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 	planeReductionEffectR_ = new P_PlaneReduction(system_);
 	planeReductionEffectR_->CreateModelData(system_->SetModelObj("resources/TemplateResource/object/plane/plane.obj"));
 #pragma endregion
+}
+
+Enemy::~Enemy() {
+	delete armL_;
+	delete armR_;
+	delete leftHandDebugObject_;
+	delete rightHandDebugObject_;
 }
 
 void Enemy::Update(Camera *camera) {
@@ -115,10 +129,15 @@ void Enemy::Update(Camera *camera) {
 	// ■■■ 腕の更新 ■■■
 	 // ここで現在の「倍率(armScaleL_/R_)」を渡すだけ！
 	if (armL_) {
-		armL_->Update(camera, armScaleL_);
+		leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
+		leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
+		leftHandDebugObject_->Update(camera);
 	}
 	if (armR_) {
 		armR_->Update(camera, armScaleR_);
+		rightHandDebugObject_->mainPosition.transform.translate = GetArmPositionR();
+		rightHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleR_ * 10.0f));
+		rightHandDebugObject_->Update(camera);
 	}
 }
 
@@ -135,9 +154,11 @@ void Enemy::Draw() {
 	// 腕の描画
 	if (armL_) {
 		armL_->Draw();
+		leftHandDebugObject_->Draw();
 	}
 	if (armR_) {
 		armR_->Draw();
+		rightHandDebugObject_->Draw();
 	}
 }
 

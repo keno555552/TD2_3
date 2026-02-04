@@ -36,6 +36,13 @@ Player::Player(kEngine* system, const Vector3& position) {
 	rightHandDebugObject_->SetShowNumber(true);
 }
 
+Player::~Player() {
+	delete armL_;
+	delete armR_;
+	delete leftHandDebugObject_;
+	delete rightHandDebugObject_;
+}
+
 void Player::Update(Camera* camera) {
 	// 1. エンジンから値を取得
 	float rawDeltaTime = system_->GetScaledDeltaTime();
@@ -56,18 +63,18 @@ void Player::Update(Camera* camera) {
 		armL_->objectParts_[0].materialConfig->intensity = colorIntensity;
 		armL_->objectParts_[0].materialConfig->heightScale = colorHeightScale;
 		armL_->Update(camera, armScaleL_);
+		leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
+		leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
+		leftHandDebugObject_->Update(camera);
 	}
 	if (armR_) {
 		armR_->Update(camera, armScaleR_);
+		rightHandDebugObject_->mainPosition.transform.translate = GetArmPositionR();
+		rightHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleR_ * 10.0f));
+		rightHandDebugObject_->Update(camera);
 	}
 
-	leftHandDebugObject_->mainPosition.transform.translate = GetArmPositionL();
-	leftHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleL_ * 10.0f));
-	leftHandDebugObject_->Update(camera);
 
-	rightHandDebugObject_->mainPosition.transform.translate = GetArmPositionR();
-	rightHandDebugObject_->UpdateShowNumber(static_cast<int>(armScaleR_ * 10.0f));
-	rightHandDebugObject_->Update(camera);
 }
 
 void Player::Draw() {
