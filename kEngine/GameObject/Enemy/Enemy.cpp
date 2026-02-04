@@ -263,20 +263,21 @@ void Enemy::Move() {
 		armScaleR_ -= 0.4f * deltaTime_;
 		if (armScaleR_ <= 1.0f) {
 			armScaleR_ = 1.0f;
-
 		}
 	}
 
 #pragma region 移動速度ブースト計算
-	// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
-	float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
-	if (maxExtraScale > 0.0f) {
-		// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
-		// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
-		float boostRatio = maxExtraScale / (30.0f - 1.0f);
-		currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
-	} else {
-		currentSpeed_ = kBaseSpeed;
+	if(!isCharging_) {
+		// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
+		float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
+		if (maxExtraScale > 0.0f) {
+			// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
+			// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
+			float boostRatio = maxExtraScale / (30.0f - 1.0f);
+			currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
+		} else {
+			currentSpeed_ = kBaseSpeed;
+		}
 	}
 #pragma endregion
 
@@ -289,6 +290,7 @@ void Enemy::Move() {
 	mainPosition.transform.scale.y = mainPosition.transform.scale.x;
 	mainPosition.transform.scale.z = mainPosition.transform.scale.x;
 
+	forward_ = Normalize(forward_);
 	velocity_ = forward_ * currentSpeed_; // 速度を正面に設定
 
 	// 見た目更新(仮の体部分のため)
@@ -346,6 +348,7 @@ void Enemy::ChargeArm() {
 	armScaleR_ += 0.3f * deltaTime_;
 	isAttackingR_ = false;
 	isCharging_ = true;
+	currentSpeed_ *= 0.8f;
 }
 
 void Enemy::AddKnockback(const Vector3& force) {

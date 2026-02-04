@@ -2,15 +2,13 @@
 
 Explosion::Explosion(kEngine* system) :Particle(system) {
 	createTimer.Init0(0.1f, system_->GetTimeManager()); // 生きる秒数
-	defaultModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/suzanne/suzanne.obj");
-	defaultTextureHandle_ = system_->LoadTexture("resources/TemplateResource/texture/circle.png");
+	defaultModelHandle_ = system_->SetModelObj("resources/game/model/Particle_Dash.obj");
+	defaultTextureHandle_ = system_->LoadTexture("resources/game/model/Particle_Dash.png");
 	commonMaterialConfig->useModelTexture = false;
 	commonMaterialConfig->textureHandle = defaultTextureHandle_;
 }
 
 void Explosion::Update(Camera* camera) {
-	CreateExplosion();
-	CreateExplosion();
 	CreateExplosion();
 	UpdateExplosion();
 	DeleteExplosion();
@@ -24,7 +22,7 @@ void Explosion::Draw() {
 void Explosion::CreateExplosion() {
 	// 同時に数か所で発生させないようにする
 	coolTimer_ += 1.0f / 60.0f;
-	if (!isEmitting_ || coolTimer_ <= 0.5f) {
+	if (!isEmitting_ || coolTimer_ <= 0.1f) {
 		return;
 	}
 	coolTimer_ = 0.0f;
@@ -55,13 +53,13 @@ void Explosion::CreateExplosion() {
 		direction = Normalize(direction);
 
 		// ランダムな速さ
-		float minSpeed = 0.01f;
-		float maxSpeed = 0.05f;
+		float minSpeed = 0.125f;
+		float maxSpeed = 0.175f;
 		float speed = randomMaker_->randomFloat(minSpeed, maxSpeed);
 
 		p->velocity = direction * speed;
 		// ランダムなスケール
-		float scale = randomMaker_->randomFloat(0.05f, 0.1f);
+		float scale = randomMaker_->randomFloat(0.15f, 0.3f);
 		p->part->objectParts_[0].transform.scale = Vector3(scale, scale, scale);
 		p->size = scale;
 		p->part->mainPosition.transform.translate = pos_; // 初期位置
@@ -72,7 +70,7 @@ void Explosion::UpdateExplosion() {
 	for (auto& p : particleObjectList_) {
 		float t = p->lifeTimeTimer.parameter_ / p->lifeTimeTimer.maxTime_;
 		//float easedT = t * t * t; // easeInCubic
-		float easedT = t * t * t * t * t; // easeInQuint
+		float easedT = t * t * t; // easeInQuint
 		float scale = p->size * (1.0f - easedT) + 0.0f * easedT;
 		p->part->objectParts_[0].transform.scale = Vector3(scale, scale, scale);
 		p->part->objectParts_[0].materialConfig->textureColor.w = 1.0f; // アルファ値(念のため1.0fに設定)
