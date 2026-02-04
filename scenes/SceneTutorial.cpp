@@ -33,10 +33,10 @@ SceneTutorial::SceneTutorial(kEngine* system) {
     ChangeTextModel("resources/TemplateResource/object/tutorial/T1.obj");
 
     // テキストの位置調整（画面奥や上部に配置）
-    textObj_->mainPosition.transform.translate = { 0.0f, 5.0f, 10.0f };
+    textObj_->mainPosition.transform.translate = { 0.0f, 2.0f, 10.0f };
     textObj_->mainPosition.transform.scale = { 1.0f, 1.0f, 1.0f };
 	textObj_->mainPosition.transform.rotate = { 0.0f, std::numbers::pi_v<float>, 0.0f };
-	textObj_->isBillboard_ = true;
+	textObj_->isBillboard_ = false;
 	for (int i = 0; i < textObj_->objectParts_.size(); i++) {
 		textObj_->objectParts_[i].materialConfig.get()->enableLighting = false;
 	}
@@ -126,7 +126,34 @@ void SceneTutorial::Update() {
     // 共通の更新
 	skydome_->Update(usingCamera_);
 	if (tatami_) tatami_->Update(usingCamera_);
-    if (textObj_) textObj_->Update(usingCamera_);
+    
+	if (textObj_) {
+		// ■■■ テキストをカメラに向ける処理 ■■■
+
+		// 1. カメラとテキストの位置差分を計算
+		Vector3 camPos = camera_->GetPosition(); // カメラ座標
+		Vector3 txtPos = textObj_->mainPosition.transform.translate; // テキスト座標
+		Vector3 diff = { camPos.x - txtPos.x, camPos.y - txtPos.y, camPos.z - txtPos.z };
+
+		// 2. Y軸の回転（左右の向き：atan2(x, z)）
+		// カメラの方を向く（+180度するかはモデルの向き次第ですが、通常atan2だけでOK）
+		textObj_->mainPosition.transform.rotate.y = std::atan2(diff.x, diff.z);
+
+		// 3. X軸の回転（上下の向き：高さと水平距離のアークタンジェント）
+		// 水平距離(XZ平面の距離)を計算
+		float distXZ = std::sqrt(diff.x * diff.x + diff.z * diff.z);
+
+		// 高さ(diff.y) と 水平距離(distXZ) から角度を求める
+		// カメラが高い位置にある場合、テキストは上を向く必要があるのでマイナス回転（※エンジンの座標系による）
+		// 左手系・右手系で符号が変わりますが、まずは「-atan2」で試してください
+		textObj_->mainPosition.transform.rotate.x = -std::atan2(diff.y, distXZ);
+
+		// Z軸は回転させない
+		textObj_->mainPosition.transform.rotate.z = 0.0f;
+
+		// 更新実行
+		textObj_->Update(usingCamera_);
+	}
 
 	if (player_) {
 		player_->Update(usingCamera_);
@@ -287,7 +314,7 @@ void SceneTutorial::Update() {
 				camAnimStartRot_ = currentT.rotate;
 
 				// 2. 最終的な目標位置「終了地点」を設定 (CameraPartのif文の中身と同じ値)
-				camAnimEndPos_ = { 0.0f, 14.0f, -30.0f };
+				camAnimEndPos_ = { 0.0f, 10.0f, -30.0f };
 				camAnimEndRot_ = { 0.1f, std::numbers::pi_v<float> *2.0f, 0.0f };
 				// ▲▲▲ ここまで ▲▲▲
 
@@ -746,10 +773,10 @@ void SceneTutorial::ChangeTextModel(const std::string& modelPath) {
 	textObj_->CreateModelData(handle);
 
 	// 位置やスケールの再設定（メンバ変数などで管理していればそれを使う）
-	textObj_->mainPosition.transform.translate = { 0.0f, 5.0f, 10.0f };
+	textObj_->mainPosition.transform.translate = { 0.0f, 2.0f, 10.0f };
 	textObj_->mainPosition.transform.scale = { 1.0f, 1.0f, 1.0f };
 	textObj_->mainPosition.transform.rotate = { 0.0f, std::numbers::pi_v<float>, 0.0f };
-	textObj_->isBillboard_ = true;
+	textObj_->isBillboard_ = false;
 	for (int i = 0; i < textObj_->objectParts_.size(); i++) {
 		textObj_->objectParts_[i].materialConfig.get()->enableLighting = false;
 	}
