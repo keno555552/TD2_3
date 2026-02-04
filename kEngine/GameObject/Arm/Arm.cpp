@@ -5,9 +5,9 @@ Arm::Arm(kEngine* system, Object* parent, bool isRight) {
     IntObject(system);
 
     // 新しい腕モデルの読み込み
-    leftModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armL.obj"); // パスは適宜変更
-    rightModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armR.obj"); // パスは適宜変更
-
+    rightModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armL.obj"); // パスは適宜変更
+    leftModelHandle_ = system_->SetModelObj("resources/TemplateResource/object/arm/armR.obj"); // パスは適宜変更
+    
     isRight_ = isRight;
     if (isRight_) {
         Object::CreateModelData(rightModelHandle_);
@@ -47,10 +47,10 @@ void Arm::Update(Camera* camera, float gameScale) {
 
     if (isRight_) {
         // 右腕はマイナス方向（Playerの実装に合わせる）
-        mainPosition.transform.translate = { -offsetX, 0.0f, 0.0f };
+        mainPosition.transform.translate = { +offsetX, 0.0f, 0.0f };
     } else {
         // 左腕はプラス方向
-        mainPosition.transform.translate = { +offsetX, 0.0f, 0.0f };
+        mainPosition.transform.translate = { -offsetX, 0.0f, 0.0f };
     }
 
     // 高さ(Y)や前後(Z)の微調整があればここで行う
