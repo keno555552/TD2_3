@@ -30,11 +30,16 @@ SceneTutorial::SceneTutorial(kEngine* system) {
     textObj_->IntObject(system_);
     // ★重要: ここで各ステップの3D文字モデルをロードしてください
     // 例: "resources/tutorial/text_move.obj"
-    ChangeTextModel("resources/TemplateResource/object/plane/plane.obj");
+    ChangeTextModel("resources/TemplateResource/object/tutorial/T1.obj");
 
     // テキストの位置調整（画面奥や上部に配置）
     textObj_->mainPosition.transform.translate = { 0.0f, 5.0f, 10.0f };
-    textObj_->mainPosition.transform.scale = { 2.0f, 2.0f, 2.0f };
+    textObj_->mainPosition.transform.scale = { 1.0f, 1.0f, 1.0f };
+	textObj_->mainPosition.transform.rotate = { 0.0f, std::numbers::pi_v<float>, 0.0f };
+	textObj_->isBillboard_ = true;
+	for (int i = 0; i < textObj_->objectParts_.size(); i++) {
+		textObj_->objectParts_[i].materialConfig.get()->enableLighting = false;
+	}
 
 	int tatamiHandle = system_->SetModelObj("resources/game/model/tatami.obj");
 	tatami_ = new Object();
@@ -189,15 +194,15 @@ void SceneTutorial::Update() {
             switch (currentStep_) {
             case TutorialStep::Move:
                 currentStep_ = TutorialStep::ArmExpand;
-                ChangeTextModel("resources/TemplateResource/object/arrow/arrow.obj"); // 腕の説明へ
+                ChangeTextModel("resources/TemplateResource/object/tutorial/T2.obj"); // 腕の説明へ
                 break;
             case TutorialStep::ArmExpand:
                 currentStep_ = TutorialStep::Dash;
-                ChangeTextModel("resources/TemplateResource/object/plane/plane.obj"); // 加速の説明へ
+                ChangeTextModel("resources/TemplateResource/object/tutorial/T3.obj"); // 加速の説明へ
                 break;
             case TutorialStep::Dash:
                 currentStep_ = TutorialStep::Battle;
-                ChangeTextModel("resources/TemplateResource/object/crown/crown.obj"); // 戦闘の説明へ
+                ChangeTextModel("resources/TemplateResource/object/tutorial/T4.obj"); // 戦闘の説明へ
                 // 敵をスポーンさせる
                 {
 					// 敵を生成してリストに追加
@@ -288,12 +293,12 @@ void SceneTutorial::Update() {
 				camAnimStartRot_ = currentT.rotate;
 
 				// 2. 最終的な目標位置「終了地点」を設定 (CameraPartのif文の中身と同じ値)
-				camAnimEndPos_ = { 0.0f, 5.0f, -10.0f };
+				camAnimEndPos_ = { 0.0f, 14.0f, -30.0f };
 				camAnimEndRot_ = { 0.1f, std::numbers::pi_v<float> *2.0f, 0.0f };
 				// ▲▲▲ ここまで ▲▲▲
 
                 currentStep_ = TutorialStep::Caution;
-                ChangeTextModel("resources/TemplateResource/object/plane/plane.obj"); // 注意事項へ
+                ChangeTextModel("resources/TemplateResource/object/tutorial/T5.obj"); // 注意事項へ
                 break;
             case TutorialStep::Caution:
                 currentStep_ = TutorialStep::Finished;
@@ -743,18 +748,24 @@ void SceneTutorial::ChangeTextModel(const std::string& modelPath) {
 
 	textObj_ = new Object();
 	textObj_->IntObject(system_);
-
-	// 位置やスケールの再設定（メンバ変数などで管理していればそれを使う）
-	textObj_->mainPosition.transform.translate = { 0.0f, 5.0f, 10.0f };
-	textObj_->mainPosition.transform.scale = { 2.0f, 2.0f, 2.0f };
-
 	// モデルロードと適用
 	int handle = system_->SetModelObj(modelPath);
 	textObj_->CreateModelData(handle);
 
+	// 位置やスケールの再設定（メンバ変数などで管理していればそれを使う）
+	textObj_->mainPosition.transform.translate = { 0.0f, 5.0f, 10.0f };
+	textObj_->mainPosition.transform.scale = { 1.0f, 1.0f, 1.0f };
+	textObj_->mainPosition.transform.rotate = { 0.0f, std::numbers::pi_v<float>, 0.0f };
+	textObj_->isBillboard_ = true;
+	for (int i = 0; i < textObj_->objectParts_.size(); i++) {
+		textObj_->objectParts_[i].materialConfig.get()->enableLighting = false;
+	}
+
 	// 設定適用
 	if (!textObj_->objectParts_.empty()) {
-		textObj_->objectParts_[0].materialConfig->enableLighting = false;
+		textObj_->objectParts_[0].materialConfig.get()->enableLighting = false;
+		textObj_->objectParts_[1].materialConfig.get()->enableLighting = false;
+		textObj_->objectParts_[2].materialConfig.get()->enableLighting = false;
 
 		// もし plane.obj にテクスチャが無いなら、白くするために以下も必要かもしれません
 		// textObj_->objectParts_[0].materialConfig->textureColor = {1,1,1,1};
