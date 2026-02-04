@@ -12,6 +12,12 @@ Enemy::Enemy(kEngine* system, const Vector3& position) {
 
 	currentSpeed_ = 2.0f;
 
+	if (randomMaker_->randomInt(0, 1) == 0) {
+		currentAction_ = Action::kCharge;
+	} else {
+		currentAction_ = Action::kChaseTarget;
+	}
+
 	// ■■■ 新しい腕の生成 ■■■
 	  // 第2引数に「自分(this)」を渡して追従させる
 	armL_ = new Arm(system, this, false); // 左腕
@@ -203,19 +209,6 @@ void Enemy::Move() {
 		}
 	}
 
-#pragma region 移動速度ブースト計算
-	// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
-	float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
-	if (maxExtraScale > 0.0f) {
-		// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
-		// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
-		float boostRatio = maxExtraScale / (30.0f - 1.0f);
-		currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
-	} else {
-		currentSpeed_ = kBaseSpeed;
-	}
-#pragma endregion
-
 	// 攻撃フラグ管理
 	if (armScaleR_ > 1.01f) {
 		isAttackingR_ = true;
@@ -230,56 +223,64 @@ void Enemy::Move() {
 
 	isCharging_ = false; // 両腕チャージしていないフラグ初期化
 
-	if (isTargetCharging_) { // ターゲットがチャージ中(両腕溜め)ならば->ターゲットを追う
-		// 自身から見て右か左か
-		Vector3 toTarget = targetPos_ - mainPosition.transform.translate;
-		toTarget.y = 0.0f;
-		toTarget = Normalize(toTarget);
-		forward_.y = 0.0f;
-		forward_ = Normalize(forward_);
-		float crossY = Cross(forward_, toTarget).y;
+	actionSelectionTimer_ -= deltaTime_;
 
-		constexpr float kTurnEpsilon = 0.2f; // 許容範囲
-
-		if (crossY > kTurnEpsilon) { // 左
-
-			armScaleL_ += 0.3f * deltaTime_;
-
-			float turnSpeed = 0.01f + (armScaleL_ - 1.0f) * 0.02f;
-			turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
-			mainPosition.transform.rotate.y += turnSpeed;
-
-			// 攻撃判定解除
-			isAttackingL_ = false;
-		} else {
-			armScaleL_ -= 0.4f * deltaTime_;
-			if (armScaleL_ <= 1.0f) {
-				armScaleL_ = 1.0f;
+	switch (currentAction_) {
+	case Action::kCharge:
+		// 両腕チャージ
+		ChargeArm();
+		if (isTargetCharging_) {
+			currentAction_ = Action::kChaseTarget;
+			return;
+		}
+		if (actionSelectionTimer_ <= 0.0f) { // 選択の時
+			actionSelectionTimer_ = actionSelectionInterval_;
+		}
+		break;
+	case Action::kChaseTarget:
+		ChaseTarget();
+		if (actionSelectionTimer_ <= 0.0f) {
+			actionSelectionTimer_ = actionSelectionInterval_;
+			// ターゲットの腕より自身の腕の方が小さい場合
+			if (targetLargeArm_ > std::fmaxf(armScaleL_, armScaleR_)) {
+				int random = randomMaker_->randomInt(0, 2);
+				if (random <= 1) {
+					currentAction_ = Action::kCharge;
+				}
 			}
 		}
-		if (crossY < -kTurnEpsilon) { // 右
-
-			armScaleR_ += 0.3f * deltaTime_;
-
-			float turnSpeed = 0.01f + (armScaleR_ - 1.0f) * 0.02f;
-			turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
-			mainPosition.transform.rotate.y -= turnSpeed;
-
-			// 攻撃判定解除
-			isAttackingR_ = false;
-		} else {
-			armScaleR_ -= 0.4f * deltaTime_;
-			if (armScaleR_ <= 1.0f) {
-				armScaleR_ = 1.0f;
-			}
-		}
-	} else { // ターゲットがチャージ中でないならば->両腕チャージ
-		armScaleL_ += 0.3f * deltaTime_;
-		isAttackingL_ = false;
-		armScaleR_ += 0.3f * deltaTime_;
-		isAttackingR_ = false;
-		isCharging_ = true;
+		break;
 	}
+
+	if (isAttackingL_) {
+		armScaleL_ -= 0.4f * deltaTime_;
+		if (armScaleL_ <= 1.0f) {
+			armScaleL_ = 1.0f;
+		}
+	}
+
+	if (isAttackingR_) {
+		armScaleR_ -= 0.4f * deltaTime_;
+		if (armScaleR_ <= 1.0f) {
+			armScaleR_ = 1.0f;
+		}
+	}
+
+#pragma region 移動速度ブースト計算
+	// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
+	float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
+	if (maxExtraScale > 0.0f) {
+		// 腕が縮んでいる最中は、膨らみ具合に比例してブーストをかける
+		// 1.0(最大) ～ 0.0(縮みきり) の割合を算出
+		float boostRatio = maxExtraScale / (30.0f - 1.0f);
+		currentSpeed_ = kBaseSpeed + (4.0f * boostRatio);
+	} else {
+		currentSpeed_ = kBaseSpeed;
+	}
+#pragma endregion
+
+	
+
 	// 腕のスケール制限
 	armScaleL_ = std::clamp(armScaleL_, 1.0f, 30.0f);
 	armScaleR_ = std::clamp(armScaleR_, 1.0f, 30.0f);
@@ -291,6 +292,59 @@ void Enemy::Move() {
 
 	// 見た目更新(仮の体部分のため)
 	UpdateAppearance();
+}
+
+void Enemy::ChaseTarget() {
+	// 自身から見て右か左か
+	Vector3 toTarget = targetPos_ - mainPosition.transform.translate;
+	toTarget.y = 0.0f;
+	toTarget = Normalize(toTarget);
+	forward_.y = 0.0f;
+	forward_ = Normalize(forward_);
+	float crossY = Cross(forward_, toTarget).y;
+
+	constexpr float kTurnEpsilon = 0.2f; // 許容範囲
+
+	if (crossY > kTurnEpsilon) { // 左腕チャージ,旋回
+		ChargeLeftArm();
+	} else {
+		
+	}
+	if (crossY < -kTurnEpsilon) { // 右腕チャージ,旋回
+		ChargeRightArm();
+	} else {
+		
+	}
+}
+
+void Enemy::ChargeLeftArm() {
+	armScaleL_ += 0.3f * deltaTime_;
+
+	float turnSpeed = 0.01f + (armScaleL_ - 1.0f) * 0.02f;
+	turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
+	mainPosition.transform.rotate.y += turnSpeed;
+
+	// 攻撃判定解除
+	isAttackingL_ = false;
+}
+
+void Enemy::ChargeRightArm() {
+	armScaleR_ += 0.3f * deltaTime_;
+
+	float turnSpeed = 0.01f + (armScaleR_ - 1.0f) * 0.02f;
+	turnSpeed = std::min(turnSpeed, 0.01f * 10.0f);
+	mainPosition.transform.rotate.y -= turnSpeed;
+
+	// 攻撃判定解除
+	isAttackingR_ = false;
+}
+
+void Enemy::ChargeArm() {
+	armScaleL_ += 0.3f * deltaTime_;
+	isAttackingL_ = false;
+	armScaleR_ += 0.3f * deltaTime_;
+	isAttackingR_ = false;
+	isCharging_ = true;
 }
 
 void Enemy::AddKnockback(const Vector3& force) {
