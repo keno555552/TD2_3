@@ -37,17 +37,9 @@ void P_DashWind::CreateDashWind() {
 		p->lifeTimeTimer.Init0(lifeTime_ * armScale_, system_->GetTimeManager());
 		*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
 		p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
-		//p->part->objectParts_[0].materialConfig->textureColor = { 255.0f / 255.0f, 77.0f / 255.0f, 13.0f / 255.0f, 255.0f / 255.0f };
-		//p->part->objectParts_[0].materialConfig->textureColor2 = { 178.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f };
-		//p->part->objectParts_[0].materialConfig->textureColor3 = { 238.0f / 255.0f, 56.0f / 255.0f, 0.0f / 255.0f, 255.0f / 255.0f };
-		//p->part->objectParts_[0].materialConfig->intensity = 1.441f;
-		//p->part->objectParts_[0].materialConfig->heightScale = 1.524f;
-		//p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
 		p->part->objectParts_[0].materialConfig->textureColor = { 255.0f / 255.0f, 242.0f / 255.0f, 110.0f / 255.0f, 255.0f / 255.0f };
 		p->part->objectParts_[0].materialConfig->textureColor2 = { 255.0f / 255.0f, 183.0f / 255.0f, 93.0f / 255.0f, 255.0f / 255.0f };
-		//p->part->objectParts_[0].materialConfig->textureColor3 = { 255.0f / 255.0f, 207.0f / 255.0f, 193.0f / 255.0f, 255.0f / 255.0f };
 		p->part->objectParts_[0].materialConfig->intensity = 1.324f;
-		//p->part->objectParts_[0].materialConfig->heightScale = 1.524f;
 
 
 		p->part->mainPosition.transform = CreateDefaultTransform();

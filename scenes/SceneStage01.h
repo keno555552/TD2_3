@@ -378,6 +378,14 @@ private:
 
 		int CountSE_ = -1;     // SEハンドル（-1 = 未ロード）
 		bool CountSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+		int HitSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		Timer* hitSETimer_ = nullptr;
+
+		int ChargeSE_ = -1;     // SEハンドル（-1 = 未ロード）
+		Timer* ChargeSETimer_ = nullptr;
+
+
 private:
 	/// ============= シーン内命令 =============///
 	void CameraPart();

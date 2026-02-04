@@ -622,7 +622,12 @@ SceneStage01::SceneStage01(kEngine* system) {
 	BGM_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_G.wav");
 	BGMR_ = system_->SoundLoadSE("resources/gate/SE/Game/BGM_R.wav");
 
-
+	HitSE_ = system_->SoundLoadSE("resources/gate/SE/Hit.wav");
+	hitSETimer_ = new Timer();
+	hitSETimer_->Init0(1.0f, system_->GetTimeManager());
+	ChargeSE_ = system_->SoundLoadSE("resources/gate/SE/Charge.wav");
+	ChargeSETimer_ = new Timer();
+	ChargeSETimer_->Init0(0.5f, system_->GetTimeManager());
 
 	player_->Update(usingCamera_);
 
@@ -681,6 +686,8 @@ SceneStage01::~SceneStage01() {
 	if (guideKey_) delete guideKey_;
 	if (guideGamepad_)  delete guideGamepad_;
 	delete tutorial_;
+	delete hitSETimer_;
+	delete ChargeSETimer_;
 }
 
 void SceneStage01::Update() {
@@ -825,7 +832,16 @@ void SceneStage01::Update() {
 		if (player_->IsDamage()) {
 			isAnyDamage = true;
 		}
-		if (isAnyDamage)usingCamera_->StartShark();
+		if (isAnyDamage) {
+			usingCamera_->StartShark();
+			if (hitSETimer_->parameter_ <= 0.0f) {
+				system_->SoundPlaySE(HitSE_, 0.5f);
+				hitSETimer_->ResetM();
+			}
+		}
+		if (hitSETimer_->parameter_ > 0.0f) {
+			hitSETimer_->ToZero();
+		}
 	}
 	usingCamera_->SharkUpdate(system_->GetDeltaTime());
 
@@ -1029,24 +1045,38 @@ void SceneStage01::Update() {
 	suctionEffect_->SetTargetPosRight(player_->GetArmPositionR());
 	suctionEffect_->SetLeftEmitting(false);
 	suctionEffect_->SetRightEmitting(false);
-	if (system_->GetIsPush(DIK_A)||
-		system_->GetGamepadIsPush(VK_PAD_LSHOULDER)) {
-		suctionEffect_->SetLeftEmitting(true);
-	}
-	if (system_->GetIsPush(DIK_D)||
-		system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
-		suctionEffect_->SetRightEmitting(true);
+	{
+		bool isCharging = false;
+		if (system_->GetIsPush(DIK_A) ||
+			system_->GetGamepadIsPush(VK_PAD_LSHOULDER)) {
+			suctionEffect_->SetLeftEmitting(true);
+			isCharging = true;
+		}
+		if (system_->GetIsPush(DIK_D) ||
+			system_->GetGamepadIsPush(VK_PAD_RSHOULDER)) {
+			suctionEffect_->SetRightEmitting(true);
+			isCharging = true;
+		}
+		if (isCharging) {
+			if (ChargeSETimer_->parameter_ <= 0) {
+				system_->SoundPlaySE(ChargeSE_, 0.5f);
+				ChargeSETimer_->ResetM();
+			}
+		}
+		if (ChargeSETimer_->parameter_ > 0) {
+			ChargeSETimer_->ToZero();
+		}
 	}
 
 	suctionEffect_->Update(usingCamera_);
 
 
-	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A)|| system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
+	planeReductionEffectL_->SetIsAction(system_->GetIsPush(DIK_A) || system_->GetGamepadIsPush(VK_PAD_LSHOULDER));
 	planeReductionEffectL_->SetTargetPos(player_->GetArmPositionL());
 	planeReductionEffectL_->SetTargetScale(player_->GetArmScaleL());
 	planeReductionEffectL_->Update(camera_);
 
-	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D)|| system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
+	planeReductionEffectR_->SetIsAction(system_->GetIsPush(DIK_D) || system_->GetGamepadIsPush(VK_PAD_RSHOULDER));
 	planeReductionEffectR_->SetTargetPos(player_->GetArmPositionR());
 	planeReductionEffectR_->SetTargetScale(player_->GetArmScaleR());
 	planeReductionEffectR_->Update(camera_);
@@ -1798,7 +1828,7 @@ void SceneStage01::CheckAttackCollision() {
 				}
 			}
 		}
-	};
+		};
 
 	// ▼▼▼▼▼▼▼▼▼ 腕 vs 腕 の衝突判定 ▼▼▼▼▼▼▼▼▼
 
