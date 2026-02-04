@@ -7,6 +7,7 @@
 #include "BaseScene.h"
 #include "GameObject/Object/Corner.h"
 #include "Arm/Arm.h"
+#include "DebugTool/DebugObject.h"
 
 // 最大膨張率
 static inline const float kMaxArmScale = 30.0f;
@@ -95,6 +96,9 @@ private:
 private:
 
 	std::vector<std::function<void()>> function;
+
+	DebugObject*  leftHandDebugObject_ = nullptr;
+	DebugObject* rightHandDebugObject_ = nullptr;
 
 private:
 
@@ -191,5 +195,14 @@ private:
 	bool isAttackingL_ = false;
 
 	bool isCharging_ = false;
+
+
+
+	Vector4 Color1 = { 1.0f, 0.5f, 0.5f, 1.0f };
+	Vector4 Color2 = { 0.5f, 0.5f, 1.0f, 1.0f };
+	Vector4 Color3 = { 0.5f, 1.0f, 0.5f, 1.0f };
+	float colorIntensity = 2.0f;
+	float colorHeightScale = 1.0f;
+	void ImGuiPart();
 };
 
