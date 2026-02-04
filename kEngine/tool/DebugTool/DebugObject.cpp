@@ -3,7 +3,7 @@
 DebugObject::DebugObject(kEngine* kEngine) {
 	system_ = kEngine;
 	TH_centerPoint = system_->LoadTexture("./resources/TemplateResource/texture/centerPoint.png");
-	TH_number = system_->LoadTexture("./resources/TemplateResource/texture/number/unicode_japaness_number.png");
+	TH_number = system_->LoadTexture("./resources/texture/CountdownTimer/Iwata_Antic_Std_number.png");
 }
 
 DebugObject::~DebugObject() {
@@ -86,11 +86,12 @@ void DebugObject::updateTargetPosition() {
 		? followObject_->transform.translate
 		: mainPosition.transform.translate;
 }
+
 /// 中心点更新 ///
 void DebugObject::updateCenterPoint() {
 	if (isShowCenterPoint_) {
 		if (centerPoint_ != nullptr) {
-			Vector2 pos = camera_->GetObjectScreenPos(followObject_->transform.translate);
+			Vector2 pos = camera_->GetObjectScreenPos(targetPosition_);
 			centerPoint_->mainPosition.transform.translate = Vector3(pos.x, pos.y, 0.0f);
 		}
 	}
@@ -129,7 +130,7 @@ void DebugObject::updateCenterNumber() {
 
 			/// スプライト配置 ///
 
-			float scale = 0.025f;
+			float scale = 0.015f;
 
 			float spriteW = 1140.0f;
 			float spriteH = 160.0f;
@@ -146,12 +147,13 @@ void DebugObject::updateCenterNumber() {
 			float scaledSpacing = spacing * pxScale;
 
 			// 整排寬度
-			float totalWidth = scaledCropW * numDigits + scaledSpacing * (numDigits - 1);
+			float totalWidth = spriteW * numDigits + spacing * (numDigits - 1);
 
-			// 初めの数字の位置
-			Vector2 pos = camera_->GetObjectScreenPos(followObject_->transform.translate);
-			float baseX = pos.x - (totalWidth * 0.5f);
-			float baseY = pos.y - (scaledCropH * 0.5f);
+
+			// 左上角基準
+			Vector2 pos = camera_->GetObjectScreenPos(targetPosition_);
+			float baseX = -totalWidth * 0.5f;
+			float baseY = -spriteH * 0.5f;
 
 			for (int i = 0; i < numDigits; i++) {
 
@@ -162,16 +164,17 @@ void DebugObject::updateCenterNumber() {
 				part.cropLT = Vector2(digit * cropW, 0.0f);
 				part.cropSize = Vector2(cropW, cropH);
 
-				// 設定位置
-				float x = baseX + i * (scaledCropW + scaledSpacing);
-
+				// 設定位置（中心點）
+				float x = baseX + i * (spriteW + spacing);
 				part.transform.translate = { x,baseY,0 };
 			}
+
 
 			// 設定縮放
 			float scaleX = scale;
 			float scaleY = scale * 10.0f;
 			centerNumberSprite_->mainPosition.transform.scale = Vector3(scaleX, scaleY, 1.0f);
+			centerNumberSprite_->mainPosition.transform.translate = Vector3(pos.x, pos.y, 0.0f);
 		}
 	}
 }
