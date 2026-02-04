@@ -172,7 +172,7 @@ void Enemy::Move() {
 		}
 	}
 
-
+#pragma region 移動速度ブースト計算
 	// 現在の「最も膨らんでいる腕」の余剰分（1.0を超えている分）を計算
 	float maxExtraScale = std::max(armScaleL_, armScaleR_) - 1.0f;
 	if (maxExtraScale > 0.0f) {
@@ -183,6 +183,7 @@ void Enemy::Move() {
 	} else {
 		currentSpeed_ = kBaseSpeed;
 	}
+#pragma endregion
 
 	// 攻撃フラグ管理
 	if (armScaleR_ > 1.01f) {
@@ -196,9 +197,9 @@ void Enemy::Move() {
 		isAttackingL_ = false;
 	}
 
-	isCharging_ = false;
+	isCharging_ = false; // 両腕チャージしていないフラグ初期化
 
-	if (isTargetCharging_) {
+	if (isTargetCharging_) { // ターゲットがチャージ中(両腕溜め)ならば->ターゲットを追う
 		// 自身から見て右か左か
 		Vector3 toTarget = targetPos_ - mainPosition.transform.translate;
 		toTarget.y = 0.0f;
@@ -241,16 +242,16 @@ void Enemy::Move() {
 				armScaleR_ = 1.0f;
 			}
 		}
-	} else {
+	} else { // ターゲットがチャージ中でないならば->両腕チャージ
 		armScaleL_ += 0.3f * deltaTime_;
 		isAttackingL_ = false;
 		armScaleR_ += 0.3f * deltaTime_;
 		isAttackingR_ = false;
 		isCharging_ = true;
 	}
+	// 腕のスケール制限
 	armScaleL_ = std::clamp(armScaleL_, 1.0f, 30.0f);
 	armScaleR_ = std::clamp(armScaleR_, 1.0f, 30.0f);
-
 
 	mainPosition.transform.scale.y = mainPosition.transform.scale.x;
 	mainPosition.transform.scale.z = mainPosition.transform.scale.x;
