@@ -39,10 +39,23 @@ void Explosion::CreateExplosion() {
 
 		p->part->CreateModelData(defaultModelHandle_);
 		*p->part->objectParts_[0].materialConfig = *commonMaterialConfig;
+		p->part->objectParts_[0].materialConfig->lightModelType = LightModelType::FlameNeonGlow;
+		//p->part->objectParts_[0].materialConfig->textureColor = { 255.0f / 255.0f, 110.0f / 255.0f, 20.0f / 255.0f, 255.0f / 255.0f };
+		//p->part->objectParts_[0].materialConfig->textureColor2 = { 255.0f / 255.0f, 150.0f / 255.0f, 18.0f / 255.0f, 255.0f / 255.0f };
+		//p->part->objectParts_[0].materialConfig->textureColor3 = { 255.0f / 255.0f, 207.0f / 255.0f, 193.0f / 255.0f, 255.0f / 255.0f };
+		//p->part->objectParts_[0].materialConfig->intensity = 1.441f;
+		//p->part->objectParts_[0].materialConfig->heightScale = 1.524f;
+		p->part->objectParts_[0].materialConfig->textureColor = { 20.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+		p->part->objectParts_[0].materialConfig->textureColor2 = { 21.0f / 255.0f,  0.0f / 255.0f,  0.0f / 255.0f, 1.0f };
+		p->part->objectParts_[0].materialConfig->textureColor3 = { 255.0f / 255.0f,  0.0f / 255.0f,  2.0f / 255.0f, 1.0f };
+		p->part->objectParts_[0].materialConfig->intensity = 0.625f;
+		p->part->objectParts_[0].materialConfig->heightScale = 1.654f;
+
 		p->part->isBillboard_ = false;
 		p->part->mainPosition.transform = CreateDefaultTransform();
 		lifeTime_ = randomMaker_->randomFloat(0.5f, 1.0f); // 生存時間
 		p->lifeTimeTimer.Init0(lifeTime_, system_->GetTimeManager());
+
 
 		// ランダムな進む方向
 		Vector3 direction = {
