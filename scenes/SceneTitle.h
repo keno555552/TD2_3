@@ -18,6 +18,8 @@ public:
 	static constexpr int kPreloadDoujouCount = 15;
 public:
 
+	float skydomeRotateY_ = 0.0f;
+	const float kSkydomeRotateSpeed_ = 0.05f; // rad / sec（好みで）
 
     // セレクトSE
     // =====================
@@ -33,7 +35,14 @@ public:
 	int  DecideSE_ = -1;     // SEハンドル（-1 = 未ロード）
 	bool DecideSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 
+	int AppearSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool AppearSELoaded_ = false; // ★ 一度だけロードするためのフラグ
 
+	int WalkSE_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool WalkSELoaded_ = false; // ★ 一度だけロードするためのフラグ
+
+	int BGM_ = -1;     // SEハンドル（-1 = 未ロード）
+	bool BGM_oaded_ = false; // ★ 一度だけロードするためのフラグ
 
 	// パッド入力の連続防止
 	bool padSelectNeutral_ = true;

@@ -114,12 +114,15 @@ static void CopyCameraToHoldCam(Camera* src, Camera* dst) {
 SceneManager::SceneManager(kEngine* system) {
     system_ = system;
     sceneFactory_ = new SceneFactory(system_);
-    sceneUsingNameHandle_ = "STAGE_01";
+    sceneUsingNameHandle_ = "TITLE";
 
     if (gShojiFrameTexHandle < 0)
         gShojiFrameTexHandle = system_->LoadTexture("resources/gate/model/wood_tate.png");
     if (gShojiPaperTexHandle < 0)
         gShojiPaperTexHandle = system_->LoadTexture("resources/gate/model/paper.png");
+
+    CloseSE_ = system_->SoundLoadSE("resources/gate/SE/Close.wav");
+    OpenSE_ = system_->SoundLoadSE("resources/gate/SE/Open.wav");
 
     // ★ HoldCam を先に作っておく（遷移中に必ず描画できる）
     EnsureShojiHoldCam(system_);
@@ -212,6 +215,10 @@ void SceneManager::SceneChanger() {
         shojiT_ = 0.0f;
         shojiWaitTimer_ = 0.0f;
         shojiPhase_ = ShojiPhase::Closing;
+        if (CloseSE_ >= 0) {
+            system_->SoundPlaySE(CloseSE_, 0.6f);
+        }
+
         shojiPlaying_ = true;
     }
 }
@@ -416,7 +423,7 @@ void SceneManager::Shoji_UpdateClosingOpening(float dt) {
 
     // ★ Closing完了 → 1秒待ってからシーン切替
     if (shojiPhase_ == ShojiPhase::Closing && shojiT_ >= 1.0f) {
-
+      
         sceneUsingNameHandle_ = nextAfterShoji_;
 
         shojiWaitTimer_ = 0.0f;
@@ -497,6 +504,9 @@ void SceneManager::Shoji_UpdateWaitNewCamera(float dt) {
 
     shojiT_ = 1.0f;
     shojiPhase_ = ShojiPhase::Opening;
+    if (OpenSE_ >= 0) {
+        system_->SoundPlaySE(OpenSE_, 0.6f);
+    }
 }
 
 void SceneManager::Shoji_DestroyAll() {

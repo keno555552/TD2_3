@@ -7,6 +7,7 @@
 #include "BaseScene.h"
 #include "GameObject/Object/Corner.h"
 #include "Arm/Arm.h"
+#include "DebugTool/DebugObject.h"
 
 // 最大膨張率
 static inline const float kMaxArmScale = 30.0f;
@@ -46,6 +47,7 @@ class Player :public Object
 {
 public:
 	Player(kEngine* system, const Vector3& position = Vector3{ 0,0,0 });
+	~Player();
 
 	void Update(Camera* camera) override;
 
@@ -70,6 +72,8 @@ public:
     float GetArmScaleR() const { return armScaleR_; }
     
     Vector3 GetForward() const { return forward_; }
+
+	void SetNumberShow(bool flag);
 
 	// ImGuI用
 #ifdef USE_IMGUI
@@ -99,6 +103,7 @@ private:
 
 	std::vector<std::function<void()>> function;
 
+
 private:
 
 	/// マップとの当たり判定情報
@@ -123,6 +128,8 @@ private:
 	void UpdateArmScale(float &scale, bool isPush);
 	// 見た目を更新する
 	void UpdateAppearance();
+
+	void ImGuiPart();
 
 private:
 	/////// State
@@ -156,6 +163,9 @@ private:
 	// これまでのパーツ管理ではなく、Armクラスを持つ
 	Arm* armL_ = nullptr;
 	Arm* armR_ = nullptr;
+	DebugObject* leftHandDebugObject_ = nullptr;
+	DebugObject* rightHandDebugObject_ = nullptr;
+
 	// 左腕のスケール（1.0が通常）
 	float armScaleL_ = 1.0f;
 	// 右腕のスケール
