@@ -1124,6 +1124,7 @@ void SceneStage01::Draw() {
 		/// 向きがないのか判定の対象外
 
 		if (Length(Doujous_[i]->objectParts_[0].forward) < 0.0001f) {
+			if (i != 3 && i != 8)
 			Doujous_[i]->Draw();
 			continue;
 		}
@@ -1149,6 +1150,11 @@ void SceneStage01::Draw() {
 		}
 	}
 	Doujous_[15]->Draw();
+	if (NotDraw_) {
+
+		Doujous_[3]->Draw();
+		Doujous_[8]->Draw();
+	}
 	DrawSparkEffect2(); // ← Spark専用Draw
 
 	constexpr float RESULT_DRAW_DIST = 300.0f;
